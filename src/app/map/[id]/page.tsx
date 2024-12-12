@@ -65,7 +65,7 @@ export default function PublishedMap() {
 
   //temporary code
   const params = useParams();
-  const mapName = params.mapName as string;
+  // const mapName = params.mapName as string;
   const mapId = params.id as string;
   // name = String(name);
   // const [mapId, setMapId] = useState<string>();
@@ -86,12 +86,12 @@ export default function PublishedMap() {
         }
 
         // Replace all spaces with dashes and convert to lowercase for consistent comparison
-        const formattedMapName = data.name.toLowerCase().replace(/\s+/g, '');
+        // const formattedMapName = data.name.toLowerCase().replace(/\s+/g, '');
         
-        if (formattedMapName !== mapName.toLowerCase()) {
-          setIsPublished(false);
-          return;
-        }
+        // if (formattedMapName !== mapName.toLowerCase()) {
+        //   setIsPublished(false);
+        //   return;
+        // }
 
         const { data: publishInfo } = await supabase
           .from("maps")
