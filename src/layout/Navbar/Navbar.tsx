@@ -462,7 +462,7 @@ const Navbar = () => {
               )}
             </div>
           )}
-          <div className="flex justify-center items-center gap-2">
+          <div className="flex justify-center items-center gap-1">
             {currentPath === "/dashboard" ||
             currentPath === "/dashboard/subscriptions" ? (
               <>
@@ -477,22 +477,22 @@ const Navbar = () => {
               <>
                 <button
                   onClick={updateCards}
-                  className="mx-5 font-semibold text-gray-500 hover:underline"
+                  className="mx-5 font-semibold text-gray-400 hover:underline"
                 >
                   {isSaving || saveStatus === "saving" ? (
                     <div className="flex items-center gap-1">
-                      <BiRefresh className="text-2xl animate-spin" />
+                      <BiRefresh className="text-xl animate-spin" />
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <MdOutlineCloudDone className="text-2xl" />
+                      <MdOutlineCloudDone className="text-xl" />
                     </div>
                   )}
                 </button>
                 <div className="flex justify-center items-center bg-black px-2 rounded-full">
                   <button
                     onClick={showModal}
-                    className=" text-white font-semibold px-3 py-2"
+                    className=" text-white font-semibold px-3 py-1"
                   >
                     Publish
                   </button>
@@ -502,11 +502,21 @@ const Navbar = () => {
             <Button className="bg-transparent border-none text-3xl">
               {/* <FaUserCircle /> */}
               <Dropdown menu={{ items }} placement="bottomRight" arrow>
-                <img
-                  src={currUser?.user_metadata.avatar_url}
-                  alt="profile"
-                  className="rounded-full h-[40px] w-[40px] text-sm bg-black justify-end"
-                />
+                {currUser?.user_metadata.avatar_url ? (
+                  <img
+                    src={currUser.user_metadata.avatar_url}
+                    alt="profile"
+                    className="rounded-full h-[30px] w-[30px] text-sm bg-black justify-end"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                    }}
+                  />
+                ) : (
+                  <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-xl uppercase">
+                    {currUser?.user_metadata.full_name?.[0] || currUser?.email?.[0] || '?'}
+                  </div>
+                )}
               </Dropdown>
             </Button>
           </div>
