@@ -36,8 +36,8 @@ export async function sendZeptoMail({ template, email, data }: SendMailProps) {
       body: JSON.stringify({
         template_key: templateId,
         from: {
-          address: 'Cebe@macroscope.so',
-          name: 'Cebe'
+          address: 'team@macroscope.so',
+          name: 'Cebe from Macroscope'
         },
         to: [{
           email_address: {
