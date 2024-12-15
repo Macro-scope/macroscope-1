@@ -507,10 +507,10 @@ const Navbar = () => {
                     src={currUser.user_metadata.avatar_url}
                     alt="profile"
                     className="rounded-full h-[30px] w-[30px] text-sm bg-black justify-end"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
-                    }}
+                    // onError={(e) => {
+                    //   e.currentTarget.style.display = 'none';
+                    //   (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                    // }}
                   />
                 ) : (
                   <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-xl uppercase">

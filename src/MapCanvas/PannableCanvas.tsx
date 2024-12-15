@@ -13,7 +13,7 @@ import { setGlobalSettings } from "@/redux/globalSettingsSlice";
 import { setImages } from "@/redux/imagesSlice";
 import { getImages } from "@/hooks/getImages";
 import { useParams } from "next/navigation";
-import { deleteImage } from "@/hooks/deleteImage"; 
+import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 
@@ -48,7 +48,7 @@ const ImageCard = ({ src, onDelete }: any) => {
         onClick={onDelete}
         className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       >
-         <IoClose className="text-xl" />
+        <IoClose className="text-xl" />
       </button>
     </div>
   );
@@ -63,7 +63,6 @@ export default function PannableCanvas() {
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1);
   const { updateImagePosition } = useUpdateImagePosition();
-
 
   // const [canvasWidth, setCanvasWidth] = useState(3000);
   // const [canvasHeight, setCanvasHeight] = useState(3000);
@@ -266,7 +265,6 @@ export default function PannableCanvas() {
       }
     };
 
-    
     const setGlobalStyles = async (mapId: string) => {
       const globalStyles: any = await getGlobalMapStyles(mapId);
       dispatch(setGlobalSettings(globalStyles!.settings));
@@ -281,17 +279,19 @@ export default function PannableCanvas() {
   }, []);
 
   // Deleteing images
-  
+
   const handleDeleteImage = async (imageId: string) => {
     if (!images) return;
-  
+
     try {
       const isDeleted = await deleteImage(imageId);
-      
+
       if (isDeleted) {
-        const updatedImages = images.filter((image: any) => image.image_id !== imageId);
-        dispatch(setImages(updatedImages)); 
-  
+        const updatedImages = images.filter(
+          (image: any) => image.image_id !== imageId
+        );
+        dispatch(setImages(updatedImages));
+
         console.log("Image deleted successfully!");
       } else {
         console.log("Failed to delete image");
@@ -300,7 +300,7 @@ export default function PannableCanvas() {
       console.error("Error deleting image:", error);
     }
   };
-  
+
   useEffect(() => {
     setCurrCards(mapCards.data);
     console.log("Woahhh ===== ", currCards);
@@ -313,38 +313,40 @@ export default function PannableCanvas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapSettings]);
 
-  // image position changes  
+  // image position changes
 
   useEffect(() => {
     const { updateImagePosition } = useUpdateImagePosition();
-  
+
     const updateImage = async () => {
       if (!images || !Array.isArray(images)) return;
-  
+
       console.log("Updating all image positions...");
-  
+
       // Iterate over each image and update its position in Supabase
       const updatedImagesPromises = images.map(async (image: any) => {
         const success = await updateImagePosition(image.image_id, [
           image.position[0],
           image.position[1],
         ]);
-  
+
         if (success) {
           console.log(`Position updated for image: ${image.image_id}`);
         } else {
-          console.error(`Failed to update position for image: ${image.image_id}`);
+          console.error(
+            `Failed to update position for image: ${image.image_id}`
+          );
         }
-  
+
         return image; // Returning the image as is (you can customize if needed)
       });
-  
+
       // Wait for all updates to complete
       await Promise.all(updatedImagesPromises);
-  
+
       console.log("All image positions updated in Supabase!");
     };
-  
+
     if (images) {
       updateImage();
     }
@@ -355,7 +357,7 @@ export default function PannableCanvas() {
     const updateCardSettings = (targetCardId: string) => {
       setCurrCards((prevCards: any) => {
         if (!Array.isArray(prevCards)) return prevCards;
-        
+
         const updatedCards = prevCards.map((card: any) => {
           if (card.card_id === targetCardId) {
             return {
@@ -381,7 +383,6 @@ export default function PannableCanvas() {
   }, [localSettings, localCardId]);
 
   // const [images, setImages] = useState<any>();
-
 
   useEffect(() => {
     const getImage = async () => {
@@ -592,12 +593,6 @@ export default function PannableCanvas() {
             <Rnd
               disableDragging={handTool}
               key={card.card_id}
-              // default={{
-              //   x: card.position[0],
-              //   y: card.position[1],
-              //   width: card.dimension[0] as number,
-              //   height: card.dimension[1] as number,
-              // }}
               size={{
                 width: card.dimension[0] as number,
                 height: card.dimension[1] as number,
@@ -606,15 +601,16 @@ export default function PannableCanvas() {
                 x: card.position[0],
                 y: card.position[1],
               }}
-              enableResizing={{
-                bottom: false,
-                bottomLeft: false,
-                bottomRight: false,
-                left: false,
-                right: true,
-                top: false,
-                topLeft: false,
-                topRight: false,
+              enableResizing={false}
+              resizeHandleStyles={{
+                bottom: { display: "none" },
+                bottomLeft: { display: "none" },
+                bottomRight: { display: "none" },
+                left: { display: "none" },
+                right: { display: "none" },
+                top: { display: "none" },
+                topLeft: { display: "none" },
+                topRight: { display: "none" },
               }}
               style={handTool ? { zIndex: 1 } : { zIndex: 1000 }}
               bounds="parent"
@@ -626,24 +622,7 @@ export default function PannableCanvas() {
                     : c
                 );
                 dispatch(setCards(updatedCards));
-                console.log(updatedCards);
               }}
-              onResizeStop={(_e, _direction, ref, _delta, _position) => {
-                const updatedCards = mapCards?.data?.map((c: any) =>
-                  c.card_id === card.card_id
-                    ? {
-                        ...c,
-                        dimension: [
-                          parseInt(ref.style.width),
-                          parseInt(ref.style.height),
-                        ],
-                      }
-                    : c
-                );
-                dispatch(setCards(updatedCards));
-                console.log(updatedCards);
-              }}
-              resizeGrid={[10, 10]}
               dragGrid={[2, 2]}
               className="mappedCards z-50"
             >
@@ -652,9 +631,12 @@ export default function PannableCanvas() {
                 settings={card.settings}
                 tiles={card.tiles}
                 tagName={card.name}
-                cardId={card.card_id} 
+                cardId={card.card_id}
                 isDoubleClick={false}
-                // handleDynamicSizeChange={handleDynamicSizeChange}
+                dimension={[
+                  Number(card.dimension[0]),
+                  Number(card.dimension[1]),
+                ]}
               />
             </Rnd>
           ) : (
