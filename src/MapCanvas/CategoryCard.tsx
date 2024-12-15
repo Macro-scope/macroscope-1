@@ -29,6 +29,7 @@ type Props = {
     cardId: string
   ) => void;
   isDoubleClick?: boolean;
+  heightComp?: number;
 };
 
 const ResizableNode: React.FC<Props> = (props) => {
@@ -314,7 +315,7 @@ const ResizableNode: React.FC<Props> = (props) => {
         }}
       >
         {props.isViewer ? (
-          <div></div>
+          <></>
         ) : (
           <button
             onClick={openLocalSettings}
@@ -329,15 +330,16 @@ const ResizableNode: React.FC<Props> = (props) => {
             border: `${group.borderWeight} solid ${props.settings.group.borderColor}`,
             background: `${props.settings.group.fillColor}`,
             borderRadius: `${group.corner}`,
+            // height: props.heightComp ? `${props.heightComp}px` : 'auto'
           }}
         >
           <div
-            className={`font-semibold absolute -top-5 flex justify-center items-center text-center text-lg px-2 ${
+            className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
               title.alignment === "center"
-                ? "text-center left-[50%] transform -translate-x-1/2"
+                ? "left-[50%] transform -translate-x-1/2"
                 : title.alignment === "right"
-                ? "text-right right-2"
-                : "text-left"
+                ? "right-2"
+                : "left-2"
             }`}
             style={{
               color: `${
@@ -351,10 +353,12 @@ const ResizableNode: React.FC<Props> = (props) => {
                   ? props.settings.group.borderColor
                   : props.settings.group.fillColor
               }`,
-              border: `${group.borderWeight} solid ${props.settings.group.borderColor}`
+              border: `${group.borderWeight} solid ${props.settings.group.borderColor}`,
             }}
           >
-            <p className="h-fit w-fit">{props.tagName || "Default"}</p>
+            <div className="w-full h-full flex justify-center items-center">
+              <p className="">{props.tagName || "Default"}</p>
+            </div>
           </div>
           <div
             className={`flex flex-wrap gap-2 p-5 rounded-md`}
@@ -397,7 +401,7 @@ const ResizableNode: React.FC<Props> = (props) => {
                         }
                       />
                     </div>
-                    <p className="flex justify-center items-center m-0">{tile.name}</p>
+                    <p className="m-0 min-h-full">{tile.name}</p>
                   </div>
                 ) : null
               )}

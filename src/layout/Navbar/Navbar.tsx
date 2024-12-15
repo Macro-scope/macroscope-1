@@ -468,7 +468,7 @@ const Navbar = () => {
               <>
                 <button
                   onClick={showMapModal}
-                  className="bg-black flex items-center gap-2 font-semibold text-white py-[10px] px-5 rounded-full"
+                  className="bg-black flex justify-center items-center gap-2 font-semibold text-white py-1 px-2 rounded-full"
                 >
                   <FaPlus /> Create New
                 </button>
@@ -499,7 +499,7 @@ const Navbar = () => {
                 </div>
               </>
             )}
-            <Button className="bg-transparent border-none text-3xl">
+            <Button className="border-none text-3xl bg-black rounded-full h-[30px] w-[30px]">
               {/* <FaUserCircle /> */}
               <Dropdown menu={{ items }} placement="bottomRight" arrow>
                 {currUser?.user_metadata.avatar_url ? (

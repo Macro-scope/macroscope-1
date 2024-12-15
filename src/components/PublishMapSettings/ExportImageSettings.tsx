@@ -57,6 +57,7 @@ const ExportImageSettings = (props: Props) => {
     if (!element) return;
   
     // Set the element's size to the calculated dimensions
+    
     element.style.width = `${maxX}px`;
     element.style.height = `${maxY}px`;
   

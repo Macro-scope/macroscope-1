@@ -34,6 +34,9 @@ import { addLogo } from '@/hooks/addLogo';
 import { TiptapEditor } from '../editor/tiptap-editor';
 import { ExportIcon } from '../icons';
 import { Loader2 } from "lucide-react"; // Import loading icon
+import { useDispatch, useSelector } from 'react-redux';
+import { getMapData } from '@/hooks/getMapData';
+import { setCards } from '@/redux/mapCardsSlice';
 
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
@@ -399,6 +402,61 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     }
   }, [columns, data]);
 
+  const { mapCards, images } = useSelector((state: any) => ({
+    mapCards: state.mapCards,
+    images: state.images,
+}));
+const dispatch = useDispatch();
+
+useEffect(() => {
+  const getCards = async (mapId: string) => {
+    try {
+      const data: any = await getMapData(mapId);
+      if (data) {
+        dispatch(setCards(data.cards));
+        console.log(data);
+      }
+    } catch (error) {
+      console.error("Fetching error:", error);
+    }
+  };
+
+  if (mapId) {
+    getCards(mapId);
+  }
+}, [mapId]);
+
+const getCanvasSize = () => {
+  console.log("hi")
+  console.log(mapCards)
+  console.log(images)
+  if (!mapCards?.data?.length && (!images || !Array.isArray(images))) return;
+  console.log("hey")
+
+    // Calculate the bounding box of all cards and images
+    let maxX = 0;
+    let maxY = 0;
+
+    // Update maxX and maxY based on card dimensions and positions
+    mapCards.data.forEach((card: any) => {
+        maxX = Math.max(maxX, Number(card.position[0]) + Number(card.dimension[0]));
+        maxY = Math.max(maxY, Number(card.position[1]) + Number(card.dimension[1]));
+    });
+
+    // Update maxX and maxY based on image dimensions and positions
+    images?.forEach((image: any) => {
+        maxX = Math.max(maxX, Number(image.position[0]) + Number(image.dimension[0]));
+        maxY = Math.max(maxY, Number(image.position[1]) + Number(image.dimension[1]));
+    });
+
+    // Add padding
+    const padding = 50;
+    maxX += padding;
+    maxY += padding;
+    console.log(maxX, maxY);
+    return {maxX, maxY};
+}
+
   const onCellEdited = React.useCallback(async ([col, row]: readonly [number, number], newValue: any) => {
     const column = columns[col];
     const rowData = data[row];
@@ -496,7 +554,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       } else if (selectedValue && newValue.data.allowCreation) {
         try {
           const randomColor = getRandomColor();
-          const result = await addNewTag(mapId, selectedValue, randomColor);
+          const position = getCanvasSize();
+          const pos = [position.maxX, position.maxY];
+          const result = await addNewTag(mapId, selectedValue, randomColor, pos);
           await refreshTags();
           
           // Get the newly created card

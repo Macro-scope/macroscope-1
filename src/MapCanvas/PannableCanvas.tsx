@@ -607,7 +607,7 @@ export default function PannableCanvas() {
                 y: card.position[1],
               }}
               enableResizing={{
-                bottom: false,
+                bottom: true,
                 bottomLeft: false,
                 bottomRight: false,
                 left: false,
@@ -654,6 +654,7 @@ export default function PannableCanvas() {
                 tagName={card.name}
                 cardId={card.card_id} 
                 isDoubleClick={false}
+                heightComp={card.dimension[1] as number}
                 // handleDynamicSizeChange={handleDynamicSizeChange}
               />
             </Rnd>
