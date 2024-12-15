@@ -1,8 +1,8 @@
-"use client"
+'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import CustomLayout from '@/layout/CustomLayout';
-
+// s
 export default function CustomerPortalPage() {
   const [portalUrl, setPortalUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +13,9 @@ export default function CustomerPortalPage() {
 
   const fetchPortalUrl = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       // Get the most recent subscription to get the portal URL
@@ -46,7 +48,7 @@ export default function CustomerPortalPage() {
     <CustomLayout>
       <div className="p-6">
         <h1 className="text-2xl font-bold mb-6">Subscription Management</h1>
-        
+
         {isLoading ? (
           <div className="text-center py-8">
             Redirecting to customer portal...
@@ -57,7 +59,9 @@ export default function CustomerPortalPage() {
           </div>
         ) : (
           <div className="text-center py-8">
-            <p className="mb-4">If you are not automatically redirected, click the button below:</p>
+            <p className="mb-4">
+              If you are not automatically redirected, click the button below:
+            </p>
             <a
               href={portalUrl}
               target="_blank"
