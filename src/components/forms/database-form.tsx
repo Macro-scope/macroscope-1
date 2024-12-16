@@ -1,22 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { FaLink as Link, FaImage, FaTrash, FaArrowUpFromBracket, FaChevronDown } from 'react-icons/fa6';
-import { SheetHeader, SheetTitle } from '../ui/sheet';
-import { useTableColumns } from '../../hooks/use-table-columns';
-import { useParams } from 'react-router-dom';
-
-import { Dialog, DialogContent } from '../ui/dialog';
-import { ImageUpload } from '../database/image-upload';
+import { Camera, Link2, Trash2, Upload, ChevronDown, X, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import {
-  Select as SelectUI,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { supabase } from '@/lib/supabaseClient';
-import { TiptapEditor } from '../editor/tiptap-editor';
-import { useTableData } from '@/hooks/use-table-data';
-import Select  from 'react-select/creatable';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -25,7 +19,14 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-} from "../ui/alert-dialog";
+} from "@/components/ui/alert-dialog";
+import { ImageUpload } from '../database/image-upload';
+import { supabase } from '@/lib/supabaseClient';
+import { TiptapEditor } from '../editor/tiptap-editor';
+import { useTableData } from '@/hooks/use-table-data';
+import { useTableColumns } from '../../hooks/use-table-columns';
+import Select from 'react-select/creatable';
+import { useParams } from 'react-router-dom';
 
 interface FormData {
   name: string;
@@ -37,34 +38,19 @@ interface FormData {
     color: string;
   };
   description: string;
-
   last_updated: string;
 }
 
-interface EditItemFormData {
-  name: string;
-  url: string;
-  logo: string;
-  category: {
-    value: string;
-    label: string;
-    color: string;
-  };
-  description: string;
+interface EditItemFormData extends FormData {
   descriptionHtml: string;
-  last_updated: string;
   tile_id: string;
 }
+
 interface EditItemFormProps {
   data: EditItemFormData;
   onSave: (updatedData: Partial<FormData>) => void;
   onCancel: () => void;
   mapId: string;
-}
-
-interface Option {
-  value: string;
-  label: string;
 }
 
 export default function EditItemForm({
@@ -73,56 +59,6 @@ export default function EditItemForm({
   onCancel,
   mapId,
 }: EditItemFormProps) {
- 
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [tagOptions, setTagOptions] = useState<any[]>([]);
-  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
-  const { data: tableData, setData, loading, error, addRow, updateRow, deleteRow, reorderRow, 
-    undo, redo, canUndo, canRedo } = useTableData({ mapId });
-  // Add console logs to debug
-  const fetchTags = useCallback(async () => {
-  
-
-    try {
-      console.log('Fetching tags for mapId:', mapId);
-      const { data: tags, error } = await supabase
-        .from('tags')
-        .select('*')
-        .eq('map_id', mapId);
-
-      if (error) throw error;
-
-      console.log('Fetched tags:', tags);
-
-      const formattedTags = tags.map(tag => ({
-        value: tag.tag_id,
-        label: tag.name,
-        color: tag.color,
-      }));
-
-      console.log('Formatted tags:', formattedTags);
-      setTagOptions(formattedTags);
-    } catch (error) {
-      console.error('Error fetching tags:', error);
-    }
-  }, [mapId]);
-
-  // Log when component mounts and when data changes
-  useEffect(() => {
-    console.log('EditItemForm mounted or data changed:', data);
-    fetchTags();
-  }, [fetchTags, data]);
-
-  // Log current state
-  useEffect(() => {
-    console.log('Current tagOptions:', tagOptions);
-  }, [tagOptions]);
-
-  const { columns } = useTableColumns(mapId);
-  
-  const categoryColumn = columns.find(col => col.id === 'category');
-  const categoryOptions = categoryColumn?.options || [];
-
   const [formData, setFormData] = useState<FormData>({
     name: data.name || '',
     url: data.url || '',
@@ -132,30 +68,43 @@ export default function EditItemForm({
     last_updated: data.last_updated || new Date().toISOString()
   });
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { id, value } = e.target;
-    
-    if (id === 'category') {
-      const selectedOption = categoryOptions.find((opt:any) => opt.value === value);
-      if (selectedOption) {
-        setFormData(prev => ({
-          ...prev,
-          category: {
-            value: selectedOption.value,
-            label: selectedOption.label,
-            color: selectedOption.color,
-          },
-        }));
-      }
-      return;
-    }
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [tagOptions, setTagOptions] = useState<any[]>([]);
+  
+  const { data: tableData, updateRow } = useTableData({ mapId });
+  const { columns } = useTableColumns(mapId);
 
+  const fetchTags = useCallback(async () => {
+    try {
+      const { data: tags, error } = await supabase
+        .from('tags')
+        .select('*')
+        .eq('map_id', mapId);
+
+      if (error) throw error;
+
+      const formattedTags = tags.map(tag => ({
+        value: tag.tag_id,
+        label: tag.name,
+        color: tag.color,
+      }));
+
+      setTagOptions(formattedTags);
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  }, [mapId]);
+
+  useEffect(() => {
+    fetchTags();
+  }, [fetchTags]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
   };
-
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -166,11 +115,9 @@ export default function EditItemForm({
     }
 
     const updates: any = {};
-    
     if (formData.name !== data.name) updates.name = formData.name;
     if (formData.url !== data.url) updates.url = formData.url;
     if (formData.description !== data.description) updates.description = formData.description;
-    
     if (formData.category.value !== data.category.value) {
       updates.tag_id = formData.category.value;
     }
@@ -178,26 +125,7 @@ export default function EditItemForm({
     onSave(updates);
   };
 
-  const inputClass =
-    'w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500';
-  const labelClass = 'block text-[0.7rem] font-medium text-gray-700 mb-1';
-
-  const handleCategoryChange = async (value: string) => {
-    const selectedOption = tagOptions.find((opt) => opt.value === value);
-    console.log('Selected option:', selectedOption);
-    if (selectedOption) {
-      setFormData(prev => ({
-        ...prev,
-        category: {
-          value: selectedOption.value,
-          label: selectedOption.label,
-          color: selectedOption.color,
-        },
-      }));
-    }
-  };
-
-  const handleDescriptionSave = async (content: { html: string, markdown: string }) => {
+  const handleDescriptionSave = async (content: { html: string; markdown: string }) => {
     try {
       await updateRow(data.tile_id, {
         description: {
@@ -205,35 +133,26 @@ export default function EditItemForm({
           markdown: content.markdown
         }
       });
-      // setFormData(prev => ({
-      //   ...prev,
-      //   description: content.markdown
-      // }));
       setIsDescriptionDialogOpen(false);
     } catch (error) {
       console.error('Error saving description:', error);
     }
   };
 
-  const [isCreatingNewTag, setIsCreatingNewTag] = useState(false);
-  const [newTagName, setNewTagName] = useState('');
-
   const handleCreateNewTag = async (tagName: string) => {
     try {
-      // Create new tag
       const { data: newTag, error: tagError } = await supabase
         .from('tags')
         .insert({
           map_id: mapId,
           name: tagName,
-          color: '#000000' // Using black color
+          color: '#000000'
         })
         .select()
         .single();
 
       if (tagError) throw tagError;
 
-      // Create a new card with the new tag
       const { data: newCard, error: cardError } = await supabase
         .from('cards')
         .insert({
@@ -246,7 +165,6 @@ export default function EditItemForm({
 
       if (cardError) throw cardError;
 
-      // Update form data with new category
       setFormData(prev => ({
         ...prev,
         category: {
@@ -256,13 +174,7 @@ export default function EditItemForm({
         }
       }));
 
-      // Reset creation state
-      setNewTagName('');
-      setIsCreatingNewTag(false);
-      
-      // Refresh tags list
       await fetchTags();
-
       return newCard;
     } catch (error) {
       console.error('Error creating new tag:', error);
@@ -271,232 +183,214 @@ export default function EditItemForm({
   };
 
   return (
-    <div className="space-y-4 px-4">
-      <SheetHeader>
-        <SheetTitle className="text-lg font-semibold">Edit Item</SheetTitle>
-      </SheetHeader>
-      <div className="relative w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center group">
-        {data.logo ? (
-          <img 
-            src={data.logo} 
-            alt="Logo" 
-            className="w-full h-full object-contain rounded-lg" 
-          />
-        ) : (
-          <div className="w-32 h-32 flex items-center justify-center">
-            <FaImage className="w-12 h-12 text-gray-300" />
-          </div>
-        )}
-        
-        <div className="absolute right-2 bottom-0 flex gap-1">
-          <button 
-            type="button"
-            onClick={() => setIsImageDialogOpen(true)}
-            className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-50"
+    <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">Edit Item</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onCancel}
           >
-            <FaArrowUpFromBracket className="w-4 h-4 text-gray-600" />
-          </button>
-          <button 
-            type="button"
-            className="p-2 bg-white rounded-md shadow-sm hover:bg-gray-50"
-            onClick={() => {
-              setFormData(prev => ({ ...prev, logo: '' }));
-              onSave({ logo: '' });
-            }}
-          >
-            <FaTrash className="w-4 h-4 text-gray-600" />
-          </button>
+            <X className="h-4 w-4" />
+          </Button>
         </div>
-      </div>
+      </CardHeader>
 
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="sm:max-w-[680px] max-h-[80vh] flex flex-col overflow-hidden bg-white">
-          <h2 className="text-lg font-medium shrink-0">Add Image</h2>
-          <div className="flex-1 min-h-0 overflow-hidden">
-            <ImageUpload
-              initialImage={data.logo}
-              initialUrl={data.url}
-              onImageSelect={async (imageUrl) => {
-                setFormData(prev => ({ ...prev, logo: imageUrl }));
-                onSave({ logo: imageUrl });
-                setIsImageDialogOpen(false);
-              }}
-              onClose={() => setIsImageDialogOpen(false)}
-            />
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group overflow-hidden">
+            {formData.logo ? (
+              <img 
+                src={formData.logo} 
+                alt="Logo" 
+                className="w-full h-full object-contain rounded-lg transition-transform group-hover:scale-105" 
+              />
+            ) : (
+              <div className="w-40 h-40 flex items-center justify-center">
+                <Camera className="w-12 h-12 text-gray-300" />
+              </div>
+            )}
+            
+            <div className="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsImageDialogOpen(true)}
+              >
+                <Upload className="w-4 h-4 mr-1" />
+                Upload
+              </Button>
+              {formData.logo && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, logo: '' }));
+                    onSave({ logo: '' });
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           </div>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="url">URL</Label>
+              <div className="relative">
+                <Input
+                  id="url"
+                  value={formData.url}
+                  onChange={handleInputChange}
+                  className="pr-10"
+                />
+                <Link2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="category">Category</Label>
+              <Select
+                isClearable
+                placeholder="Search or create category..."
+                value={formData.category.value ? {
+                  value: formData.category.value,
+                  label: formData.category.label
+                } : null}
+                options={tagOptions}
+                onChange={async (newValue: any) => {
+                  if (!newValue) {
+                    setFormData(prev => ({
+                      ...prev,
+                      category: { value: '', label: '', color: '' }
+                    }));
+                    return;
+                  }
+
+                  if (newValue.__isNew__) {
+                    try {
+                      await handleCreateNewTag(newValue.label);
+                    } catch (error) {
+                      console.error('Error creating new tag:', error);
+                    }
+                  } else {
+                    setFormData(prev => ({
+                      ...prev,
+                      category: {
+                        value: newValue.value,
+                        label: newValue.label,
+                        color: newValue.color,
+                      },
+                    }));
+                  }
+                }}
+                onCreateOption={handleCreateNewTag}
+                classNames={{
+                  control: () => 'border rounded-md !min-h-[40px]',
+                  menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
+                  option: () => 'px-3 py-2 hover:bg-gray-50',
+                }}
+                theme={(theme) => ({
+                  ...theme,
+                  colors: {
+                    ...theme.colors,
+                    primary: 'black',
+                    primary25: '#f9fafb',
+                    primary50: '#f3f4f6',
+                  },
+                })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <div className="relative">
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  rows={3}
+                  className="pr-20"
+                  readOnly
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsDescriptionDialogOpen(true)}
+                  className="absolute right-2 top-2"
+                >
+                  Edit
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-sm text-gray-500">
+              Last Modified:{' '}
+              <span className="font-medium">
+                {new Date(data.last_updated).toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+
+      <CardFooter className="flex flex-col gap-2 mt-6">
+        <Button 
+          className="w-full"
+          onClick={handleSubmit}
+        >
+          Save Changes
+        </Button>
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={onCancel}
+        >
+          Discard
+        </Button>
+      </CardFooter>
+
+      {/* Dialogs remain the same */}
+      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+        <DialogContent className="sm:max-w-[680px] max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Upload Image</DialogTitle>
+          </DialogHeader>
+          <ImageUpload
+            initialImage={data.logo}
+            initialUrl={data.url}
+            onImageSelect={async (imageUrl) => {
+              setFormData(prev => ({ ...prev, logo: imageUrl }));
+              onSave({ logo: imageUrl });
+              setIsImageDialogOpen(false);
+            }}
+            onClose={() => setIsImageDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="name" className="block text-[0.7rem] font-medium mb-1">
-            Name
-          </label>
-          <input
-            id="name"
-            value={formData.name}
-            onChange={handleInputChange}
-            className="w-full px-3 py-2 border rounded-md text-sm"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="url" className="block text-[0.7rem] font-medium mb-1">
-            URL
-          </label>
-          <div className="relative">
-            <input
-              id="url"
-              value={formData.url}
-              onChange={handleInputChange}
-              className="w-full px-3 py-2 border rounded-md text-sm pr-8"
-            />
-            <Link className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400" size={14} />
-          </div>
-        </div>
-
-        <div>
-          <label htmlFor="category" className={labelClass}>
-            Category
-          </label>
-          <Select
-            isClearable
-            placeholder="Search or create category..."
-            value={formData.category.value ? {
-              value: formData.category.value,
-              label: formData.category.label
-            } : null}
-            options={tagOptions}
-            onChange={async (newValue: any) => {
-              if (!newValue) {
-                setFormData(prev => ({
-                  ...prev,
-                  category: { value: '', label: '', color: '' }
-                }));
-                return;
-              }
-
-              if (newValue.__isNew__) {
-                // Handle creating new tag
-                try {
-                  await handleCreateNewTag(newValue.label);
-                } catch (error) {
-                  console.error('Error creating new tag:', error);
-                }
-              } else {
-                // Handle selecting existing tag
-                handleCategoryChange(newValue.value);
-              }
-            }}
-            onCreateOption={async (inputValue) => {
-              try {
-                await handleCreateNewTag(inputValue);
-              } catch (error) {
-                console.error('Error creating new tag:', error);
-              }
-            }}
-            styles={{
-              control: (base) => ({
-                ...base,
-                minHeight: '36px',
-                height: '36px',
-                boxShadow: 'none',
-                borderColor: '#e5e7eb',
-                '&:hover': {
-                  borderColor: '#000000',
-                },
-              }),
-              valueContainer: (base) => ({
-                ...base,
-                height: '36px',
-                padding: '0 6px',
-              }),
-              input: (base) => ({
-                ...base,
-                margin: 0,
-                padding: 0,
-              }),
-              option: (base, state) => ({
-                ...base,
-                backgroundColor: state.isFocused ? '#f7f7f7' : 'white',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                color: '#000000',
-              }),
-              placeholder: (base) => ({
-                ...base,
-                fontSize: '0.875rem',
-              }),
-              singleValue: (base) => ({
-                ...base,
-                fontSize: '0.875rem',
-              }),
-            }}
-            classNames={{
-              control: () => 'border rounded-md text-sm',
-              menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
-              option: () => 'px-3 py-2 hover:bg-gray-50',
-            }}
-          />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-[0.7rem] font-medium mb-1">
-            Description
-          </label>
-          <div className="relative">
-            <button 
-              type="button"
-              onClick={() => setIsDescriptionDialogOpen(true)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 px-4 py-1 bg-gray-200 rounded text-sm"
-            >
-              Edit
-            </button>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows={3}
-              className="w-full px-3 py-2 border rounded-md text-sm"
-              readOnly
-            />
-          </div>
-        </div>
-
-        <div className="text-xs text-gray-500">
-          Last Modified:{' '}
-          <span className="font-medium">
-            {new Date(data.last_updated).toLocaleString()}
-          </span>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-8 ">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-4 py-2 border rounded-md text-sm"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-black text-white rounded-md text-sm"
-          >
-            Save
-          </button>
-        </div>
-      </form>
-
       <Dialog open={isDescriptionDialogOpen} onOpenChange={setIsDescriptionDialogOpen}>
-        <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col z-[999] bg-white">
-          <h2 className="text-lg font-medium mb-4">Edit Description</h2>
-          <div className="flex-1 overflow-hidden">
-            <TiptapEditor
-              initialContent={data.descriptionHtml || ''}
-              onSave={handleDescriptionSave}
-              onCancel={() => setIsDescriptionDialogOpen(false)}
-            />
-          </div>
+        <DialogContent className="sm:max-w-[900px] h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Edit Description</DialogTitle>
+          </DialogHeader>
+          <TiptapEditor
+            initialContent={data.descriptionHtml || ''}
+            onSave={handleDescriptionSave}
+            onCancel={() => setIsDescriptionDialogOpen(false)}
+          />
         </DialogContent>
       </Dialog>
 
@@ -515,6 +409,6 @@ export default function EditItemForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </Card>
   );
 }

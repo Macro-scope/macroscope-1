@@ -1,34 +1,40 @@
 "use client"
-import { PiCursorLight, PiHandLight } from "react-icons/pi";
-// import { FaRegImage } from "react-icons/fa6";
-// import { MdOutlineTextFields } from "react-icons/md";
-// import { VscSettings } from "react-icons/vsc";
+
+import React, { useRef } from 'react';
 import { useDispatch, useSelector } from "react-redux";
-import { GiSettingsKnobs } from "react-icons/gi";
-// import { BiPointer } from "react-icons/bi";
-import { setHandTool, setMapSettings } from "../../redux/mapSettingsSlice";
-import { CiImageOn } from "react-icons/ci";
-import { useRef } from "react";
-import { supabase } from "../../lib/supabaseClient";
 import { useParams } from "next/navigation";
+import { setHandTool, setMapSettings } from "../../redux/mapSettingsSlice";
+import { setImages } from "../../redux/imagesSlice";
+import { supabase } from "../../lib/supabaseClient";
 import { addImage } from "../../hooks/addImage";
 import { getImages } from "../../hooks/getImages";
-import { setImages } from "../../redux/imagesSlice";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Card } from "@/components/ui/card";
+import { 
+  MousePointer, 
+  Image as ImageIcon, 
+  Settings,
+  Plus
+} from "lucide-react";
+
+const iconStyle = {
+  width: '25px',
+  height: '25px',
+  minWidth: '25px',
+  minHeight: '25px',
+  display: 'block'
+};
 
 const ToolsMenu = () => {
-  const { handTool } = useSelector((state: any) => ({
+  const { handTool } = useSelector((state: { handTool: { value: boolean } }) => ({
     handTool: state.handTool.value,
   }));
   const dispatch = useDispatch();
+  const { id: mapId } = useParams();
+  const fileInputRef = useRef(null);
 
-  let { id: mapId } = useParams();
-  mapId = String(mapId);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleFileSelect = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -41,7 +47,6 @@ const ToolsMenu = () => {
       const timestamp = Date.now();
       const fileName = `Image-${timestamp}-${file.name}`;
 
-      // Optional: Upload to Supabase storage
       const { error } = await supabase.storage
         .from("map-images")
         .upload(fileName, file, {
@@ -50,49 +55,98 @@ const ToolsMenu = () => {
         });
 
       if (error) throw error;
-  
+
       const {
         data: { publicUrl },
       } = supabase.storage.from("map-images").getPublicUrl(fileName);
 
-      //Store public url to database
-      await addImage(mapId!, publicUrl)
-
-      // alert(publicUrl);
-      const images = await getImages(mapId!)
-
-      dispatch(setImages(images))
+      await addImage(String(mapId), publicUrl);
+      const images = await getImages(String(mapId));
+      dispatch(setImages(images));
     } catch (error) {
       console.error("Error handling image:", error);
       alert("Failed to upload image");
     }
 
-    // Reset file input
     event.target.value = "";
   };
 
-  // const handleDeleteImage = (imageId: string) => {
-  //   setImages((prev) => prev.filter((img) => img.id !== imageId));
-  // };
-
   return (
-    <div className="absolute my-auto mt-[15%] ml-2 bg-white z-10 border-2 rounded-md shadow-md px-2 py-3 flex flex-col justify-center items-center gap-3 text-2xl">
-      {handTool ? (
-        <PiCursorLight
-          onClick={() => {
-            dispatch(setHandTool(!handTool));
-          }}
-          className={`cursor-pointer`} //${handTool?"bg-gray-400":""}
-        />
-      ) : (
-        <PiHandLight
-          onClick={() => {
-            dispatch(setHandTool(!handTool));
-          }}
-          className={`cursor-pointer text-[30px]`} //${handTool?"bg-gray-400":""}
-        />
-      )}
-      {/* <MdOutlineTextFields className="cursor-pointer"/> */}
+    <Card className="absolute mt-[15%] ml-2 z-10 p-2 shadow-lg" style={{ cursor: handTool ? 'grab' : 'default' }}>
+      <TooltipProvider>
+        <div className="flex flex-col gap-2">
+
+        <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 transition-all hover:scale-105"
+              >
+                <Plus style={iconStyle} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-base px-4 py-2">
+              <p>Add</p>
+            </TooltipContent>
+          </Tooltip>
+          
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant={!handTool ? "secondary" : "ghost"}
+                size="icon"
+                onClick={() => dispatch(setHandTool(!handTool))}
+                className="h-10 w-10 transition-all hover:scale-105"
+              >
+                <MousePointer 
+                  style={iconStyle}
+                  strokeWidth={!handTool ? 2 : 1.5}
+                />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-base px-4 py-2">
+              <p>{!handTool ? "Select Tool" : "Hand Tool"}</p>
+            </TooltipContent>
+          </Tooltip>
+
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                className="h-10 w-10 transition-all hover:scale-105"
+              >
+                <ImageIcon style={iconStyle} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-base px-4 py-2">
+              <p>Add Image</p>
+            </TooltipContent>
+          </Tooltip>
+
+         
+
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => dispatch(setMapSettings("global"))}
+                className="h-10 w-10 transition-all hover:scale-105"
+              >
+                <Settings style={iconStyle} />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-base px-4 py-2">
+              <p>Settings</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </TooltipProvider>
+      
       <input
         ref={fileInputRef}
         type="file"
@@ -100,16 +154,7 @@ const ToolsMenu = () => {
         onChange={handleFileSelect}
         className="hidden"
       />
-      <button onClick={() => fileInputRef.current?.click()}>
-        <CiImageOn className="cursor-pointer text-3xl" />
-      </button>
-      <GiSettingsKnobs
-        className="cursor-pointer"
-        onClick={() => {
-          dispatch(setMapSettings("global"));
-        }}
-      />
-    </div>
+    </Card>
   );
 };
 

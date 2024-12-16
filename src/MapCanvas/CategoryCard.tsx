@@ -319,18 +319,16 @@ const ResizableNode: React.FC<Props> = (props) => {
           <></>
         ) : (
           <>
-      <button
-        onClick={openLocalSettings}
-        className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-      >
-        <MdSettings className="text-xl" />
-      </button>
-      <div
-        className="absolute text-slate-500 z-50 right-0 -bottom-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
-      >
-        <Scaling size={16} />
-      </div>
-    </>
+            <button
+              onClick={openLocalSettings}
+              className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <MdSettings className="text-xl" />
+            </button>
+            <div className="absolute text-slate-500 z-50 right-0 -bottom-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <Scaling size={16} />
+            </div>
+          </>
         )}
         <div
           className="p-2 relative h-full"
@@ -363,13 +361,20 @@ const ResizableNode: React.FC<Props> = (props) => {
                   ? props.settings.group.borderColor
                   : props.settings.group.fillColor
               }`,
-              border: `${group.borderWeight} solid ${props.settings.group.borderColor}`,
+              border: `${title.borderWeight} solid ${props.settings.group.borderColor}`,
+              // Add these new style properties
+              fontFamily: title.font || "Inter",
+              fontSize: title.fontSize || "16px",
+              fontWeight: title.bold ? "bold" : "normal",
+              fontStyle: title.italic ? "italic" : "normal",
+              textDecoration: title.underline ? "underline" : "none",
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
               <p className="">{props.tagName || "Default"}</p>
             </div>
           </div>
+
           <div
             className={`flex flex-wrap gap-2 p-5 rounded-md`}
             style={{ zIndex: 1000 }}
