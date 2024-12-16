@@ -10,30 +10,30 @@ const MapNavbar = () => {
   //   nav: state.publishedMapNav,
   // }));
 
-  // const { id: mapId } = useParams();
+  const { id: mapId } = useParams();
 
 
-  //termporay code
-  let { id: name } = useParams();
-  name = String(name)
-  const [mapId, setMapId] = useState<any>();
+  // //termporay code
+  // let { id: name } = useParams();
+  // name = String(name)
+  // const [mapId, setMapId] = useState<any>();
 
-  useEffect(() => {
-    const getMapId = async () => {
-      const { data } = await supabase
-        .from("maps")
-        .select("map_id")
-        .eq("name", name?.replace(/-/g, " "))
-        .single();
+  // useEffect(() => {
+  //   const getMapId = async () => {
+  //     const { data } = await supabase
+  //       .from("maps")
+  //       .select("map_id")
+  //       .eq("name", name?.replace(/-/g, " "))
+  //       .single();
 
-      // console.log(name)
-      setMapId(data?.map_id);
-    };
+  //     // console.log(name)
+  //     setMapId(data?.map_id);
+  //   };
 
-    getMapId();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  //termporay code
+  //   getMapId();
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
+  // //termporay code
 
   const [nav, setNav] = useState<any>();
   useEffect(() => {
@@ -43,6 +43,7 @@ const MapNavbar = () => {
         .select("navbar")
         .eq("map_id", mapId)
         .single();
+      console.log(data?.navbar)
       setNav(data?.navbar);
     };
 
@@ -50,7 +51,7 @@ const MapNavbar = () => {
   }, [mapId]);
 
   return (
-    <div className="flex justify-between items-center bg-white p-2">
+    <div className="flex justify-between items-center bg-white px-2 pb-1">
       <a href="https://macroscope.so">
         <img
           src="/logosmallblack.png"
@@ -69,11 +70,8 @@ const MapNavbar = () => {
             : `https://${nav?.suggest}`
         }`}
         target="_blank"
-        className="bg-black text-white font-semibold rounded-full px-4 py-2"
       >
-        {/* <button > */}
-        +Suggest
-        {/* </button> */}
+        <p className="text-white text-sm px-3 pb-0.5 h-[35px] w-[80px] flex items-center justify-center bg-black rounded-full">Suggest</p>
       </a>
     </div>
   );

@@ -555,7 +555,7 @@ const getCanvasSize = () => {
         try {
           const randomColor = getRandomColor();
           const position = getCanvasSize();
-          const pos = [position.maxX, position.maxY];
+          const pos = [position.maxX, 50];
           const result = await addNewTag(mapId, selectedValue, randomColor, pos);
           await refreshTags();
           

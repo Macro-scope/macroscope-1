@@ -85,6 +85,7 @@ const MapsCard = (props: Props) => {
 
   const handleDuplicate = async () => {
     await duplicateMap(props.map.map_id);
+    props.fetchDetails();
   };
 
   const items: MenuProps["items"] = [
@@ -107,7 +108,7 @@ const MapsCard = (props: Props) => {
     <div className="w-64 bg-white shadow-md rounded-lg overflow-hidden h-fit">
       <div className="relative">
         <div className="h-40 bg-gray-200 flex items-center justify-center">
-          <span className="text-gray-400">Thumbnail</span>
+          <img src="/sample_map_placeholder.svg" alt="" />
         </div>
         <div>
         {props.map.is_published === null ? (
