@@ -16,7 +16,8 @@ import TileEditDrawer from "@/MapCanvas/TileEditDrawer";
 import EditItemForm from "@/components/forms/database-form";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { MdSettings } from "react-icons/md";
-import { Scaling } from "lucide-react";
+import {  Settings2 } from "lucide-react";
+import Image from "next/image";
 
 type Props = {
   tagId: string;
@@ -315,21 +316,27 @@ const ResizableNode: React.FC<Props> = (props) => {
           height: "100%",
         }}
       >
-        {props.isViewer ? (
-          <></>
-        ) : (
-          <>
-            <button
-              onClick={openLocalSettings}
-              className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-            >
-              <MdSettings className="text-xl" />
-            </button>
-            <div className="absolute text-slate-500 z-50 right-0 -bottom-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-              <Scaling size={16} />
-            </div>
-          </>
-        )}
+       {props.isViewer ? (
+      <></>
+    ) : (
+      <>
+        <button
+      onClick={openLocalSettings}
+      className="absolute text-slate-500 z-50 right-0 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        >
+      <Settings2 className="text-xl" />
+        </button>
+        <div className="absolute text-slate-500 z-50 right-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <Image className="invert-[0.5] brightness-0"
+            src="/drag-handle-corner.svg"
+            alt="Drag handle"
+            width={42}
+            height={42}
+            draggable={false}
+          />
+        </div>
+      </>
+    )}
         <div
           className="p-2 relative h-full"
           style={{

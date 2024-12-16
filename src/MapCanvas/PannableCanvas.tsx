@@ -37,8 +37,7 @@ const SCROLLBAR_THUMB_MIN_SIZE = 16;
 
 const ImageCard = ({ src, onDelete }: any) => {
   return (
-    <div className="group relative">
-      {/* //className="group relative w-full h-full bg-white rounded-lg shadow-sm overflow-hidden" */}
+    <div className="group relative border-2 border-black rounded-md">
       <img
         src={src}
         alt="Uploaded content"
@@ -647,12 +646,6 @@ export default function PannableCanvas() {
           images?.map((image: any) => (
             <Rnd
               key={image.img_id}
-              // default={{
-              //   x: Number(image.position[0]),
-              //   y: Number(image.position[1]),
-              //   width: image.dimension[0],
-              //   height: image.dimension[1],
-              // }}
               size={{
                 width: Number(image.dimension[0]),
                 height: Number(image.dimension[1]),
@@ -685,6 +678,16 @@ export default function PannableCanvas() {
                     : c
                 );
                 dispatch(setImages(updatedImages));
+              }}
+              enableResizing={{
+                bottom: true,
+                bottomLeft: true,
+                bottomRight: true,
+                left: true,
+                right: true,
+                top: true,
+                topLeft: true,
+                topRight: true,
               }}
               resizeGrid={[10, 10]}
               dragGrid={[10, 10]}
