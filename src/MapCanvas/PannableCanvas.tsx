@@ -13,6 +13,7 @@ import { setGlobalSettings } from "@/redux/globalSettingsSlice";
 import { setImages } from "@/redux/imagesSlice";
 import { getImages } from "@/hooks/getImages";
 import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
@@ -588,31 +589,41 @@ export default function PannableCanvas() {
           style={handTool ? { zIndex: 1000 } : { zIndex: 1 }}
           id="canvasID"
         />
+        
         {currCards?.map((card: any) =>
           card.tiles.length > 0 ? (
             <Rnd
               disableDragging={handTool}
               key={card.card_id}
+              default={{
+                x: Number(card.position[0]),
+                y: Number(card.position[1]),
+                width: Number(card.dimension[0]),
+                height: Number(card.dimension[1]),
+              }}
               size={{
-                width: card.dimension[0] as number,
-                height: card.dimension[1] as number,
+                width: Number(card.dimension[0]),
+                height: Number(card.dimension[1]),
               }}
               position={{
-                x: card.position[0],
-                y: card.position[1],
+                x: Number(card.position[0]),
+                y: Number(card.position[1]),
               }}
-              enableResizing={false}
-              resizeHandleStyles={{
-                bottom: { display: "none" },
-                bottomLeft: { display: "none" },
-                bottomRight: { display: "none" },
-                left: { display: "none" },
-                right: { display: "none" },
-                top: { display: "none" },
-                topLeft: { display: "none" },
-                topRight: { display: "none" },
+              enableResizing={{
+                bottom: true,
+                bottomLeft: true,
+                bottomRight: true,
+                left: true,
+                right: true,
+                top: true,
+                topLeft: true,
+                topRight: true,
               }}
-              style={handTool ? { zIndex: 1 } : { zIndex: 1000 }}
+              style={
+                handTool
+                  ? { zIndex: 1, height: "auto", minHeight: "100%" }
+                  : { zIndex: 1000, height: "auto", minHeight: "100%" }
+              }
               bounds="parent"
               scale={zoom}
               onDragStop={(_e, d) => {
@@ -622,7 +633,48 @@ export default function PannableCanvas() {
                     : c
                 );
                 dispatch(setCards(updatedCards));
+
+                // Also update in Supabase to persist position
+                supabase
+                  .from("cards")
+                  .update({ position: [d.x, d.y] })
+                  .eq("card_id", card.card_id)
+                  .then(({ error }) => {
+                    if (error) console.error("Error updating position:", error);
+                  });
               }}
+              onResizeStop={(_e, _direction, ref, _delta, position) => {
+                const updatedCards = mapCards?.data?.map((c: any) =>
+                  c.card_id === card.card_id
+                    ? {
+                        ...c,
+                        dimension: [
+                          parseInt(ref.style.width),
+                          parseInt(ref.style.height),
+                        ],
+                        position: [position.x, position.y],
+                      }
+                    : c
+                );
+                dispatch(setCards(updatedCards));
+
+                // Update dimensions in Supabase
+                supabase
+                  .from("cards")
+                  .update({
+                    dimension: [
+                      parseInt(ref.style.width),
+                      parseInt(ref.style.height),
+                    ],
+                    position: [position.x, position.y],
+                  })
+                  .eq("card_id", card.card_id)
+                  .then(({ error }) => {
+                    if (error)
+                      console.error("Error updating dimensions:", error);
+                  });
+              }}
+              resizeGrid={[10, 10]}
               dragGrid={[2, 2]}
               className="mappedCards z-50"
             >
@@ -633,15 +685,9 @@ export default function PannableCanvas() {
                 tagName={card.name}
                 cardId={card.card_id}
                 isDoubleClick={false}
-                dimension={[
-                  Number(card.dimension[0]),
-                  Number(card.dimension[1]),
-                ]}
               />
             </Rnd>
-          ) : (
-            <></>
-          )
+          ) : null
         )}
         {images &&
           images?.map((image: any) => (
