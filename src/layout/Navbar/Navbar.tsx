@@ -7,6 +7,7 @@ import {
   Input,
   MenuProps,
   Modal,
+  Tag,
 } from "antd";
 import { supabase } from "../../lib/supabaseClient";
 import { useState, useEffect } from "react";
@@ -453,53 +454,67 @@ const Navbar = () => {
                   className="font-medium text-xl border-b-2 border-gray-300 focus:outline-none"
                 />
               ) : (
-                <div
-                  className="font-medium text-xl cursor-pointer"
-                  onClick={handleTextClick}
-                >
-                  {mapName}
+                <div className="flex items-center gap-2">
+                  <div
+                    className="text-lg font-semibold cursor-pointer "
+                    onClick={handleTextClick}
+                  >
+                    {mapName}
+                  </div>
+                  <span className="text-xs bg-green-400 text-white px-3 rounded-full">
+                    Pro
+                  </span>
                 </div>
               )}
             </div>
           )}
-          <div className="flex justify-center items-center gap-1">
+          <div className="flex justify-center items-center gap-2">
             {currentPath === "/dashboard" ||
             currentPath === "/dashboard/subscriptions" ? (
               <>
                 <button
                   onClick={showMapModal}
-                  className="bg-black flex justify-center items-center gap-2 font-semibold text-white py-1 px-2 rounded-full"
+                  className="bg-black flex justify-center items-center gap-2 text-white h-[30px] px-2 rounded-full text-sm"
                 >
-                  <FaPlus /> Create New
+                  <FaPlus />
+                  <p className="pr-2">Create New</p>
                 </button>
               </>
             ) : (
               <>
                 <button
                   onClick={updateCards}
-                  className="mx-5 font-semibold text-gray-400 hover:underline"
+                  className="mx-2 font-semibold text-gray-400 hover:underline"
                 >
                   {isSaving || saveStatus === "saving" ? (
                     <div className="flex items-center gap-1">
-                      <BiRefresh className="text-xl animate-spin" />
+                      <BiRefresh className="text-[20px] animate-spin" />
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <MdOutlineCloudDone className="text-xl" />
+                      <MdOutlineCloudDone className="text-[20px]" />
                     </div>
                   )}
                 </button>
-                <div className="flex justify-center items-center bg-black px-2 rounded-full">
+                <div className="flex justify-center items-center gap-3">
+                  <button
+                    onClick={() => {
+                      window.open(`https://app.macroscope.so/map/${mapId}`, '_blank');
+                    }}
+                    title="Preview Map"
+                  >
+                    <img src="/goto_map_icon.svg" alt="" className="w-[20px] h-[20px]" />
+                  </button>
                   <button
                     onClick={showModal}
-                    className=" text-white font-semibold px-3 py-1"
+                    className="text-white text-sm px-3 h-[30px] w-[80px] flex items-center justify-center bg-black rounded-full"
                   >
                     Publish
                   </button>
                 </div>
               </>
             )}
-            <Button className="border-none text-3xl bg-black rounded-full h-[30px] w-[30px]">
+            <button className="border-none text-3xl bg-black rounded-full h-[30px] w-[30px]">
               {/* <FaUserCircle /> */}
               <Dropdown menu={{ items }} placement="bottomRight" arrow>
                 {currUser?.user_metadata.avatar_url ? (
@@ -513,12 +528,14 @@ const Navbar = () => {
                     // }}
                   />
                 ) : (
-                  <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-xl uppercase">
-                    {currUser?.user_metadata.full_name?.[0] || currUser?.email?.[0] || '?'}
+                  <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-lg uppercase">
+                    {currUser?.user_metadata.full_name?.[0] ||
+                      currUser?.email?.[0] ||
+                      "?"}
                   </div>
                 )}
               </Dropdown>
-            </Button>
+            </button>
           </div>
         </div>
       </div>

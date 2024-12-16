@@ -413,60 +413,6 @@ export default function PannableCanvas() {
   //   dispatch(setCards(updatedCards));
   // };
 
-  // useEffect(() => {
-  //   const downloadImage = async() => {
-  //     const element = document.getElementById("capture"); // Select the div
-  //     if (!element) return;
-
-  //     try {
-  //       const canvas = await html2canvas(element, {
-  //         useCORS: true,
-  //         allowTaint: true,
-  //         logging: true, // Enable logging for debugging
-  //       }); // Capture the div as a canvas
-  //       const dataURL = canvas.toDataURL("image/png"); // Convert canvas to Data URL
-
-  //       // Create a link element to trigger the download
-  //       const link = document.createElement("a");
-  //       link.href = dataURL;
-  //       link.download = "div-image.png"; // File name for the downloaded image
-  //       link.click();
-  //     } catch (error) {
-  //       console.error("Error capturing the div:", error);
-  //     }
-  //   };
-
-  //   downloadImage();
-  // }, [canvasHeight, canvasWidth]);
-
-  // const exportAsImage = async () => {
-  //   // set the dimensions of the element to the size of the last card on canvas
-  //   if (!mapCards?.data?.length) return;
-
-  //   // Calculate the bounding box of all cards
-  //   let maxX = 0;
-  //   let maxY = 0;
-
-  //   mapCards.data.forEach((card: any) => {
-  //     maxX = Math.max(
-  //       maxX,
-  //       Number(card.position[0]) + Number(card.dimension[0])
-  //     );
-  //     maxY = Math.max(
-  //       maxY,
-  //       Number(card.position[1]) + Number(card.dimension[1])
-  //     );
-  //   });
-
-  //   // Add padding
-  //   const padding = 50;
-  //   maxX += padding;
-  //   maxY += padding;
-
-  //   setCanvasHeight(maxY);
-  //   setCanvasWidth(maxX);
-  // };
-
   // Add new state for scrollbar interaction
   const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [isDraggingVertical, setIsDraggingVertical] = useState(false);

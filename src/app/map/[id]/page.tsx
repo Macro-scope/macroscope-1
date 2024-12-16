@@ -529,7 +529,7 @@ export default function PublishedMap() {
     return (
       <div>
         <MapNavbar />
-        <Watermark />
+        {/* <Watermark /> */}
         <div
           className="w-full h-[calc(100vh-65px)] overflow-hidden bg-gray-100 relative cursor-grab"
           onMouseDown={handleMouseDown}
@@ -623,7 +623,7 @@ export default function PublishedMap() {
 
           {/* Zoom Controls */}
           <div
-            className="absolute bottom-6 right-6 flex gap-2 bg-white rounded-md shadow-lg zoom-controls h-[40px]"
+            className="absolute bottom-6 left-5 flex gap-2 bg-white rounded-md shadow-lg zoom-controls h-[40px]"
             style={{ zIndex: 2000 }}
           >
             <button
@@ -651,20 +651,20 @@ export default function PublishedMap() {
             </button>
           </div>
 
-          {/* <a
-            className="bg-black flex justify-center items-center absolute text-white font-normal px-2 py-1 rounded-full bottom-3 left-3 h-8"
+          <a
+            className="flex justify-center items-center absolute bottom-3 right-3 h-8"
             style={{ zIndex: "2000" }}
             href="https://macroscope.so"
             target="_blank"
           >
-            Made with{" "}
+            {/* Made with{" "} */}
             <img
-              src="/logosmallwhite.svg"
+              src="/branding.svg"
               alt="Macroscope"
-              className="h-5 ml-2 mr-1"
+              className="ml-2 mr-1 h-7"
             />
-            <span className="font-semibold">Macroscope</span>
-          </a> */}
+            {/* <span className="font-semibold">Macroscope</span> */}
+          </a>
 
           {/* Horizontal Scrollbar */}
           {getScrollbarDimensions().showHorizontal && (
@@ -723,8 +723,8 @@ export default function PublishedMap() {
   else
     return (
       <div className="flex justify-center items-center h-screen">
-        <h1 className="text-5xl font-semibold">
-          🚧 This map might be under construction 🚧
+        <h1 className="text-3xl">
+         Loading...
         </h1>
       </div>
     );
