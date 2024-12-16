@@ -1,12 +1,55 @@
-"use client"
-import { Button, Modal, Segmented, Select } from "antd";
-import { LuAlignJustify, LuAlignLeft, LuAlignRight } from "react-icons/lu";
-import {
-  TbBorderCornerPill,
-  TbBorderCornerRounded,
-  TbBorderCornerSquare,
-} from "react-icons/tb";
+"use client";
+
 import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "next/navigation";
+import { setMapSettings } from "../../redux/mapSettingsSlice";
+import { setGlobalMapStyle } from "@/hooks/setGlobalMapStyle";
+import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { Toggle } from "@/components/ui/toggle";
+import { ColorPicker } from "antd";
+import {
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Bold,
+  Italic,
+  Underline,
+  Square,
+  CircleOff,
+  Circle,
+  X,
+  Type,
+  PaintBucket,
+} from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import {
   setGlobalSettings,
   setGroupBorderWeight,
@@ -17,341 +60,328 @@ import {
   setTitleBorder,
   setTitleCorner,
   setTitleFontColor,
+  setTitleFont,
+  setTitleBold,
+  setTitleItalic,
+  setTitleUnderline,
+  setTitleFontSize,
+  setCanvasBackground,
+  setTitleBorderWeight,
 } from "../../redux/globalSettingsSlice";
-import { useParams } from "next/navigation";
-import { setMapSettings } from "../../redux/mapSettingsSlice";
-import { BsFillExclamationCircleFill } from "react-icons/bs";
-import { IoClose, IoCloseOutline } from "react-icons/io5";
-import { setGlobalMapStyle } from "@/hooks/setGlobalMapStyle";
-import { useRef } from "react";
-import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
 
 const GlobalSettings = () => {
-  const { mapStyle, title, group, tileStyle } = useSelector((state: any) => ({
-    mapStyle: state.globalSettings,
-    title: state.globalSettings.title,
-    group: state.globalSettings.group,
-    tileStyle: state.globalSettings.tile,
-  }));
+  const { mapStyle, title, group, tileStyle, canvasBackground } = useSelector(
+    (state: any) => ({
+      mapStyle: state.globalSettings,
+      title: state.globalSettings.title,
+      group: state.globalSettings.group,
+      tileStyle: state.globalSettings.tile,
+      canvasBackground: state.globalSettings.canvasBackground,
+    })
+  );
+
   const dispatch = useDispatch();
-
-  const prevMapStyle = mapStyle;
-
-  let { id: mapId } = useParams();
-  mapId = String(mapId);
-
-  const { confirm } = Modal;
-  const showDiscardConfirm = () => {
-    confirm({
-      title: "Do you want to save these changes?",
-      icon: (
-        <BsFillExclamationCircleFill className="text-2xl mr-2 text-blue-500" />
-      ),
-      // content: 'Some descriptions',
-      onOk() {
-        saveSettings();
-      },
-      onCancel() {
-        //
-        resetGlobalSetting();
-        dispatch(setMapSettings("none"));
-      },
-      okText: "Save changes",
-      cancelText: "Discard",
-    });
-  };
+  const { id: mapId } = useParams();
 
   const resetGlobalSetting = async () => {
-    const globalStyles: any = await getGlobalMapStyles(mapId);
-    dispatch(setGlobalSettings(globalStyles!.settings));
-  }
+    const globalStyles = await getGlobalMapStyles(String(mapId));
+    if (Array.isArray(globalStyles)) {
+      console.error("Unexpected array response from getGlobalMapStyles");
+      return;
+    }
+    if (globalStyles?.settings) {
+      dispatch(setGlobalSettings(globalStyles.settings));
+    }
+  };
 
   const saveSettings = () => {
-    setGlobalMapStyle(mapId!, mapStyle);
+    setGlobalMapStyle(String(mapId), mapStyle);
     dispatch(setMapSettings("none"));
   };
 
+  const fonts = [
+    "Inter",
+    "Arial",
+    "Helvetica",
+    "Times New Roman",
+    "Roboto",
+    "Open Sans",
+    "Montserrat",
+    "Poppins",
+  ];
+
+  const CornerButtons = ({ value, onChange }) => (
+    <div className="flex gap-2">
+      <Toggle
+        pressed={value === "2px"}
+        onPressedChange={() => onChange("2px")}
+        size="sm"
+      >
+        <Square className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        pressed={value === "7px"}
+        onPressedChange={() => onChange("7px")}
+        size="sm"
+      >
+        <CircleOff className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        pressed={value === "15px"}
+        onPressedChange={() => onChange("15px")}
+        size="sm"
+      >
+        <Circle className="h-4 w-4" />
+      </Toggle>
+    </div>
+  );
+
+  const AlignmentButtons = ({ value, onChange }) => (
+    <div className="flex gap-2">
+      <Toggle
+        pressed={value === "left"}
+        onPressedChange={() => onChange("left")}
+        size="sm"
+      >
+        <AlignLeft className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        pressed={value === "center"}
+        onPressedChange={() => onChange("center")}
+        size="sm"
+      >
+        <AlignCenter className="h-4 w-4" />
+      </Toggle>
+      <Toggle
+        pressed={value === "right"}
+        onPressedChange={() => onChange("right")}
+        size="sm"
+      >
+        <AlignRight className="h-4 w-4" />
+      </Toggle>
+    </div>
+  );
+
   return (
-    <div className="w-[360px] bg-white flex flex-col gap-3 overflow-y-scroll px-3 h-full">
-      <div className="flex justify-between items-center">
-        <p className="font-bold">Global Settings</p>
-        <button
-          className="w-fit"
-          onClick={showDiscardConfirm}
-        >
-          <IoCloseOutline className="text-black text-xl" />
-        </button>
-      </div>
-      <p className="font-semibold">Group Name</p>
-      <div className="flex flex-col gap-2">
-        {/* <div className="flex w-full justify-between">
-          <p>Style Template</p>
-        </div> */}
-        {/* <Segmented
-          // value={title.corner}
-          // onChange={(value) => {
-          //   dispatch(setTitleCorner(value));
-          // }}
-          options={[
-            {
-              value: "2px",
-              icon: (
-                <img
-                  src="https://picsum.photos/2000"
-                  alt="template"
-                  className="h-20 w-full rounded"
+    <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">Global Settings</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              resetGlobalSetting();
+              dispatch(setMapSettings("none"));
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Canvas Background */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <PaintBucket className="h-4 w-4" />
+            <h3 className="font-semibold">Canvas Background</h3>
+          </div>
+          <div className="flex items-center justify-between">
+            <Label>Color</Label>
+            <ColorPicker
+              value={canvasBackground}
+              onChange={(color) =>
+                dispatch(setCanvasBackground(color.toHexString()))
+              }
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Group Name Settings */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Type className="h-4 w-4" />
+            <h3 className="font-semibold">Group Name</h3>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Font</Label>
+              <Select
+                value={title.font}
+                onValueChange={(v) => dispatch(setTitleFont(v))}
+              >
+                <SelectTrigger className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {fonts.map((font) => (
+                    <SelectItem key={font} value={font}>
+                      {font}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label>Font Size</Label>
+              <div className="w-32 flex items-center gap-2">
+                <Slider
+                  min={12}
+                  max={32}
+                  step={1}
+                  value={[parseInt(title.fontSize?.replace("px", "") || "16")]}
+                  onValueChange={(v) => dispatch(setTitleFontSize(`${v[0]}px`))}
                 />
-              ),
-            },
-            {
-              value: "7px",
-              icon: (
-                <img
-                  src="https://picsum.photos/2001"
-                  alt="template"
-                  className="h-20 w-full rounded"
+                <span className="text-sm text-muted-foreground w-8">
+                  {parseInt(title.fontSize?.replace("px", "") || "16")}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label>Style</Label>
+              <div className="flex gap-2">
+                <Toggle
+                  pressed={title.bold}
+                  onPressedChange={(v) => dispatch(setTitleBold(v))}
+                  size="sm"
+                >
+                  <Bold className="h-4 w-4" />
+                </Toggle>
+                <Toggle
+                  pressed={title.italic}
+                  onPressedChange={(v) => dispatch(setTitleItalic(v))}
+                  size="sm"
+                >
+                  <Italic className="h-4 w-4" />
+                </Toggle>
+                <Toggle
+                  pressed={title.underline}
+                  onPressedChange={(v) => dispatch(setTitleUnderline(v))}
+                  size="sm"
+                >
+                  <Underline className="h-4 w-4" />
+                </Toggle>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label>Alignment</Label>
+              <AlignmentButtons
+                value={title.alignment}
+                onChange={(v) => dispatch(setTitleAlignment(v))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label>Border Weight</Label>
+              <div className="w-32">
+                <Slider
+                  min={1}
+                  max={8}
+                  step={0.5}
+                  value={[parseFloat(title.borderWeight)]}
+                  onValueChange={(v) =>
+                    dispatch(setTitleBorderWeight(`${v[0]}px`))
+                  }
                 />
-              ),
-            },
-          ]}
-          block
-        /> */}
-        <div className="flex w-full justify-between">
-          <p>Border & Fill</p>
-          <Select
-            value={title.border}
-            style={{ width: 130 }}
-            onChange={(value)=>dispatch(setTitleBorder(value))}
-            options={[
-              { value: "fill", label: "Fill" },
-              { value: "no_fill", label: "No Fill" },
-            ]}
-          />
-        </div>
-        <div className="flex w-full justify-between">
-          <p>Corner</p>
-          <Segmented
-            value={title.corner}
-            style={{ width: 130 }}
-            onChange={(value) => {
-              dispatch(setTitleCorner(value));
-            }}
-            options={[
-              {
-                value: "2px",
-                icon: <TbBorderCornerSquare className="text-xl" />,
-              },
-              {
-                value: "7px",
-                icon: <TbBorderCornerRounded className="text-xl" />,
-              },
-              {
-                value: "15px",
-                icon: <TbBorderCornerPill className="text-xl" />,
-              },
-            ]}
-          />
-        </div>
-        <div className="flex w-full justify-between">
-          <p>Alignment</p>
-          <Segmented
-            style={{ width: 130 }}
-            value={title.alignment}
-            onChange={(value) => {
-              dispatch(setTitleAlignment(value));
-            }}
-            options={[
-              { value: "left", icon: <LuAlignLeft className="text-xl" /> },
-              { value: "center", icon: <LuAlignJustify className="text-xl" /> },
-              { value: "right", icon: <LuAlignRight className="text-xl" /> },
-            ]}
-          />
-        </div>
-        <div className="flex w-full justify-between">
-          <p>Text Color</p>
-          <Select
-            defaultValue="default"
-            style={{ width: 130 }}
-            value={title.fontColor}
-            onChange={(value) => {
-              dispatch(setTitleFontColor(value));
-            }}
-            options={[
-              { value: "default", label: "Default" },
-              { value: "#000000", label: "Black" },
-              { value: "#ffffff", label: "White" },
-            ]}
-          />
-        </div>
-      </div>
+              </div>
+            </div>
 
-      <hr />
+            <div className="flex items-center justify-between">
+              <Label>Corner Style</Label>
+              <CornerButtons
+                value={title.corner}
+                onChange={(v) => dispatch(setTitleCorner(v))}
+              />
+            </div>
+          </div>
+        </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="font-semibold">Group</p>
-        <div className="flex w-full justify-between">
-          <p>Border Weight</p>
-          <Select
-            defaultValue="2px"
-            value={group.borderWeight}
-            style={{ width: 130 }}
-            onChange={(value) => {
-              dispatch(setGroupBorderWeight(value));
-            }}
-            options={[
-              {
-                value: "1px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    1px<div className="w-full h-[1px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "2px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    2px<div className="w-full h-[2px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "4px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    4px<div className="w-full h-[4px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "8px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    8px<div className="w-full h-[8px] bg-black"></div>
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </div>
-        <div className="flex w-full justify-between">
-          <p>Corner</p>
-          <Segmented
-            style={{ width: 130 }}
-            value={group.corner}
-            onChange={(value) => {
-              dispatch(setGroupCorner(value));
-            }}
-            options={[
-              {
-                value: "2px",
-                icon: <TbBorderCornerSquare className="text-xl" />,
-              },
-              {
-                value: "7px",
-                icon: <TbBorderCornerRounded className="text-xl" />,
-              },
-              {
-                value: "15px",
-                icon: <TbBorderCornerPill className="text-xl" />,
-              },
-            ]}
-          />
-        </div>
-      </div>
+        <Separator />
 
-      <hr />
+        {/* Group Settings */}
+        <div className="space-y-4">
+          <h3 className="font-semibold">Group</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Border Weight</Label>
+              <div className="w-32">
+                <Slider
+                  min={1}
+                  max={8}
+                  step={0.5}
+                  value={[parseFloat(group.borderWeight)]}
+                  onValueChange={(v) =>
+                    dispatch(setGroupBorderWeight(`${v[0]}px`))
+                  }
+                />
+              </div>
+            </div>
 
-      <div className="flex flex-col gap-2">
-        <p className="font-semibold">Tile</p>
-        <div className="flex w-full justify-between">
-          <p>Border Weight</p>
-          <Select
-            defaultValue="2px"
-            value={tileStyle.borderWeight}
-            style={{ width: 130 }}
-            onChange={(value) => {
-              dispatch(setTileBorderWeight(value));
-            }}
-            options={[
-              {
-                value: "1px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    1px<div className="w-full h-[1px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "2px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    2px<div className="w-full h-[2px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "4px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    4px<div className="w-full h-[4px] bg-black"></div>
-                  </div>
-                ),
-              },
-              {
-                value: "8px",
-                label: (
-                  <div className="flex items-center justify-center gap-1">
-                    8px<div className="w-full h-[8px] bg-black"></div>
-                  </div>
-                ),
-              },
-            ]}
-          />
+            <div className="flex items-center justify-between">
+              <Label>Corner Style</Label>
+              <CornerButtons
+                value={group.corner}
+                onChange={(v) => dispatch(setGroupCorner(v))}
+              />
+            </div>
+          </div>
         </div>
-        <div className="flex w-full justify-between">
-          <p>Corner</p>
-          <Segmented
-            style={{ width: 130 }}
-            value={tileStyle.corner}
-            onChange={(value) => {
-              dispatch(setTileCorner(value));
-            }}
-            options={[
-              {
-                value: "2px",
-                icon: <TbBorderCornerSquare className="text-xl" />,
-              },
-              {
-                value: "7px",
-                icon: <TbBorderCornerRounded className="text-xl" />,
-              },
-              {
-                value: "25px",
-                icon: <TbBorderCornerPill className="text-xl" />,
-              },
-            ]}
-          />
+
+        <Separator />
+
+        {/* Tile Settings */}
+        <div className="space-y-4">
+          <h3 className="font-semibold">Tile</h3>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Label>Border Weight</Label>
+              <div className="w-32">
+                <Slider
+                  min={1}
+                  max={8}
+                  step={0.5}
+                  value={[parseFloat(tileStyle.borderWeight)]}
+                  onValueChange={(v) =>
+                    dispatch(setTileBorderWeight(`${v[0]}px`))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label>Corner Style</Label>
+              <CornerButtons
+                value={tileStyle.corner}
+                onChange={(v) => dispatch(setTileCorner(v))}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-      <div className="flex flex-col gap-2 h-full justify-end">
-        <Button
-          className="bg-blue-500 font-semibold text-white"
-          onClick={saveSettings}
-        >
-          Save
+      </CardContent>
+
+      <CardFooter className="flex flex-col gap-2 mt-6">
+        <Button className="w-full" onClick={saveSettings}>
+          Save Changes
         </Button>
         <Button
-          className="font-semibold text-black"
-          onClick={async () => {
+          variant="outline"
+          className="w-full"
+          onClick={() => {
             resetGlobalSetting();
-            dispatch(setMapSettings("none"))}}
-          // onClick={showDiscardConfirm}
+            dispatch(setMapSettings("none"));
+          }}
         >
           Discard
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 

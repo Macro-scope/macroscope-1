@@ -13,6 +13,7 @@ import { setGlobalSettings } from "@/redux/globalSettingsSlice";
 import { setImages } from "@/redux/imagesSlice";
 import { getImages } from "@/hooks/getImages";
 import { useParams } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
@@ -240,6 +241,7 @@ export default function PannableCanvas() {
     localSettings,
     localCardId,
     mapSettings,
+    globalSettings,
   } = useSelector((state: any) => ({
     mapCards: state.mapCards,
     handTool: state.handTool.value,
@@ -247,6 +249,7 @@ export default function PannableCanvas() {
     localSettings: state.localSettings,
     localCardId: state.localCardId.cardId,
     mapSettings: state.mapSettings,
+    globalSettings: state.globalSettings, // Add this
   }));
   const dispatch = useDispatch();
 
@@ -508,7 +511,10 @@ export default function PannableCanvas() {
 
   return (
     <div
-      className="w-full h-[calc(100vh-56px)] overflow-hidden bg-gray-100 relative cursor-grab"
+      className="w-full h-[calc(100vh-56px)] overflow-hidden relative cursor-grab"
+      style={{
+        backgroundColor: globalSettings?.canvasBackground || "#ffffff",
+      }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
@@ -531,34 +537,47 @@ export default function PannableCanvas() {
           width={canvasWidth}
           height={canvasHeight}
           className="absolute top-0 left-0"
-          style={handTool ? { zIndex: 1000 } : { zIndex: 1 }}
+          style={{
+            zIndex: handTool ? 1000 : 1,
+            backgroundColor: globalSettings?.canvasBackground || "#ffffff",
+          }}
           id="canvasID"
         />
+
         {currCards?.map((card: any) =>
           card.tiles.length > 0 ? (
             <Rnd
               disableDragging={handTool}
               key={card.card_id}
+              default={{
+                x: Number(card.position[0]),
+                y: Number(card.position[1]),
+                width: Number(card.dimension[0]),
+                height: Number(card.dimension[1]),
+              }}
               size={{
-                width: card.dimension[0] as number,
-                height: card.dimension[1] as number,
+                width: Number(card.dimension[0]),
+                height: Number(card.dimension[1]),
               }}
               position={{
-                x: card.position[0],
-                y: card.position[1],
+                x: Number(card.position[0]),
+                y: Number(card.position[1]),
               }}
-              enableResizing={false}
-              resizeHandleStyles={{
-                bottom: { display: "none" },
-                bottomLeft: { display: "none" },
-                bottomRight: { display: "none" },
-                left: { display: "none" },
-                right: { display: "none" },
-                top: { display: "none" },
-                topLeft: { display: "none" },
-                topRight: { display: "none" },
+              enableResizing={{
+                bottom: true,
+                bottomLeft: true,
+                bottomRight: true,
+                left: true,
+                right: true,
+                top: true,
+                topLeft: true,
+                topRight: true,
               }}
-              style={handTool ? { zIndex: 1 } : { zIndex: 1000 }}
+              style={
+                handTool
+                  ? { zIndex: 1, height: "auto", minHeight: "100%" }
+                  : { zIndex: 1000, height: "auto", minHeight: "100%" }
+              }
               bounds="parent"
               scale={zoom}
               onDragStop={(_e, d) => {
@@ -568,7 +587,48 @@ export default function PannableCanvas() {
                     : c
                 );
                 dispatch(setCards(updatedCards));
+
+                // Also update in Supabase to persist position
+                supabase
+                  .from("cards")
+                  .update({ position: [d.x, d.y] })
+                  .eq("card_id", card.card_id)
+                  .then(({ error }) => {
+                    if (error) console.error("Error updating position:", error);
+                  });
               }}
+              onResizeStop={(_e, _direction, ref, _delta, position) => {
+                const updatedCards = mapCards?.data?.map((c: any) =>
+                  c.card_id === card.card_id
+                    ? {
+                        ...c,
+                        dimension: [
+                          parseInt(ref.style.width),
+                          parseInt(ref.style.height),
+                        ],
+                        position: [position.x, position.y],
+                      }
+                    : c
+                );
+                dispatch(setCards(updatedCards));
+
+                // Update dimensions in Supabase
+                supabase
+                  .from("cards")
+                  .update({
+                    dimension: [
+                      parseInt(ref.style.width),
+                      parseInt(ref.style.height),
+                    ],
+                    position: [position.x, position.y],
+                  })
+                  .eq("card_id", card.card_id)
+                  .then(({ error }) => {
+                    if (error)
+                      console.error("Error updating dimensions:", error);
+                  });
+              }}
+              resizeGrid={[10, 10]}
               dragGrid={[2, 2]}
               className="mappedCards z-50"
             >
@@ -579,15 +639,9 @@ export default function PannableCanvas() {
                 tagName={card.name}
                 cardId={card.card_id}
                 isDoubleClick={false}
-                dimension={[
-                  Number(card.dimension[0]),
-                  Number(card.dimension[1]),
-                ]}
               />
             </Rnd>
-          ) : (
-            <></>
-          )
+          ) : null
         )}
         {images &&
           images?.map((image: any) => (
@@ -645,45 +699,36 @@ export default function PannableCanvas() {
 
       {/* Zoom Controls */}
       <div
-        className="absolute bottom-6 left-5 flex gap-2 bg-white rounded-md shadow-lg zoom-controls h-[40px]"
+        className="absolute bottom-6 left-5 flex gap-2 bg-white rounded-md shadow-lg zoom-controls h-[40px] overflow-hidden"
         style={{ zIndex: 1000 }}
       >
-        {/* <button
-          onClick={exportAsImage}
-          className="hover:bg-gray-200 p-2"
-          title="Fit to Content"
-        >
-          <RiExportFill className="w-5 h-5" />
-        </button> */}
         <button
           onClick={handleFitContent}
-          className="hover:bg-gray-200 p-2"
+          className="hover:bg-gray-100 p-2 transition-colors"
           title="Fit to Content"
         >
           <CiMaximize2 className="w-5 h-5" />
         </button>
+        <div className="w-px bg-gray-200" />
         <button
           onClick={handleZoomOut}
-          className="p-2 hover:bg-gray-200"
+          className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom Out"
         >
-          {/* <BsZoomOut className="w-5 h-5" /> */}
           <LuMinus />
         </button>
         <button
           onClick={handleZoomIn}
-          className="p-2 hover:bg-gray-200"
+          className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom In"
         >
           <LuPlus />
-          {/* <BsZoomIn className="w-5 h-5" /> */}
         </button>
       </div>
 
-      {/* Horizontal Scrollbar */}
       {getScrollbarDimensions().showHorizontal && (
         <div
-          className="absolute bottom-0 left-0 right-[8px] bg-gray-200"
+          className="absolute bottom-0 left-0 right-[8px] bg-secondary/10"
           style={{
             height: SCROLLBAR_SIZE,
             zIndex: 1001,
@@ -695,21 +740,21 @@ export default function PannableCanvas() {
           }}
         >
           <div
-            className="absolute bg-gray-400 rounded cursor-pointer hover:bg-gray-500 transition-colors"
+            className="absolute cursor-pointer bg-secondary/50 hover:bg-secondary/70 transition-all duration-200"
             style={{
               width: getScrollbarDimensions().horizontalThumbSize,
-              height: SCROLLBAR_SIZE - 2,
+              height: SCROLLBAR_SIZE - 4,
               left: getScrollbarDimensions().horizontalThumbPosition,
-              top: 1,
+              top: 2,
+              borderRadius: SCROLLBAR_SIZE / 2,
             }}
           />
         </div>
       )}
 
-      {/* Vertical Scrollbar */}
       {getScrollbarDimensions().showVertical && (
         <div
-          className="absolute top-0 right-0 bottom-[8px] bg-gray-200"
+          className="absolute top-0 right-0 bottom-[8px] bg-secondary/10"
           style={{
             width: SCROLLBAR_SIZE,
             zIndex: 1001,
@@ -721,12 +766,13 @@ export default function PannableCanvas() {
           }}
         >
           <div
-            className="absolute bg-gray-400 rounded cursor-pointer hover:bg-gray-500 transition-colors"
+            className="absolute cursor-pointer bg-secondary/50 hover:bg-secondary/70 transition-all duration-200"
             style={{
               height: getScrollbarDimensions().verticalThumbSize,
-              width: SCROLLBAR_SIZE - 2,
+              width: SCROLLBAR_SIZE - 4,
               top: getScrollbarDimensions().verticalThumbPosition,
-              left: 1,
+              left: 2,
+              borderRadius: SCROLLBAR_SIZE / 2,
             }}
           />
         </div>

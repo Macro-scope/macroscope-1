@@ -1,101 +1,42 @@
 "use client"
-import { Button, ColorPicker, Modal } from "antd";
+
 import { useDispatch, useSelector } from "react-redux";
-import {
-  setGroupBorderColor,
+import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { 
+  setGroupBorderColor, 
   setGroupFillColor,
   setTileBorderColor,
-  setTileFillColor,
+  setTileFillColor 
 } from "../../redux/localSettingsSlice";
 import { saveLocalCardStyle } from "../../hooks/saveLocalCardStyle";
 import { setMapSettings } from "../../redux/mapSettingsSlice";
-import { BsFillExclamationCircleFill } from "react-icons/bs";
-import { IoClose, IoCloseOutline } from "react-icons/io5";
 import { getMapData } from "../../hooks/getMapData";
 import { setCards } from "../../redux/mapCardsSlice";
 import { getGlobalMapStyles } from "../../hooks/getGlobalMapStyles";
 import { setGlobalSettings } from "../../redux/globalSettingsSlice";
-import { useParams } from "next/navigation";
-import { useEffect } from "react";
-
-// const DemoCard = () => {
-//   const { localtile, localgroup } = useSelector((state: any) => ({
-//     localtile: state.localSettings?.tile,
-//     localgroup: state.localSettings?.group,
-//   }));
-
-//   const { title, group, tileStyle } = useSelector((state: any) => ({
-//     title: state.globalSettings.title,
-//     group: state.globalSettings.group,
-//     tileStyle: state.globalSettings.tile,
-//   }));
-
-//   return (
-//     <div
-//       className="bg-white rounded-lg relative"
-//       style={{
-//         borderRadius: `${group.corner}`,
-//       }}
-//     >
-//       <div
-//         className={`p-2`}
-//         style={{
-//           border: `${group.borderWeight} solid ${localgroup?.borderColor}`,
-//           background: `${localgroup?.fillColor}`,
-//           borderRadius: `${group.corner}`,
-//         }}
-//       >
-//         <div
-//           className={`text-black text-xl font-semibold mb-2 absolute -top-4 w-full ${
-//             title.alignment === "center"
-//               ? "text-center -left-1"
-//               : title.alignment === "right"
-//               ? "text-right right-2"
-//               : "text-left"
-//           }`}
-//           style={{
-//             color: `#${
-//               title.fontColor === "default"
-//                 ? localgroup?.fillColor
-//                 : title.fontColor
-//             }`,
-//             zIndex: 1000,
-//           }}
-//         >
-//           <span
-//             style={{ borderRadius: `${title.corner}` }}
-//             className="text-center text-sm border-2 rounded bg-blue-400 border-black px-2 py-1"
-//           >
-//             Demo Card
-//           </span>
-//         </div>
-//         <div
-//           className={`flex flex-wrap gap-2 p-5 rounded-md cursor-pointer`}
-//           style={{ zIndex: 2000 }}
-//         >
-//           <div
-//             className="bg-white shadow-lg p-2 flex items-center justify-center z-50"
-//             style={{
-//               border: `${tileStyle.borderWeight} solid ${localtile?.borderColor}`,
-//               background: `${localtile?.fillColor}`,
-//               // background: `#fff`,
-//               borderRadius: `${tileStyle.corner}`,
-//             }}
-//           >
-//             <div className="h-7 w-7 rounded-full mr-2">
-//               <img
-//                 src={`https://icons.duckduckgo.com/ip3/www.google.com.ico`}
-//                 className="h-full"
-//                 alt="logo"
-//               />
-//             </div>
-//             <p>Google</p>
-//           </div>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { ColorPicker } from 'antd';
+import { X, AlertCircle } from "lucide-react";
 
 const LocalSettings = () => {
   const { cardId, localStyle, group, tile } = useSelector((state: any) => ({
@@ -105,9 +46,7 @@ const LocalSettings = () => {
     tile: state.localSettings.tile,
   }));
 
-  console.log(cardId);
   const dispatch = useDispatch();
-
   let { id: mapId } = useParams();
   mapId = String(mapId);
 
@@ -115,142 +54,137 @@ const LocalSettings = () => {
     console.log("localStyle", localStyle);
   }, [localStyle]);
 
-  const saveSettings = () => {
-    console.log("Final ---- ",localStyle)
-    saveLocalCardStyle(cardId, localStyle);
+  const saveSettings = async () => {
+    console.log("Final ---- ", localStyle);
+    await saveLocalCardStyle(cardId, localStyle);
     dispatch(setMapSettings("none"));
 
-    const getCards = async (mapId: string) => {
-      try {
-        const data: any = await getMapData(mapId);
-        if (data) {
-          dispatch(setCards(data.cards));
-        }
-      } catch (error) {
-        console.error("Fetching error:", error);
+    try {
+      const data = await getMapData(mapId);
+      if (data) {
+        dispatch(setCards(data.cards));
       }
-    };
-
-    const setGlobalStyles = async (mapId: string) => {
-      const globalStyles: any = await getGlobalMapStyles(mapId);
-      dispatch(setGlobalSettings(globalStyles!.settings));
-    };
-
-    if (mapId) {
-      getCards(mapId);
-      setGlobalStyles(mapId);
+      const globalStyles = await getGlobalMapStyles(mapId);
+      if (Array.isArray(globalStyles)) {
+        console.error("Unexpected globalStyles format:", globalStyles);
+      } else {
+        dispatch(setGlobalSettings(globalStyles?.settings));
+      }
+    } catch (error) {
+      console.error("Error updating settings:", error);
     }
   };
 
-  const { confirm } = Modal;
-  const showDiscardConfirm = () => {
-    confirm({
-      title: "Do you want to save these changes?",
-      icon: (
-        <BsFillExclamationCircleFill className="text-2xl mr-2 text-blue-500" />
-      ),
-      // content: 'Some descriptions',
-      onOk() {
-        saveSettings();
-      },
-      onCancel() {
-        dispatch(setMapSettings("none"));
-      },
-      okText: "Save changes",
-      cancelText: "Discard",
-    });
-  };
+  const ColorSection = ({ title, items }) => (
+    <div className="space-y-4">
+      <h3 className="font-semibold text-lg">{title}</h3>
+      <div className="space-y-3">
+        {items.map(({ label, value, onChange }) => (
+          <div key={label} className="flex items-center justify-between">
+            <Label className="text-sm text-muted-foreground">{label}</Label>
+            <ColorPicker
+              style={{ width: 100 }}
+              disabledAlpha
+              showText
+              value={value}
+              onChange={(hex) => onChange(hex.toHexString())}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="w-[360px] bg-white flex flex-col gap-3 px-3 h-full">
-      <div className="flex justify-between items-center">
-        <p className="font-bold">Local Settings</p>
-        <button
-          className="w-fit"
-          onClick={showDiscardConfirm}
-        >
-          <IoCloseOutline className="text-black text-xl" />
-        </button>
-      </div>
-
-      {/* <DemoCard /> */}
-
-      <div className="flex flex-col gap-2">
-        <p className="font-semibold">Group</p>
-        <div className="flex w-full justify-between">
-          <p>Border Color</p>
-          <ColorPicker
-            style={{ width: 100 }}
-            disabledAlpha
-            showText
-            value={group.borderColor}
-            onChange={(hex) => {
-              console.log(hex.toHexString());
-              dispatch(setGroupBorderColor(hex.toHexString()));
-            }}
-          />
+    <Card className="w-[360px] border-none shadow-none h-full">
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">Local Settings</CardTitle>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => dispatch(setMapSettings("none"))}
+            className="h-8 w-8"
+          >
+            <X className="h-4 w-4" />
+          </Button>
         </div>
+      </CardHeader>
 
-        <div className="flex w-full justify-between mb-2">
-          <p>Fill Color</p>
-          <ColorPicker
-            style={{ width: 100 }}
-            disabledAlpha
-            showText
-            value={group.fillColor}
-            onChange={(hex) => {
-              dispatch(setGroupFillColor(hex.toHexString()));
-            }}
-          />
-        </div>
-      </div>
-      <hr />
+      <CardContent className="space-y-6">
+        <ColorSection
+          title="Group Styles"
+          items={[
+            {
+              label: "Border Color",
+              value: group.borderColor,
+              onChange: (hex) => dispatch(setGroupBorderColor(hex))
+            },
+            {
+              label: "Fill Color",
+              value: group.fillColor,
+              onChange: (hex) => dispatch(setGroupFillColor(hex))
+            }
+          ]}
+        />
 
-      <div className="flex flex-col gap-2">
-        <p className="font-semibold">Tile</p>
-        <div className="flex w-full justify-between">
-          <p>Border Color</p>
-          <ColorPicker
-            style={{ width: 100 }}
-            disabledAlpha
-            showText
-            value={tile.borderColor}
-            onChange={(hex) => {
-              dispatch(setTileBorderColor(hex.toHexString()));
-            }}
-          />
-        </div>
+        <Separator />
 
-        <div className="flex w-full justify-between">
-          <p>Fill Color</p>
-          <ColorPicker
-            style={{ width: 100 }}
-            disabledAlpha
-            showText
-            value={tile.fillColor}
-            onChange={(hex) => {
-              dispatch(setTileFillColor(hex.toHexString()));
-            }}
-          />
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 h-full justify-end">
-        <Button
+        <ColorSection
+          title="Tile Styles"
+          items={[
+            {
+              label: "Border Color",
+              value: tile.borderColor,
+              onChange: (hex) => dispatch(setTileBorderColor(hex))
+            },
+            {
+              label: "Fill Color",
+              value: tile.fillColor,
+              onChange: (hex) => dispatch(setTileFillColor(hex))
+            }
+          ]}
+        />
+      </CardContent>
+
+      <CardFooter className="absolute bottom-0 left-0 right-0 pb-4 px-6 flex flex-col gap-2">
+        <Button 
+          className="w-full" 
           onClick={saveSettings}
-          className="bg-black text-white font-semibold"
         >
-          Save
+          Save Changes
         </Button>
-        <Button
-          className="text-black font-semibold"
-          onClick={() => {
-            dispatch(setMapSettings("none"));
-          }}
+        <Button 
+          variant="outline" 
+          className="w-full"
+          onClick={() => dispatch(setMapSettings("none"))}
         >
           Discard
         </Button>
-      </div>
-    </div>
+      </CardFooter>
+
+      <AlertDialog>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-blue-500" />
+              Save Changes?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Do you want to save your changes to this card's appearance?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => dispatch(setMapSettings("none"))}>
+              Discard
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={saveSettings}>
+              Save Changes
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Card>
   );
 };
 
