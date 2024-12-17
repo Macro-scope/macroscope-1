@@ -81,26 +81,6 @@ const LocalSettings = () => {
     setShowDiscardDialog(true);
   };
 
-  const ColorSection = ({ title, items }) => (
-    <div className="space-y-4">
-      <h3 className="text-base">{title}</h3>
-      <div className="space-y-3">
-        {items.map(({ label, value, onChange }) => (
-          <div key={label} className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{label}</span>
-            <ColorPicker
-              style={{ width: 100 }}
-              disabledAlpha
-              showText
-              value={value}
-              onChange={(hex) => onChange(hex.toHexString())}
-            />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
   return (
     <>
       <Card className="w-[360px] border-none shadow-none h-full">
@@ -121,39 +101,53 @@ const LocalSettings = () => {
         <div className="h-[1px] w-full bg-border" />
 
         <div className="p-4 space-y-6">
-          <ColorSection
-            title={<span className="font-medium text-sm">Group Styles</span>}
-            items={[
-              {
-                label: "Border Color",
-                value: group.borderColor,
-                onChange: (hex) => dispatch(setGroupBorderColor(hex))
-              },
-              {
-                label: "Fill Color",
-                value: group.fillColor,
-                onChange: (hex) => dispatch(setGroupFillColor(hex))
-              }
-            ]}
-          />
+          {/* Group Styles */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Group Styles</h3>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Border Color</span>
+              <ColorPicker
+                showText
+                value={group.borderColor}
+                onChange={(color) => dispatch(setGroupBorderColor(color.toHexString()))}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Fill Color</span>
+              <ColorPicker
+                showText
+                value={group.fillColor}
+                onChange={(color) => dispatch(setGroupFillColor(color.toHexString()))}
+              />
+            </div>
+          </div>
 
-          <div className="h-[1px] w-full bg-border" />
+          <Separator className="border-1" />
 
-          <ColorSection
-            title={<span className="font-medium text-sm">Tile Styles</span>}
-            items={[
-              {
-                label: "Border Color",
-                value: tile.borderColor,
-                onChange: (hex) => dispatch(setTileBorderColor(hex))
-              },
-              {
-                label: "Fill Color",
-                value: tile.fillColor,
-                onChange: (hex) => dispatch(setTileFillColor(hex))
-              }
-            ]}
-          />
+          {/* Tile Styles */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Tile Styles</h3>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Border Color</span>
+              <ColorPicker
+                showText
+                value={tile.borderColor}
+                onChange={(color) => dispatch(setTileBorderColor(color.toHexString()))}
+              />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Fill Color</span>
+              <ColorPicker
+                showText
+                value={tile.fillColor}
+                onChange={(color) => dispatch(setTileFillColor(color.toHexString()))}
+              />
+            </div>
+          </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2 bg-white">
@@ -177,7 +171,6 @@ const LocalSettings = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              
               Save Changes?
             </AlertDialogTitle>
             <AlertDialogDescription>
