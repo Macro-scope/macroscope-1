@@ -572,6 +572,7 @@ export default function PannableCanvas() {
                 topLeft: true,
                 topRight: true,
               }}
+              minHeight={card.tiles.length * 100} 
               style={
                 handTool
                   ? { zIndex: 1, height: "auto", minHeight: "100%" }
