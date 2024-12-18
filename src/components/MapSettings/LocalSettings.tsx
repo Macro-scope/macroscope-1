@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { 
-  setGroupBorderColor, 
+import {
+  setGroupBorderColor,
   setGroupFillColor,
   setTileBorderColor,
-  setTileFillColor 
+  setTileFillColor,
 } from "../../redux/localSettingsSlice";
 import { saveLocalCardStyle } from "../../hooks/saveLocalCardStyle";
 import { setMapSettings } from "../../redux/mapSettingsSlice";
@@ -35,12 +35,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
-import { ColorPicker } from 'antd';
+import { ColorPicker } from "antd";
 import { X, AlertCircle } from "lucide-react";
 
 const LocalSettings = () => {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-  
+
   const { cardId, localStyle, group, tile } = useSelector((state: any) => ({
     cardId: state.localCardId.cardId,
     localStyle: state.localSettings,
@@ -84,7 +84,7 @@ const LocalSettings = () => {
   return (
     <>
       <Card className="w-[360px] border-none shadow-none h-full">
-        <div className="p-4">
+        <div className="p-2">
           <div className="flex items-center justify-between">
             <span className="text-base">Local Settings</span>
             <Button
@@ -107,11 +107,15 @@ const LocalSettings = () => {
               <h3 className="font-medium text-sm">Group Styles</h3>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Border Color</span>
+              <span className="text-sm text-muted-foreground">
+                Border Color
+              </span>
               <ColorPicker
                 showText
                 value={group.borderColor}
-                onChange={(color) => dispatch(setGroupBorderColor(color.toHexString()))}
+                onChange={(color) =>
+                  dispatch(setGroupBorderColor(color.toHexString()))
+                }
               />
             </div>
             <div className="flex items-center justify-between">
@@ -119,7 +123,9 @@ const LocalSettings = () => {
               <ColorPicker
                 showText
                 value={group.fillColor}
-                onChange={(color) => dispatch(setGroupFillColor(color.toHexString()))}
+                onChange={(color) =>
+                  dispatch(setGroupFillColor(color.toHexString()))
+                }
               />
             </div>
           </div>
@@ -132,11 +138,15 @@ const LocalSettings = () => {
               <h3 className="font-medium text-sm">Tile Styles</h3>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Border Color</span>
+              <span className="text-sm text-muted-foreground">
+                Border Color
+              </span>
               <ColorPicker
                 showText
                 value={tile.borderColor}
-                onChange={(color) => dispatch(setTileBorderColor(color.toHexString()))}
+                onChange={(color) =>
+                  dispatch(setTileBorderColor(color.toHexString()))
+                }
               />
             </div>
             <div className="flex items-center justify-between">
@@ -144,41 +154,36 @@ const LocalSettings = () => {
               <ColorPicker
                 showText
                 value={tile.fillColor}
-                onChange={(color) => dispatch(setTileFillColor(color.toHexString()))}
+                onChange={(color) =>
+                  dispatch(setTileFillColor(color.toHexString()))
+                }
               />
             </div>
           </div>
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2 bg-white">
-          <Button 
-            className="w-full" 
-            onClick={saveSettings}
-          >
+          <Button className="w-full" onClick={saveSettings}>
             Save Changes
           </Button>
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={handleDiscard}
-          >
+          <Button variant="outline" className="w-full" onClick={handleDiscard}>
             Discard
           </Button>
         </div>
       </Card>
 
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-96">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              Save Changes?
+              Save Changes
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Do you want to save your changes to this card's appearance?
+              Do you want to save the changes?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel 
+            <AlertDialogCancel
               onClick={() => {
                 dispatch(setMapSettings("none"));
                 setShowDiscardDialog(false);
@@ -186,7 +191,7 @@ const LocalSettings = () => {
             >
               Discard
             </AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={() => {
                 saveSettings();
                 setShowDiscardDialog(false);
