@@ -563,7 +563,7 @@ export default function PannableCanvas() {
           className="absolute top-0 left-0"
           style={{
             zIndex: handTool ? 1000 : 1,
-            backgroundColor: globalSettings?.canvasBackground || "#ffffff",
+            // backgroundColor: globalSettings?.canvasBackground || "#ffffff",
           }}
           id="canvasID"
         />
@@ -597,7 +597,7 @@ export default function PannableCanvas() {
                 topLeft: true,
                 topRight: true,
               }}
-              minHeight={card.tiles.length * 100} 
+              minHeight={card.tiles.length * 100}
               style={
                 handTool
                   ? { zIndex: 1, height: "auto", minHeight: "100%" }
