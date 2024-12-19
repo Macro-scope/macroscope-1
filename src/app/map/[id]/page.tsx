@@ -80,7 +80,7 @@ export default function PublishedMap() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        console.log("----------------------", user.id);
+        // console.log("----------------------", user.id);
         setCurrUser(user?.id);
       } catch (error) {
         console.log(error);
