@@ -470,15 +470,22 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         console.error("Fetching error:", error);
       }
     };
+    const getdata = async(mapId:string) => {
+      const data = await getMapData(mapId);
+      console.log(data.cards)
+    }
 
     if (mapId) {
+      console.log(mapId)
       getCards(mapId);
+      getdata(mapId);
     }
   }, [mapId]);
+  
 
   const getCanvasSize = () => {
     console.log("hi");
-    console.log(mapCards);
+    console.log("Pedro Pedro Pedro ---- ",mapCards);
     console.log(images);
     if (!mapCards?.data?.length && (!images || !Array.isArray(images))) return;
     console.log("hey");
@@ -487,8 +494,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     let maxX = 0;
     let maxY = 0;
 
+    //mapCards.data.card.tiles length >0
+    const filteredCards = mapCards?.data?.filter((card:any) => {
+      return card.tiles && card.tiles.length > 0
+      // console.log(card.tiles)
+    } 
+    );
+    console.log(filteredCards)
+
     // Update maxX and maxY based on card dimensions and positions
-    mapCards.data.forEach((card: any) => {
+    filteredCards.forEach((card: any) => {
       maxX = Math.max(
         maxX,
         Number(card.position[0]) + Number(card.dimension[0])
