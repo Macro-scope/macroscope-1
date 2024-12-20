@@ -205,6 +205,7 @@ export default function PannableCanvas() {
     updateZoom(newZoom);
   };
 
+  
   const handleFitContent = () => {
     if (!mapCards?.data?.length) return;
 
@@ -277,6 +278,10 @@ export default function PannableCanvas() {
   }));
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    handleFitContent();
+  }, [mapCards])
+  
   const [currCards, setCurrCards] = useState([]);
 
   useEffect(() => {
