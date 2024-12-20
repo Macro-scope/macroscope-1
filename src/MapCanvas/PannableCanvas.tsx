@@ -18,6 +18,9 @@ import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 
+import { LuChevronsUpDown, LuChevronsLeftRight } from "react-icons/lu";
+import { RxCornerBottomLeft, RxCornerBottomRight, RxCornerTopLeft, RxCornerTopRight } from "react-icons/rx";
+
 // var CANVAS_WIDTH = 3000;
 // var CANVAS_HEIGHT = 2000;
 
@@ -37,22 +40,44 @@ const SCROLLBAR_THUMB_MIN_SIZE = 16;
 
 const ImageCard = ({ src, onDelete }: any) => {
   return (
-    <div className="group relative border-2 border-black rounded-md">
+    <div className="group relative rounded-md">
+      {/* Border that only shows on hover */}
+      <div className="absolute inset-0 border-2 border-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      
+      {/* Image */}
       <img
         src={src}
         alt="Uploaded content"
         className="w-full h-full object-contain"
         draggable="false"
       />
+
+      {/* Delete button */}
       <button
         onClick={onDelete}
         className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       >
         <IoClose className="text-xl" />
       </button>
+
+      {/* Resize handles that show on hover */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Corner handles */}
+        <div className="absolute -top-1 -left-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute -bottom-1 -left-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute -bottom-1 -right-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+        {/* Middle handles */}
+        <div className="absolute top-1/2 -translate-y-1/2 -left-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute left-1/2 -translate-x-1/2 -top-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2 h-2 bg-white border border-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      </div>
     </div>
   );
 };
+
 
 export default function PannableCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);

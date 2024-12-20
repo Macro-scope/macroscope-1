@@ -15,8 +15,7 @@ import TileImage from "./TileImage";
 import TileEditDrawer from "@/MapCanvas/TileEditDrawer";
 import EditItemForm from "@/components/forms/database-form";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { MdSettings } from "react-icons/md";
-import {  Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import Image from "next/image";
 
 type Props = {
@@ -316,27 +315,28 @@ const ResizableNode: React.FC<Props> = (props) => {
           height: "100%",
         }}
       >
-       {props.isViewer ? (
-      <></>
-    ) : (
-      <>
-        <button
-      onClick={openLocalSettings}
-      className="absolute text-slate-500 z-50 right-0 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        >
-      <Settings2 className="text-xl" />
-        </button>
-        <div className="absolute text-slate-500 z-50 right-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <Image className="invert-[0.5] brightness-0"
-            src="/drag-handle-corner.svg"
-            alt="Drag handle"
-            width={42}
-            height={42}
-            draggable={false}
-          />
-        </div>
-      </>
-    )}
+        {props.isViewer ? (
+          <></>
+        ) : (
+          <>
+            <button
+              onClick={openLocalSettings}
+              className="absolute text-slate-500 z-50 right-0 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <Settings2 className="text-xl" size={16} />
+            </button>
+            <div className="absolute text-slate-500 z-50 right-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <Image
+                className="invert-[0.5] brightness-0"
+                src="/drag-handle-corner.svg"
+                alt="Drag handle"
+                width={24}
+                height={24}
+                draggable={false}
+              />
+            </div>
+          </>
+        )}
         <div
           className="p-2 relative h-full"
           style={{
@@ -369,12 +369,12 @@ const ResizableNode: React.FC<Props> = (props) => {
                   : props.settings.group.fillColor
               }`,
               border: `${title.borderWeight} solid ${props.settings.group.borderColor}`,
-              // Add these new style properties
               fontFamily: title.font || "Inter",
               fontSize: title.fontSize || "16px",
               fontWeight: title.bold ? "bold" : "normal",
               fontStyle: title.italic ? "italic" : "normal",
               textDecoration: title.underline ? "underline" : "none",
+              minWidth: "120px", // Added minimum width
             }}
           >
             <div className="w-full h-full flex justify-center items-center">

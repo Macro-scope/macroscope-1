@@ -171,7 +171,7 @@ const GlobalSettings = () => {
   return (
     <>
       <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
-        <div className="p-4">
+        <div className="p-2">
           <div className="flex items-center justify-between">
             <span className="text-base">Global Settings</span>
             <Button
@@ -220,7 +220,7 @@ const GlobalSettings = () => {
                   value={title.font}
                   onValueChange={(v) => dispatch(setTitleFont(v))}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -234,12 +234,14 @@ const GlobalSettings = () => {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Border Style</span>
+                <span className="text-sm text-muted-foreground">
+                  Border Style
+                </span>
                 <Select
                   value={title.border}
                   onValueChange={(v) => dispatch(setTitleBorder(v))}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -250,12 +252,14 @@ const GlobalSettings = () => {
               </div>
 
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Text Color</span>
+                <span className="text-sm text-muted-foreground">
+                  Text Color
+                </span>
                 <Select
                   value={title.fontColor}
                   onValueChange={(v) => dispatch(setTitleFontColor(v))}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-32 h-8">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -273,8 +277,12 @@ const GlobalSettings = () => {
                     min={12}
                     max={32}
                     step={1}
-                    value={[parseInt(title.fontSize?.replace("px", "") || "16")]}
-                    onValueChange={(v) => dispatch(setTitleFontSize(`${v[0]}px`))}
+                    value={[
+                      parseInt(title.fontSize?.replace("px", "") || "16"),
+                    ]}
+                    onValueChange={(v) =>
+                      dispatch(setTitleFontSize(`${v[0]}px`))
+                    }
                   />
                   <span className="text-sm text-muted-foreground w-8">
                     {parseInt(title.fontSize?.replace("px", "") || "16")}
@@ -284,7 +292,7 @@ const GlobalSettings = () => {
 
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Style</span>
-                <div className="flex gap-2">
+                <div className="flex gap-1">
                   <Toggle
                     pressed={title.bold}
                     onPressedChange={(v) => dispatch(setTitleBold(v))}
@@ -430,22 +438,20 @@ const GlobalSettings = () => {
           <Button className="w-full" onClick={saveSettings}>
             Save Changes
           </Button>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={handleDiscard}
-          >
+          <Button variant="outline" className="w-full" onClick={handleDiscard}>
             Discard
           </Button>
         </CardFooter>
       </Card>
 
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-96">
           <AlertDialogHeader>
-            <AlertDialogTitle>Do you want to save these changes?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Save Changes
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Your changes will be lost if you don't save them.
+              Do you want to save these changes?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

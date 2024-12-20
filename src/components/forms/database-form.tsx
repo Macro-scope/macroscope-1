@@ -1,33 +1,37 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Camera, Link2, Trash2, Upload, X, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useCallback, useEffect } from 'react';
+import { X, Upload, Link2, Camera, Trash2 } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { ImageUpload } from "../database/image-upload";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import Select from "react-select/creatable";
 import { supabase } from "@/lib/supabaseClient";
 import { TiptapEditor } from "../editor/tiptap-editor";
+import { ImageUpload } from "../database/image-upload";
 import { useTableData } from "@/hooks/use-table-data";
-import { useTableColumns } from "../../hooks/use-table-columns";
-import Select from "react-select/creatable";
-import { useParams } from "react-router-dom";
+import { useTableColumns } from "@/hooks/use-table-columns";
 
 interface FormData {
   name: string;
@@ -47,116 +51,70 @@ interface EditItemFormData extends FormData {
   tile_id: string;
 }
 
-interface EditItemFormProps {
-  data: EditItemFormData;
-  onSave: (updatedData: Partial<FormData>) => void;
-  onCancel: () => void;
+interface DatabaseFormProps {
   mapId: string;
+  data: EditItemFormData;
+  onSave: (updatedData: Partial<FormData>) => Promise<void>;
+  onCancel: () => void;
 }
 
-export default function EditItemForm({
-  data,
-  onSave,
-  onCancel,
-  mapId,
-}: EditItemFormProps) {
+interface Tag {
+  value: string;
+  label: string;
+  color: string;
+}
+
+const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
+  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tagOptions, setTagOptions] = useState<Tag[]>([]);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
+  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     name: data.name || "",
     url: data.url || "",
     logo: data.logo || "",
     category: data.category || { value: "", label: "", color: "" },
     description: data.description || "",
-    last_updated: data.last_updated || new Date().toISOString(),
+    last_updated: data.last_updated || new Date().toISOString()
   });
 
-  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
-  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
-  const [showErrorDialog, setShowErrorDialog] = useState(false);
-  const [showDiscardDialog, setShowDiscardDialog] = useState(false);
-  const [tagOptions, setTagOptions] = useState<any[]>([]);
-
-  const { data: tableData, updateRow } = useTableData({ mapId });
-  const { columns } = useTableColumns(mapId);
+  const { updateRow } = useTableData({ mapId });
 
   const fetchTags = useCallback(async () => {
     try {
+      setIsLoading(true);
       const { data: tags, error } = await supabase
         .from("tags")
         .select("*")
         .eq("map_id", mapId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching tags:", error);
+        return;
+      }
 
       const formattedTags = tags.map((tag) => ({
         value: tag.tag_id,
         label: tag.name,
-        color: tag.color,
+        color: tag.color || "#000000",
       }));
 
       setTagOptions(formattedTags);
     } catch (error) {
-      console.error("Error fetching tags:", error);
+      console.error("Error in fetchTags:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [mapId]);
 
   useEffect(() => {
     fetchTags();
-  }, [fetchTags]);
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { id, value } = e.target;
-    setFormData((prev) => ({ ...prev, [id]: value }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!formData.category.value) {
-      setShowErrorDialog(true);
-      return;
-    }
-
-    const updates: any = {};
-    if (formData.name !== data.name) updates.name = formData.name;
-    if (formData.url !== data.url) updates.url = formData.url;
-    if (formData.description !== data.description)
-      updates.description = formData.description;
-    if (formData.category.value !== data.category.value) {
-      updates.tag_id = formData.category.value;
-    }
-
-    onSave(updates);
-  };
-
-  const handleDiscard = () => {
-    if (JSON.stringify(formData) !== JSON.stringify(data)) {
-      setShowDiscardDialog(true);
-    } else {
-      onCancel();
-    }
-  };
-
-  const handleDescriptionSave = async (content: {
-    html: string;
-    markdown: string;
-  }) => {
-    try {
-      await updateRow(data.tile_id, {
-        description: {
-          html: content.html,
-          markdown: content.markdown,
-        },
-      });
-      setIsDescriptionDialogOpen(false);
-    } catch (error) {
-      console.error("Error saving description:", error);
-    }
-  };
+  }, [fetchTags, mapId]);
 
   const handleCreateNewTag = async (tagName: string) => {
     try {
+      setIsLoading(true);
       const { data: newTag, error: tagError } = await supabase
         .from("tags")
         .insert({
@@ -169,25 +127,28 @@ export default function EditItemForm({
 
       if (tagError) throw tagError;
 
+      // Create a new card for the tag
       const { data: newCard, error: cardError } = await supabase
         .from("cards")
         .insert({
           map_id: mapId,
           tag_id: newTag.tag_id,
-          name: tagName,
+          name: tagName
         })
         .select("*, tags!inner(tag_id, name, color)")
         .single();
 
       if (cardError) throw cardError;
 
-      setFormData((prev) => ({
+      const newCategory = {
+        value: newTag.tag_id,
+        label: tagName,
+        color: "#000000"
+      };
+
+      setFormData(prev => ({
         ...prev,
-        category: {
-          value: newTag.tag_id,
-          label: tagName,
-          color: "#000000",
-        },
+        category: newCategory
       }));
 
       await fetchTags();
@@ -195,180 +156,227 @@ export default function EditItemForm({
     } catch (error) {
       console.error("Error creating new tag:", error);
       throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDiscard = () => {
+    if (JSON.stringify(formData) !== JSON.stringify(data)) {
+      setShowDiscardDialog(true);
+    } else {
+      onCancel();
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const updates: Partial<FormData> = {};
+    if (formData.name !== data.name) updates.name = formData.name;
+    if (formData.url !== data.url) updates.url = formData.url;
+    if (formData.description !== data.description) updates.description = formData.description;
+    if (formData.category.value !== data.category.value) {
+      updates.category = formData.category;
+    }
+
+    await onSave(updates);
+  };
+
+  const handleDescriptionSave = async (content: { html: string; markdown: string }) => {
+    try {
+      await updateRow(data.tile_id, {
+        description: {
+          html: content.html,
+          markdown: content.markdown
+        }
+      });
+      setFormData(prev => ({
+        ...prev,
+        description: content.markdown
+      }));
+      setIsDescriptionDialogOpen(false);
+    } catch (error) {
+      console.error("Error saving description:", error);
     }
   };
 
   return (
-    <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
-      <CardHeader className="pb-4">
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="p-2 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">Edit Item</CardTitle>
-          <Button variant="ghost" size="icon" onClick={handleDiscard}>
+          <span className="text-base">Edit Item</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDiscard}
+            className="h-8 w-8 p-0"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group overflow-hidden">
-            {formData.logo ? (
-              <img
-                src={formData.logo}
-                alt="Logo"
-                className="w-full h-full object-contain rounded-lg transition-transform group-hover:scale-105"
-              />
-            ) : (
-              <div className="w-40 h-40 flex items-center justify-center">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-6">
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Image</h3>
+            </div>
+            <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group">
+              {formData.logo ? (
+                <img
+                  src={formData.logo}
+                  alt="Logo"
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              ) : (
                 <Camera className="w-12 h-12 text-gray-300" />
+              )}
+              <div className="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button 
+                  variant="secondary" 
+                  size="sm"
+                  onClick={() => setIsImageDialogOpen(true)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload
+                </Button>
+                {formData.logo && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, logo: "" }));
+                      onSave({ logo: "" });
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
-            )}
+            </div>
+          </div>
 
-            <div className="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Separator className="border-1" />
+
+          {/* Basic Information */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Basic Information</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="url">URL</Label>
+                <div className="relative">
+                  <Input
+                    id="url"
+                    value={formData.url}
+                    onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                    className="pr-10"
+                  />
+                  <Link2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Category Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Category</h3>
+            </div>
+            <Select
+              isDisabled={isLoading}
+              isClearable
+              placeholder={isLoading ? "Loading categories..." : "Search or create category..."}
+              value={formData.category.value ? formData.category : null}
+              options={tagOptions}
+              onChange={(newValue: any) => {
+                if (!newValue) {
+                  setFormData(prev => ({
+                    ...prev,
+                    category: { value: "", label: "", color: "" }
+                  }));
+                  return;
+                }
+                
+                if (newValue.__isNew__) {
+                  handleCreateNewTag(newValue.label);
+                } else {
+                  setFormData(prev => ({
+                    ...prev,
+                    category: newValue
+                  }));
+                }
+              }}
+              classNames={{
+                control: () => "border rounded-md !min-h-[40px]",
+                menu: () => "mt-1 bg-white border rounded-md shadow-lg",
+                option: () => "px-3 py-2 hover:bg-gray-50"
+              }}
+            />
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Description Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Description</h3>
+            </div>
+            <div className="relative">
+              <Textarea
+                value={formData.description}
+                rows={4}
+                className="pr-20"
+                readOnly
+              />
               <Button
+                type="button"
                 variant="secondary"
                 size="sm"
-                onClick={() => setIsImageDialogOpen(true)}
+                className="absolute right-2 top-2"
+                onClick={() => setIsDescriptionDialogOpen(true)}
               >
-                <Upload className="w-4 h-4 mr-1" />
-                Upload
+                Edit
               </Button>
-              {formData.logo && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    setFormData((prev) => ({ ...prev, logo: "" }));
-                    onSave({ logo: "" });
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
             </div>
           </div>
 
-          <div className="space-y-4 pb-20">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={handleInputChange}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="url">URL</Label>
-              <div className="relative">
-                <Input
-                  id="url"
-                  value={formData.url}
-                  onChange={handleInputChange}
-                  className="pr-10"
-                />
-                <Link2 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select
-                isClearable
-                placeholder="Search or create category..."
-                value={
-                  formData.category.value
-                    ? {
-                        value: formData.category.value,
-                        label: formData.category.label,
-                      }
-                    : null
-                }
-                options={tagOptions}
-                onChange={async (newValue: any) => {
-                  if (!newValue) {
-                    setFormData((prev) => ({
-                      ...prev,
-                      category: { value: "", label: "", color: "" },
-                    }));
-                    return;
-                  }
-
-                  if (newValue.__isNew__) {
-                    try {
-                      await handleCreateNewTag(newValue.label);
-                    } catch (error) {
-                      console.error("Error creating new tag:", error);
-                    }
-                  } else {
-                    setFormData((prev) => ({
-                      ...prev,
-                      category: {
-                        value: newValue.value,
-                        label: newValue.label,
-                        color: newValue.color,
-                      },
-                    }));
-                  }
-                }}
-                onCreateOption={handleCreateNewTag}
-                classNames={{
-                  control: () => "border rounded-md !min-h-[40px]",
-                  menu: () => "mt-1 bg-white border rounded-md shadow-lg",
-                  option: () => "px-3 py-2 hover:bg-gray-50",
-                }}
-                theme={(theme) => ({
-                  ...theme,
-                  colors: {
-                    ...theme.colors,
-                    primary: "black",
-                    primary25: "#f9fafb",
-                    primary50: "#f3f4f6",
-                  },
-                })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <div className="relative">
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  rows={3}
-                  className="pr-20"
-                  readOnly
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setIsDescriptionDialogOpen(true)}
-                  className="absolute right-2 top-2"
-                >
-                  Edit
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-sm text-gray-500">
-              Last Modified:{" "}
-              <span className="font-medium">
-                {new Date(data.last_updated).toLocaleString()}
-              </span>
-            </div>
+          <div className="text-sm text-gray-500">
+            Last Modified: <span className="font-medium">
+              {new Date(data.last_updated).toLocaleString()}
+            </span>
           </div>
         </div>
-      </CardContent>
+      </div>
 
-      <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2 bg-white">
-        <Button className="w-full" onClick={handleSubmit}>
-          Save Changes
-        </Button>
-        <Button variant="outline" className="w-full" onClick={handleDiscard}>
-          Discard
-        </Button>
+      {/* Footer */}
+      <div className="p-4 border-t border-gray-200 bg-white">
+        <div className="flex flex-col gap-2">
+          <Button className="w-full" onClick={handleSubmit}>
+            Save Changes
+          </Button>
+          <Button variant="outline" className="w-full" onClick={handleDiscard}>
+            Discard
+          </Button>
+        </div>
       </div>
 
       {/* Dialogs */}
@@ -381,7 +389,7 @@ export default function EditItemForm({
             initialImage={data.logo}
             initialUrl={data.url}
             onImageSelect={async (imageUrl) => {
-              setFormData((prev) => ({ ...prev, logo: imageUrl }));
+              setFormData(prev => ({ ...prev, logo: imageUrl }));
               onSave({ logo: imageUrl });
               setIsImageDialogOpen(false);
             }}
@@ -390,10 +398,7 @@ export default function EditItemForm({
         </DialogContent>
       </Dialog>
 
-      <Dialog
-        open={isDescriptionDialogOpen}
-        onOpenChange={setIsDescriptionDialogOpen}
-      >
+      <Dialog open={isDescriptionDialogOpen} onOpenChange={setIsDescriptionDialogOpen}>
         <DialogContent className="sm:max-w-[900px] h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Description</DialogTitle>
@@ -406,38 +411,21 @@ export default function EditItemForm({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Missing Category</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please select a category before saving the item.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowErrorDialog(false)}>
-              OK
-            </AlertDialogCancel>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-96">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              {/* <AlertCircle className="h-5 w-5 text-blue-500" /> */}
-              Save Changes?
+            <AlertDialogTitle>
+              Save Changes
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Do you want to save your changes to this item?
+              Do you want to save these changes?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => {
-                setShowDiscardDialog(false);
                 onCancel();
+                setShowDiscardDialog(false);
               }}
             >
               Discard
@@ -453,6 +441,8 @@ export default function EditItemForm({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Card>
+    </div>
   );
-}
+};
+
+export default DatabaseForm;

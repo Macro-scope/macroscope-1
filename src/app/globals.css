@@ -91,6 +91,22 @@ background: #555;
 }
 
 /* Add these styles to your global CSS */
+
+.navbar {
+  z-index: 50;
+}
+
+.dialog {
+  z-index: 45;
+}
+
+.form-overlay {
+  z-index: 40;
+}
+
+.backdrop {
+  z-index: 30;
+}
 .iframe-wrapper {
   position: relative;
   padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
