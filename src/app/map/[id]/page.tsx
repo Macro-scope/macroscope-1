@@ -374,6 +374,10 @@ export default function PublishedMap() {
     })
   );
 
+  useEffect(() => {
+    handleFitContent();
+  }, [mapCards])
+  
   const [currCards, setCurrCards] = useState([]);
 
   useEffect(() => {
