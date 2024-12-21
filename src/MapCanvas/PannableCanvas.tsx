@@ -17,9 +17,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
-
-import { LuChevronsUpDown, LuChevronsLeftRight } from "react-icons/lu";
-import { RxCornerBottomLeft, RxCornerBottomRight, RxCornerTopLeft, RxCornerTopRight } from "react-icons/rx";
+import ParentCategory from "./ParentCategory";
 
 // var CANVAS_WIDTH = 3000;
 // var CANVAS_HEIGHT = 2000;
@@ -43,7 +41,7 @@ const ImageCard = ({ src, onDelete }: any) => {
     <div className="group relative rounded-md">
       {/* Border that only shows on hover */}
       <div className="absolute inset-0 border-2 border-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+
       {/* Image */}
       <img
         src={src}
@@ -78,7 +76,6 @@ const ImageCard = ({ src, onDelete }: any) => {
   );
 };
 
-
 export default function PannableCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -87,6 +84,7 @@ export default function PannableCanvas() {
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1);
+  const [parentCategories, setParentCategories] = useState([]);
   const { updateImagePosition } = useUpdateImagePosition();
 
   // const [canvasWidth, setCanvasWidth] = useState(3000);
@@ -284,8 +282,12 @@ export default function PannableCanvas() {
       try {
         const data: any = await getMapData(mapId);
         if (data) {
-          dispatch(setCards(data.cards));
-          console.log(data);
+          // Include parent_category_id in the card data
+          const cardsWithParentCategories = data.cards.map(card => ({
+            ...card,
+            parent_category_id: card.parent_category_id || null
+          }));
+          dispatch(setCards(cardsWithParentCategories));
         }
       } catch (error) {
         console.error("Fetching error:", error);
@@ -306,6 +308,23 @@ export default function PannableCanvas() {
   }, []);
 
   // Deleteing images
+  useEffect(() => {
+    const fetchParentCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("parent_categories")
+          .select("*")
+          .eq("map_id", mapId);
+
+        if (error) throw error;
+        setParentCategories(data || []);
+      } catch (error) {
+        console.error("Error fetching parent categories:", error);
+      }
+    };
+
+    fetchParentCategories();
+  }, [mapId]);
 
   const handleDeleteImage = async (imageId: string) => {
     if (!images) return;
@@ -567,6 +586,50 @@ export default function PannableCanvas() {
           }}
           id="canvasID"
         />
+
+        {parentCategories.map((category) => {
+          const categoryCards = currCards?.filter(
+            (card) => card.parent_category_id === category.category_id
+          );
+
+          return (
+            <ParentCategory
+              key={category.category_id}
+              id={category.category_id}
+              name={category.name}
+              childCards={categoryCards}
+              initialPosition={{
+                x: Number(category.position?.[0] || 0),
+                y: Number(category.position?.[1] || 0),
+              }}
+              initialDimension={{
+                width: Number(category.dimension?.[0] || 800),
+                height: Number(category.dimension?.[1] || 600),
+              }}
+              color={category.color}
+              mapId={mapId}
+              onUpdate={async (updates) => {
+                try {
+                  const { error } = await supabase
+                    .from("parent_categories")
+                    .update(updates)
+                    .eq("category_id", category.category_id);
+
+                  if (error) throw error;
+
+                  const updatedCategories = parentCategories.map((cat) =>
+                    cat.category_id === category.category_id
+                      ? { ...cat, ...updates }
+                      : cat
+                  );
+                  setParentCategories(updatedCategories);
+                } catch (error) {
+                  console.error("Error updating parent category:", error);
+                }
+              }}
+            />
+          );
+        })}
 
         {currCards?.map((card: any) =>
           card.tiles.length > 0 ? (
