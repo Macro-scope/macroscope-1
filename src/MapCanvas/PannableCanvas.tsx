@@ -19,7 +19,13 @@ import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 
 import { LuChevronsUpDown, LuChevronsLeftRight } from "react-icons/lu";
-import { RxCornerBottomLeft, RxCornerBottomRight, RxCornerTopLeft, RxCornerTopRight } from "react-icons/rx";
+import {
+  RxCornerBottomLeft,
+  RxCornerBottomRight,
+  RxCornerTopLeft,
+  RxCornerTopRight,
+} from "react-icons/rx";
+import MapNavbar from "@/components/PublishedNavbar/MapNavbar";
 
 // var CANVAS_WIDTH = 3000;
 // var CANVAS_HEIGHT = 2000;
@@ -43,7 +49,7 @@ const ImageCard = ({ src, onDelete }: any) => {
     <div className="group relative rounded-md">
       {/* Border that only shows on hover */}
       <div className="absolute inset-0 border-2 border-black rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
+
       {/* Image */}
       <img
         src={src}
@@ -77,7 +83,6 @@ const ImageCard = ({ src, onDelete }: any) => {
     </div>
   );
 };
-
 
 export default function PannableCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -205,56 +210,35 @@ export default function PannableCanvas() {
     updateZoom(newZoom);
   };
 
-  
   const handleFitContent = () => {
     if (!mapCards?.data?.length) return;
 
-    // Calculate the bounding box of all cards
+    // Calculate the horizontal bounding box of all cards
     let minX = 0;
-    let minY = 0;
     let maxX = 0;
-    let maxY = 0;
 
     mapCards.data.forEach((card: any) => {
       minX = Math.min(minX, Number(card.position[0]));
-      minY = Math.min(minY, Number(card.position[1]));
       maxX = Math.max(
         maxX,
         Number(card.position[0]) + Number(card.dimension[0])
       );
-      maxY = Math.max(
-        maxY,
-        Number(card.position[1]) + Number(card.dimension[1])
-      );
     });
 
-    // Add padding
-    const padding = 50;
+    // Add horizontal padding
+    const padding = -20;
     minX -= padding;
-    minY -= padding;
     maxX += padding;
-    maxY += padding;
 
-    // Calculate required zoom
+    // Calculate required zoom based only on width
     const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
     const zoomX = viewportSize.width / contentWidth;
-    const zoomY = viewportSize.height / contentHeight;
-    const newZoom = Math.max(
-      MIN_ZOOM,
-      Math.min(MAX_ZOOM, Math.min(zoomX, zoomY))
-    );
 
-    // Calculate center position
-    // const centerX = (minX + maxX) / 2;
-    // const centerY = (minY + maxY) / 2;
+    // Ensure zoom stays within bounds
+    const newZoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, zoomX));
 
-    // Update zoom and offset to center content
-    updateZoom(newZoom, maxX, maxY);
-    // setOffset({
-    //   x: viewportSize.width / 2 - centerX * newZoom,
-    //   y: viewportSize.height / 2 - centerY * newZoom,
-    // });
+    // Update zoom with focus on x-axis
+    updateZoom(newZoom, maxX, 100);
   };
 
   let { id: mapId } = useParams();
@@ -280,8 +264,8 @@ export default function PannableCanvas() {
 
   useEffect(() => {
     handleFitContent();
-  }, [mapCards])
-  
+  }, [mapCards]);
+
   const [currCards, setCurrCards] = useState([]);
 
   useEffect(() => {
@@ -561,6 +545,16 @@ export default function PannableCanvas() {
           transformOrigin: "0 0",
         }}
       >
+        <a
+          className="relative flex justify-center items-center bottom-3 right-24 h-8 mt-[97vh]"
+          style={{ zIndex: "2000" }}
+          href="https://macroscope.so"
+          target="_blank"
+        >
+          {/* Made with{" "} */}
+          <img src="/branding.svg" alt="Macroscope" className="ml-2 mr-1 h-7" />
+          {/* <span className="font-semibold">Macroscope</span> */}
+        </a>
         <canvas
           ref={canvasRef}
           width={canvasWidth}

@@ -38,8 +38,8 @@ const ExportImageSettings = (props: Props) => {
     });
   
     // Add padding
-    const padding = 50;
-    maxX += padding;
+    const padding = -100;
+    maxX += padding - 80;
     maxY += padding;
   
     // Update the Redux store with the new canvas size

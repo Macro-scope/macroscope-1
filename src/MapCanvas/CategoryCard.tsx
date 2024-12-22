@@ -407,7 +407,7 @@ const ResizableNode: React.FC<Props> = (props) => {
                       dispatch(setHandTool(false));
                     }}
                     key={index}
-                    className="bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer"
+                    className="bg-white shadow-lg p-2 gap-2 flex items-center justify-between z-50 w-fit cursor-pointer"
                     style={{
                       border: `${tileStyle.borderWeight} solid ${props.settings.tile.borderColor}`,
                       background: `${props.settings.tile.fillColor}`,
@@ -423,7 +423,14 @@ const ResizableNode: React.FC<Props> = (props) => {
                         }
                       />
                     </div>
-                    <p className="m-0 min-h-full">{tile.name}</p>
+                    <p
+                      className="m-0 min-h-full whitespace-nowrap overflow-hidden text-ellipsis"
+                      title={tile.name} // Optional: Shows the full name on hover
+                    >
+                      {tile.name.length > 15
+                        ? `${tile.name.slice(0, 15)}...`
+                        : tile.name}
+                    </p>
                   </div>
                 ) : null
               )}

@@ -49,7 +49,7 @@ const TileInfoDrawer = (props: Props) => {
       <div className="flex items-center gap-5 h-16">
         <img src={tile?.logo} className="h-full rounded-md" alt="" />
         <div className="">
-          <div className="text-4xl font-semibold flex items-center gap-2">{tile?.name} <a href={tile.url}><FiExternalLink className="text-xl" /></a></div>
+          <div className="text-4xl font-semibold flex items-center gap-2">{tile?.name} <a href={tile?.url}><FiExternalLink className="text-xl" /></a></div>
           <div className="px-4 bg-blue-500 text-white w-fit rounded-full mt-2">
             {tagName || "Other"}
           </div>

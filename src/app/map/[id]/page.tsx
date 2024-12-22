@@ -314,54 +314,37 @@ export default function PublishedMap() {
 
   const handleFitContent = () => {
     if (!mapCards?.data?.length) return;
-
-    // Calculate the bounding box of all cards
+  
+    // Calculate the horizontal bounding box of all cards
     let minX = 0;
-    let minY = 0;
     let maxX = 0;
-    let maxY = 0;
-
+  
     mapCards.data.forEach((card: any) => {
       minX = Math.min(minX, Number(card.position[0]));
-      minY = Math.min(minY, Number(card.position[1]));
       maxX = Math.max(
         maxX,
         Number(card.position[0]) + Number(card.dimension[0])
       );
-      maxY = Math.max(
-        maxY,
-        Number(card.position[1]) + Number(card.dimension[1])
-      );
     });
-
-    // Add padding
-    const padding = 50;
+  
+    // Add horizontal padding
+    const padding = -70;
     minX -= padding;
-    minY -= padding;
     maxX += padding;
-    maxY += padding;
-
-    // Calculate required zoom
+  
+    // Calculate required zoom based only on width
     const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
     const zoomX = viewportSize.width / contentWidth;
-    const zoomY = viewportSize.height / contentHeight;
+    
+    // Ensure zoom stays within bounds
     const newZoom = Math.max(
       MIN_ZOOM,
-      Math.min(MAX_ZOOM, Math.min(zoomX, zoomY))
+      Math.min(MAX_ZOOM, zoomX)
     );
-
-    // Calculate center position
-    // const centerX = (minX + maxX) / 2;
-    // const centerY = (minY + maxY) / 2;
-
-    // Update zoom and offset to center content
-    updateZoom(newZoom, maxX, maxY);
-    // setOffset({
-    //   x: viewportSize.width / 2 - centerX * newZoom,
-    //   y: viewportSize.height / 2 - centerY * newZoom,
-    // });
-  };
+  
+    // Update zoom with focus on x-axis
+    updateZoom(newZoom, maxX, 100);
+  }
 
   const { handTool, localSettings, localCardId, mapSettings } = useSelector(
     (state: any) => ({
