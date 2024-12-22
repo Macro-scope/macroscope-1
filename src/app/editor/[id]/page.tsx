@@ -1,7 +1,8 @@
-"use client"
+"use client";
 
 import GlobalSettings from "@/components/MapSettings/GlobalSettings";
 import LocalSettings from "@/components/MapSettings/LocalSettings";
+import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
 import ToolsMenu from "@/components/MapSettings/ToolsMenu";
 import CustomLayout from "@/layout/CustomLayout";
 import { supabase } from "@/lib/supabaseClient";
@@ -10,8 +11,6 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-
-
 
 const EditorMain = () => {
   const { mapSettings, user } = useSelector((state: any) => ({
@@ -22,7 +21,7 @@ const EditorMain = () => {
   const { id: mapId } = useParams();
   const [mapOwner, setMapOwner] = useState();
 
-  const router = useRouter()
+  const router = useRouter();
 
   useEffect(() => {
     const getmapOwner = async () => {
@@ -35,37 +34,34 @@ const EditorMain = () => {
       setMapOwner(data.user_id);
     };
     getmapOwner();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // useEffect(() => {
-  //   if (!user) router.push("/login");
-  //   if (mapOwner && mapOwner !== user.user_id) router.push("/dashboard");
-  //   // console.log(mapOwner, user.id);
-  //   // console.log(mapOwner !== user.id);
-  // }, [mapOwner, user]);
+  }, [mapId]);
 
   const renderSettingsWindow = () => {
-    if (mapSettings === "none") return;
-    else if (mapSettings === "local")
-      return (
-        <div className="flex flex-col bg-white p-2 relative">
-          <LocalSettings />
-        </div>
-      );
-    else if (mapSettings === "global")
-      return (
-        <div className="flex flex-col bg-white p-2">
-          <GlobalSettings />
-        </div>
-      );
+    // console.log('Current mapSettings:', mapSettings); // Debug log
+
+    if (mapSettings === "none") return null;
+
+    const settingComponents = {
+      local: <LocalSettings />,
+      global: <GlobalSettings />,
+      parentCategoryLocal: <ParentCategoryLocalSettings />
+    };
+
+    const SettingComponent = settingComponents[mapSettings];
+    
+    if (!SettingComponent) return null;
+
+    return (
+      <div className="flex flex-col bg-white p-2 relative">
+        {SettingComponent}
+      </div>
+    );
   };
 
-  
   return (
     <CustomLayout>
       <div className="h-full flex overflow-hidden">
-        <PannableCanvas  />
+        <PannableCanvas />
         {renderSettingsWindow()}
         <ToolsMenu />
       </div>

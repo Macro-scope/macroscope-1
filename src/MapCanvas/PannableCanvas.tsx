@@ -18,6 +18,7 @@ import { deleteImage } from "@/hooks/deleteImage";
 import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 import ParentCategory from "./ParentCategory";
+import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
 
 // var CANVAS_WIDTH = 3000;
 // var CANVAS_HEIGHT = 2000;
@@ -264,6 +265,8 @@ export default function PannableCanvas() {
     localCardId,
     mapSettings,
     globalSettings,
+    localParentCategorySettings,
+    localParentCategoryId,
   } = useSelector((state: any) => ({
     mapCards: state.mapCards,
     handTool: state.handTool.value,
@@ -271,7 +274,9 @@ export default function PannableCanvas() {
     localSettings: state.localSettings,
     localCardId: state.localCardId.cardId,
     mapSettings: state.mapSettings,
-    globalSettings: state.globalSettings, // Add this
+    globalSettings: state.globalSettings,
+    localParentCategorySettings: state.localParentCategorySettings,
+    localParentCategoryId: state.localParentCategory?.categoryId,
   }));
   const dispatch = useDispatch();
 
@@ -283,9 +288,9 @@ export default function PannableCanvas() {
         const data: any = await getMapData(mapId);
         if (data) {
           // Include parent_category_id in the card data
-          const cardsWithParentCategories = data.cards.map(card => ({
+          const cardsWithParentCategories = data.cards.map((card) => ({
             ...card,
-            parent_category_id: card.parent_category_id || null
+            parent_category_id: card.parent_category_id || null,
           }));
           dispatch(setCards(cardsWithParentCategories));
         }
@@ -307,7 +312,78 @@ export default function PannableCanvas() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (localParentCategorySettings && localParentCategoryId) {
+      setParentCategories((prevCategories) => {
+        return prevCategories.map((category) => {
+          if (category.category_id === localParentCategoryId) {
+            // Create a completely new object to ensure React detects the change
+            return {
+              ...category,
+              settings: {
+                ...category.settings,
+                container: {
+                  ...category.settings.container,
+                  ...localParentCategorySettings.container,
+                },
+                title: {
+                  ...category.settings.title,
+                  ...localParentCategorySettings.title,
+                },
+              },
+            };
+          }
+          return category;
+        });
+      });
+    }
+  }, [localParentCategorySettings, localParentCategoryId]);
+
   // Deleteing images
+
+  useEffect(() => {
+    const refreshParentCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("parent_categories")
+          .select("*")
+          .eq("map_id", mapId);
+
+        if (error) throw error;
+
+        const processedCategories = (data || []).map((category) => ({
+          ...category,
+          settings: category.local_settings || {
+            container: {
+              borderColor: category.color,
+              fillColor: "rgba(255, 255, 255, 0.5)",
+              borderWeight: "2px",
+              corner: "8px",
+            },
+            title: {
+              borderColor: category.color,
+              fillColor: "white",
+              fontColor: category.color,
+              borderWeight: "2px",
+              corner: "8px",
+              font: "Inter",
+              fontSize: "16px",
+              alignment: "left",
+            },
+          },
+        }));
+
+        setParentCategories(processedCategories);
+      } catch (error) {
+        console.error("Error refreshing parent categories:", error);
+      }
+    };
+
+    if (mapSettings === "none") {
+      refreshParentCategories();
+    }
+  }, [mapSettings, mapId]);
+
   useEffect(() => {
     const fetchParentCategories = async () => {
       try {
@@ -317,7 +393,32 @@ export default function PannableCanvas() {
           .eq("map_id", mapId);
 
         if (error) throw error;
-        setParentCategories(data || []);
+
+        // Process each parent category to ensure it has settings
+        const processedCategories = (data || []).map((category) => ({
+          ...category,
+          settings: category.local_settings || {
+            container: {
+              borderColor: category.color,
+              fillColor: "rgba(255, 255, 255, 0.5)",
+              borderWeight: "2px",
+              corner: "8px",
+            },
+            title: {
+              borderColor: category.color,
+              fillColor: "white",
+              fontColor: category.color,
+              borderWeight: "2px",
+              corner: "8px",
+              font: "Inter",
+              fontSize: "16px",
+              alignment: "left",
+            },
+          },
+        }));
+
+        setParentCategories(processedCategories);
+        console.log("Parent categories with settings:", processedCategories);
       } catch (error) {
         console.error("Error fetching parent categories:", error);
       }
@@ -608,21 +709,35 @@ export default function PannableCanvas() {
               }}
               color={category.color}
               mapId={mapId}
+              settings={ category.settings }
               onUpdate={async (updates) => {
                 try {
-                  const { error } = await supabase
-                    .from("parent_categories")
-                    .update(updates)
-                    .eq("category_id", category.category_id);
+                  if (updates.settings) {
+                    const { error } = await supabase
+                      .from("parent_categories")
+                      .update({
+                        ...updates,
+                        local_settings: updates.settings,
+                      })
+                      .eq("category_id", category.category_id);
 
-                  if (error) throw error;
+                    if (error) throw error;
+                  } else {
+                    const { error } = await supabase
+                      .from("parent_categories")
+                      .update(updates)
+                      .eq("category_id", category.category_id);
 
-                  const updatedCategories = parentCategories.map((cat) =>
-                    cat.category_id === category.category_id
-                      ? { ...cat, ...updates }
-                      : cat
+                    if (error) throw error;
+                  }
+
+                  setParentCategories((prevCategories) =>
+                    prevCategories.map((cat) =>
+                      cat.category_id === category.category_id
+                        ? { ...cat, ...updates }
+                        : cat
+                    )
                   );
-                  setParentCategories(updatedCategories);
                 } catch (error) {
                   console.error("Error updating parent category:", error);
                 }
