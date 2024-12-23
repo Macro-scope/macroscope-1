@@ -32,6 +32,14 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     group: state.globalSettings.group,
   }));
   const dispatch = useDispatch();
+  
+  useEffect(() => {
+    const loadInitialSettings = async () => {
+      const settings = await populateParentCategoryLocalSettings(props.id);
+      dispatch(setParentCategoryLocalSettings(settings));
+    };
+    loadInitialSettings();
+  }, [props.id, dispatch]);
 
   const [bounds, setBounds] = useState({ minX: 0, minY: 0, maxX: 0, maxY: 0 });
   const [dimension, setDimension] = useState(props.initialDimension);
@@ -48,6 +56,10 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
   const { zoom } = useSelector((state: any) => ({
     zoom: state.mapSettings?.zoom || 1,
   }));
+
+  const localSettings = useSelector((state: any) => 
+    state.localParentCategorySettings
+  );
 
   const updateParentCategory = useCallback(
     debounce(async (updates) => {
@@ -152,36 +164,32 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
         <div
           className="pt-2 px-1 pb-1 relative h-full"
           style={{
-            border: `${group.borderWeight} solid ${props.settings.container.borderColor}`,
-            background: `${props.settings.container.fillColor}`,
-            borderRadius: `${group.corner}`,
+            border: `${localSettings?.container?.borderWeight || group.borderWeight || "2px"} solid ${
+              localSettings?.container?.borderColor 
+            }`,
+            background: localSettings?.container?.fillColor || "rgba(255, 255, 255, 0.5)",
+            borderRadius: `${localSettings?.container?.corner || group.corner || "8px"}`,
             height: "100%",
             backdropFilter: "blur(2px)",
           }}
         >
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
-              title.alignment === "center"
+              (localSettings?.title?.alignment || title.alignment) === "center"
                 ? "left-[50%] transform -translate-x-1/2"
-                : title.alignment === "right"
+                : (localSettings?.title?.alignment || title.alignment) === "right"
                 ? "right-2"
                 : "left-2"
             }`}
             style={{
-              color: `${
-                title.fontColor === "default"
-                  ? props.settings.container.borderColor
-                  : props.settings.title.fontColor
+              color: localSettings?.title?.fontColor || (title.fontColor === "default" ),
+              borderRadius: localSettings?.title?.corner || title.corner || "8px",
+              background: localSettings?.title?.fillColor || "white",
+              border: `${localSettings?.title?.borderWeight || title.borderWeight || "2px"} solid ${
+                localSettings?.container?.borderColor 
               }`,
-              borderRadius: `${title.corner}`,
-              background: `${
-                title.border === "fill"
-                  ? props.settings.container.borderColor
-                  : props.settings.container.fillColor
-              }`,
-              border: `${title.borderWeight} solid ${props.settings.container.borderColor}`,
-              fontFamily: title.font || "Inter",
-              fontSize: title.fontSize || "16px",
+              fontFamily: localSettings?.title?.font || title.font || "Inter",
+              fontSize: localSettings?.title?.fontSize || title.fontSize || "16px",
               fontWeight: title.bold ? "bold" : "normal",
               fontStyle: title.italic ? "italic" : "normal",
               textDecoration: title.underline ? "underline" : "none",
