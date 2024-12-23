@@ -17,12 +17,14 @@ import EditItemForm from "@/components/forms/database-form";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Settings2 } from "lucide-react";
 import Image from "next/image";
+import CategoryDescription from "@/components/ui/description";
 
 type Props = {
   tagId: string;
   settings: any;
   tiles: string[];
   tagName: string;
+  description?: string; // Add this line
   isViewer?: boolean;
   cardId: string;
   handleDynamicSizeChange?: (
@@ -173,25 +175,25 @@ const ResizableNode: React.FC<Props> = (props) => {
         console.log("No tile ID provided");
         return;
       }
-  
+
       try {
         const { data, error } = await supabase
           .from("tiles")
           .select()
           .eq("tile_id", tileId)
           .single();
-  
+
         if (error) {
           console.error("Error fetching tile:", error);
           return;
         }
-  
+
         setTile(data);
       } catch (error) {
         console.error("Error in getTileInfo:", error);
       }
     };
-  
+
     // Only call getTileInfo if tileId exists
     if (tileId) {
       getTileInfo(tileId);
@@ -368,6 +370,18 @@ const ResizableNode: React.FC<Props> = (props) => {
             flexDirection: "column",
           }}
         >
+          <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
+            {" "}
+            <CategoryDescription
+              description={
+                props.description ||
+                "This category contains resources related to AI platforms and tools."
+              }
+              maxLines={2}
+              className="text-sm text-gray-600"
+            />
+          </div>
+
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
               title.alignment === "center"

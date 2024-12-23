@@ -6,6 +6,12 @@ import { Settings2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { supabase } from "@/lib/supabaseClient";
 import debounce from "lodash/debounce";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   setLocalParentCategory,
@@ -17,6 +23,7 @@ import { populateParentCategoryLocalSettings } from "@/hooks/populateParentCateg
 interface ParentCategoryProps {
   id: string;
   name: string;
+  description?: string;
   childCards?: any[];
   onUpdate: (updates: any) => Promise<void>;
   initialPosition?: { x: number; y: number };
@@ -24,7 +31,54 @@ interface ParentCategoryProps {
   mapId: string;
   color?: string;
   settings: any;
+  children?: React.ReactNode;
 }
+
+const CategoryDescription = ({
+  description,
+  maxLines = 2,
+  className = "",
+}: {
+  description?: string;
+  maxLines?: number;
+  className?: string;
+}) => {
+  const [isTooltipOpen, setIsTooltipOpen] = useState(false);
+
+  if (!description) return null;
+
+  return (
+    <TooltipProvider>
+      <Tooltip open={isTooltipOpen}>
+        <TooltipTrigger asChild>
+          <div
+            className={`text-sm ${className}`}
+            style={{
+              display: "-webkit-box",
+              WebkitLineClamp: maxLines,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              lineHeight: "1.4",
+              maxWidth: "100%",
+              cursor: "pointer",
+            }}
+            onMouseEnter={() => setIsTooltipOpen(true)}
+            onMouseLeave={() => setIsTooltipOpen(false)}
+          >
+            {description}
+          </div>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          className="max-w-sm p-4 bg-white shadow-lg rounded-lg border"
+        >
+          <p className="text-sm">{description}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
   const { title, group } = useSelector((state: any) => ({
@@ -32,7 +86,7 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     group: state.globalSettings.group,
   }));
   const dispatch = useDispatch();
-  
+
   useEffect(() => {
     const loadInitialSettings = async () => {
       const settings = await populateParentCategoryLocalSettings(props.id);
@@ -57,8 +111,8 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     zoom: state.mapSettings?.zoom || 1,
   }));
 
-  const localSettings = useSelector((state: any) => 
-    state.localParentCategorySettings
+  const localSettings = useSelector(
+    (state: any) => state.localParentCategorySettings
   );
 
   const updateParentCategory = useCallback(
@@ -110,7 +164,7 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
 
     setBounds({ minX, minY, maxX, maxY });
 
-    const topPadding = 40;
+    const topPadding = description ? 80 : 40;
     const sidePadding = 20;
     const bottomPadding = 20;
 
@@ -118,10 +172,10 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     const newHeight = Math.max(maxY - minY + topPadding + bottomPadding, 200);
 
     if (
-      dimension.width !== newWidth ||
-      dimension.height !== newHeight ||
-      position.x !== minX - sidePadding ||
-      position.y !== minY - topPadding
+      dimension?.width !== newWidth ||
+      dimension?.height !== newHeight ||
+      position?.x !== minX - sidePadding ||
+      position?.y !== minY - topPadding
     ) {
       setDimension({ width: newWidth, height: newHeight });
       setPosition({ x: minX - sidePadding, y: minY - topPadding });
@@ -139,6 +193,10 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     updateParentCategory,
     props.settings,
   ]);
+
+  const description =
+    props.description ||
+    "This category contains resources related to AI platforms and tools.";
 
   return (
     <Rnd
@@ -162,34 +220,45 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
         </button>
 
         <div
-          className="pt-2 px-1 pb-1 relative h-full"
+          className="relative h-full flex flex-col"
           style={{
-            border: `${localSettings?.container?.borderWeight || group.borderWeight || "2px"} solid ${
-              localSettings?.container?.borderColor 
+            border: `${
+              localSettings?.container?.borderWeight ||
+              group.borderWeight ||
+              "2px"
+            } solid ${localSettings?.container?.borderColor}`,
+            background:
+              localSettings?.container?.fillColor || "rgba(255, 255, 255, 1)",
+            borderRadius: `${
+              localSettings?.container?.corner || group.corner || "8px"
             }`,
-            background: localSettings?.container?.fillColor || "rgba(255, 255, 255, 0.5)",
-            borderRadius: `${localSettings?.container?.corner || group.corner || "8px"}`,
-            height: "100%",
-            backdropFilter: "blur(2px)",
           }}
         >
+          {/* Title */}
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
               (localSettings?.title?.alignment || title.alignment) === "center"
                 ? "left-[50%] transform -translate-x-1/2"
-                : (localSettings?.title?.alignment || title.alignment) === "right"
+                : (localSettings?.title?.alignment || title.alignment) ===
+                  "right"
                 ? "right-2"
                 : "left-2"
             }`}
             style={{
-              color: localSettings?.title?.fontColor || (title.fontColor === "default" ),
-              borderRadius: localSettings?.title?.corner || title.corner || "8px",
+              color:
+                localSettings?.title?.fontColor ||
+                title.fontColor === "default",
+              borderRadius:
+                localSettings?.title?.corner || title.corner || "8px",
               background: localSettings?.title?.fillColor || "white",
-              border: `${localSettings?.title?.borderWeight || title.borderWeight || "2px"} solid ${
-                localSettings?.container?.borderColor 
-              }`,
+              border: `${
+                localSettings?.title?.borderWeight ||
+                title.borderWeight ||
+                "2px"
+              } solid ${localSettings?.container?.borderColor}`,
               fontFamily: localSettings?.title?.font || title.font || "Inter",
-              fontSize: localSettings?.title?.fontSize || title.fontSize || "16px",
+              fontSize:
+                localSettings?.title?.fontSize || title.fontSize || "16px",
               fontWeight: title.bold ? "bold" : "normal",
               fontStyle: title.italic ? "italic" : "normal",
               textDecoration: title.underline ? "underline" : "none",
@@ -201,6 +270,34 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
               <p className="m-0">{props.name || "Parent Category"}</p>
             </div>
           </div>
+
+          {/* Content area with conditional description and padding */}
+          <div className={`flex flex-col flex-grow pt-6 px-4 pb-3`}>
+            {" "}
+            {/* Increased padding */}
+            {description && (
+              <div className="min-h-[40px] mb-4">
+                {" "}
+                
+                {/* Increased bottom margin */}
+                <CategoryDescription
+                  description={description}
+                  maxLines={2}
+                  className="text-slate-600 hover:text-slate-700 transition-colors duration-200"
+                />
+              </div>
+            )}
+            {/* Children Content */}
+            <div
+              className="flex-grow overflow-auto"
+              style={{
+                paddingTop: description ? "1rem" : "0", // Increased padding when description exists
+              }}
+            >
+              {props.children}
+            </div>
+          </div>  
+      
         </div>
       </div>
     </Rnd>
