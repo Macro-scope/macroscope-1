@@ -24,7 +24,6 @@ import { useParams } from "react-router-dom";
 import { addNewTag } from "@/hooks/addNewTag2";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import EditItemForm from "@/components/forms/database-form";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { debounce } from "lodash";
 import DatabaseForm from "@/components/forms/database-form";
 import { ImageUpload } from "@/components/database/image-upload";
@@ -57,6 +56,18 @@ import { Loader2 } from "lucide-react"; // Import loading icon
 import { useDispatch, useSelector } from "react-redux";
 import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
+
+import { PlusCircle, FolderOpen } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
@@ -190,6 +201,13 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     canUndo,
     canRedo,
   } = useTableData({ mapId });
+
+  const [showGroupDialog, setShowGroupDialog] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupColor, setNewGroupColorState] = useState<string>("");
+  const [parentCategories, setParentCategories] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null);
+
   const { columns, refreshTags } = useTableColumns(mapId);
   const { ref, width, height } = useResizeDetector();
   const [columnSizes, setColumnSizes] = useState(() =>
@@ -267,12 +285,17 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   );
 
   useEffect(() => {
-    const portalRoot = document.createElement("div");
-    portalRoot.id = "portal";
-    document.body.appendChild(portalRoot);
+    let portalRoot = document.getElementById("portal");
+    if (!portalRoot) {
+      portalRoot = document.createElement("div");
+      portalRoot.id = "portal";
+      document.body.appendChild(portalRoot);
+    }
 
     return () => {
-      document.body.removeChild(portalRoot);
+      if (portalRoot && document.body.contains(portalRoot)) {
+        document.body.removeChild(portalRoot);
+      }
     };
   }, []);
 
@@ -298,6 +321,111 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [searchText]);
+
+  useEffect(() => {
+    const fetchParentCategories = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("parent_categories")
+          .select("*")
+          .eq("map_id", mapId);
+
+        if (error) throw error;
+        setParentCategories(data || []);
+      } catch (error) {
+        console.error("Error fetching parent categories:", error);
+      }
+    };
+
+    fetchParentCategories();
+  }, [mapId]);
+
+  // Add this function to create a new parent category
+  const createParentCategory = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("parent_categories")
+        .insert({
+          // Note: Changed from array to single object
+          map_id: mapId,
+          name: newGroupName,
+          color: getRandomColor(),
+          position: [50, 50],
+          dimension: [400, 300],
+        })
+        .select("*") // Changed from .select() to .select('*')
+        .single();
+
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      setParentCategories((prev) => [...prev, data]);
+      setNewGroupName("");
+      setShowGroupDialog(false);
+    } catch (error) {
+      console.error("Error creating parent category:", error);
+      // Add user feedback here (e.g., toast notification)
+    }
+  };
+
+  const assignToGroup = async (groupId: string) => {
+    try {
+      if (!groupId) {
+        console.error("No group ID provided");
+        return;
+      }
+
+      // Get unique card IDs from selected tiles
+      const uniqueCardIds = new Set(
+        Array.from(selectedRows).map((rowIndex) => data[rowIndex].card_id)
+      );
+
+      // Update cards with the new parent_category_id
+      const updatePromises = Array.from(uniqueCardIds).map(async (cardId) => {
+        if (!cardId) return;
+
+        const { error } = await supabase
+          .from("cards")
+          .update({
+            parent_category_id: groupId
+          })
+          .eq("card_id", cardId);
+
+        if (error) throw error;
+      });
+
+      await Promise.all(updatePromises);
+
+      // Refresh data
+      const { data: refreshedData, error } = await supabase
+      .from("tiles")
+      .select(
+        `
+        *,
+        cards (
+          card_id,
+          parent_category_id,
+          tags (
+            name,
+            color
+          )
+        )
+      `)
+      .order("position");
+
+      if (error) throw error;
+      if (refreshedData) {
+        setData(refreshedData);
+      }
+
+      // Clear selection
+      setSelectedRows(new Set());
+    } catch (error) {
+      console.error("Error assigning to group:", error);
+    }
+  };
 
   const getCellContent = React.useCallback(
     ([col, row]: readonly [number, number]) => {
@@ -420,6 +548,29 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               onClick: () => {
                 setSelectedRow(rowData);
               },
+            },
+            onClick: handleCellClick,
+          };
+
+        case "parentCategory":
+          const parentCategory = parentCategories.find(
+            (cat) => cat.category_id === rowData.parent_category_id
+          );
+          return {
+            kind: GridCellKind.Custom,
+            allowOverlay: true,
+            copyData: parentCategory?.name ?? "",
+            data: {
+              kind: "multi-select-cell",
+              values: parentCategory ? [parentCategory.name] : [],
+              options: column.options?.map((opt) => ({
+                value: opt.value,
+                label: opt.label,
+                color: opt.color,
+              })),
+              allowDuplicates: false,
+              allowCreation: false,
+              isMulti: false,
             },
             onClick: handleCellClick,
           };
@@ -591,12 +742,64 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         newValue.kind === GridCellKind.Custom
       ) {
         const selectedValue = newValue.data.values[0];
-
         const existingOption = column.options?.find(
           (opt: any) =>
             opt.value === selectedValue || opt.label === selectedValue
         );
 
+        // Handle parent category selection
+        // Inside onCellEdited function, update the parentCategory handling block:
+        if (column.id === "parentCategory") {
+          try {
+            if (existingOption) {
+              // Update the card instead of the tile
+              const { error: cardError } = await supabase
+                .from("cards")
+                .update({
+                  parent_category_id: existingOption.value,
+                })
+                .eq("card_id", rowData.card_id);
+
+              if (cardError) throw cardError;
+
+              setData((prevData) =>
+                prevData.map((item) =>
+                  item.id === rowData.id
+                    ? {
+                        ...item,
+                        parentCategory: {
+                          value: existingOption.value,
+                          label: existingOption.label,
+                          color: existingOption.color,
+                        },
+                      }
+                    : item
+                )
+              );
+            } else {
+              // Clear parent category
+              const { error: cardError } = await supabase
+                .from("cards")
+                .update({ parent_category_id: null })
+                .eq("card_id", rowData.card_id);
+
+              if (cardError) throw cardError;
+
+              setData((prevData) =>
+                prevData.map((item) =>
+                  item.id === rowData.id
+                    ? { ...item, parentCategory: null }
+                    : item
+                )
+              );
+            }
+          } catch (error) {
+            console.error("Error updating parent category:", error);
+            throw error;
+          }
+          return;
+        }
+        // Handle regular category selection
         if (existingOption) {
           try {
             // First, fetch the card that corresponds to this tag
@@ -624,7 +827,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   ? {
                       ...item,
                       category: {
-                        value: cardData.card_id, // Use card_id for the value
+                        value: cardData.card_id,
                         label: existingOption.label,
                         color: existingOption.color,
                       },
@@ -675,8 +878,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                       ...item,
                       category: {
                         value: cardData.card_id,
-                        label: selectedValue, // Use the new tag name
-                        color: randomColor, // Use the new tag color
+                        label: selectedValue,
+                        color: randomColor,
                       },
                       card_id: cardData.card_id,
                       tag_id: result.tag.tag_id,
@@ -706,7 +909,6 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     },
     [columns, data, updateRow, mapId, refreshTags, setData]
   );
-
   const onRowMoved = useCallback(
     async (from: number, to: number) => {
       // If sorting is active, show warning
@@ -1021,49 +1223,209 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     console.log("Header menu clicked for column:", column);
   };
 
+  function setNewGroupColor(color: string): void {
+   
+    
+  }
+
+  const handleSortWarningResponse = (proceed: boolean) => {
+    setShowSortWarning(false);
+    
+    if (proceed) {
+      // If proceeding with sort, apply the pending sort
+      if (pendingSortConfig.column) {
+        handleSort(pendingSortConfig.column, pendingSortConfig.direction);
+      }
+    } else {
+      // If not proceeding, clear sort config and restore original order
+      setSortConfig({
+        column: null,
+        direction: null,
+        originalOrder: null,
+      });
+      setActiveSort({
+        column: null,
+        direction: null,
+      });
+    }
+    
+    // Clear pending configurations
+    setPendingSortConfig({ column: null, direction: null });
+    setPendingReorder(null);
+  };
+
+  const resetSort = () => {
+    setSortConfig({
+      column: null,
+      direction: null,
+      originalOrder: null,
+    });
+    setActiveSort({
+      column: null,
+      direction: null,
+    });
+  };
+
+  // Alert Dialog for confirming sort action
+  const SortWarningDialog = () => (
+    <AlertDialog open={showSortWarning} onOpenChange={setShowSortWarning}>
+      <AlertDialogContent>
+        <DialogHeader>
+          <DialogTitle>Warning: Manual Order Will Be Lost</DialogTitle>
+          <DialogDescription>
+            Sorting will remove any manual ordering you've done. Do you want to proceed?
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex justify-end gap-3 mt-4">
+          <Button variant="outline" onClick={() => handleSortWarningResponse(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => handleSortWarningResponse(true)}>
+            Proceed with Sort
+          </Button>
+        </div>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   return (
     <div className="h-screen w-full bg-white">
       <div className="h-full w-full p-4 flex flex-col">
         {/* Toolbar */}
-        <div className="mb-4 flex justify-end items-center gap-2">
-          <div className="flex items-center gap-1">
-            <Button
-              onClick={undo}
-              disabled={!canUndo}
-              size="sm"
-              className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2
-                ${
-                  canUndo
-                    ? "bg-transparent hover:bg-transparent text-gray-700"
-                    : "bg-transparent text-gray-400 cursor-not-allowed"
-                }`}
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo className="h-4 w-4" />
-            </Button>
-            <Button
-              onClick={redo}
-              disabled={!canRedo}
-              size="sm"
-              className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2 text-sm
-                ${
-                  canRedo
-                    ? "bg-transparent hover:bg-transparent text-gray-700"
-                    : "bg-transparent text-gray-400 cursor-not-allowed"
-                }`}
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo className="h-4 w-4" />
-            </Button>
+        <div className="mb-4 flex justify-between items-center">
+          {/* Left side - Group/Category management */}
+          <div className="flex items-center gap-2">
+            {/* Group Assignment Button */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className={`h-8 ${
+                    selectedRows.size === 0
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  disabled={selectedRows.size === 0}
+                >
+                  <FolderOpen className="w-4 h-4 mr-2" />
+                  {selectedRows.size > 0
+                    ? `Move ${selectedRows.size} card${
+                        selectedRows.size > 1 ? "s" : ""
+                      } to group`
+                    : "Move to group"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-2">
+                <div className="space-y-2">
+                  {/* No Group Option */}
+                  <button
+                    onClick={() => assignToGroup(null)}
+                    className="w-full px-2 py-1.5 text-left hover:bg-gray-100 rounded-md text-sm flex items-center gap-2"
+                  >
+                    <div className="w-3 h-3 rounded-full bg-gray-200" />
+                    No Group
+                  </button>
 
+                  <div className="h-px bg-gray-200 my-2" />
+
+                  {/* Existing Groups */}
+                  {parentCategories.map((category) => (
+                    <button
+                      key={category.category_id}
+                      onClick={() => assignToGroup(category.category_id)}
+                      className="w-full px-2 py-1.5 text-left hover:bg-gray-100 rounded-md text-sm flex items-center gap-2 group"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: category.color }}
+                      />
+                      <span className="flex-1">{category.name}</span>
+                      <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+                        {
+                          data.filter(
+                            (row) =>
+                              row.parent_category_id === category.category_id
+                          ).length
+                        }{" "}
+                        cards
+                      </span>
+                    </button>
+                  ))}
+
+                  {/* Create New Group Button */}
+                  <button
+                    onClick={() => setShowGroupDialog(true)}
+                    className="w-full px-2 py-1.5 text-left hover:bg-gray-100 rounded-md text-sm text-blue-600 flex items-center gap-2 mt-2"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    Create New Group
+                  </button>
+                </div>
+              </PopoverContent>
+            </Popover>
+
+            {/* Group Quick Stats */}
+            {selectedRows.size > 0 && (
+              <div className="ml-2 text-sm text-gray-500">
+                {(() => {
+                  const selectedCardIds = new Set(
+                    Array.from(selectedRows).map(
+                      (rowIndex) => data[rowIndex].card_id
+                    )
+                  );
+                  const uniqueCards = selectedCardIds.size;
+                  return `${uniqueCards} unique card${
+                    uniqueCards > 1 ? "s" : ""
+                  } selected`;
+                })()}
+              </div>
+            )}
+          </div>
+
+          {/* Right side - Existing toolbar items */}
+          <div className="flex items-center gap-2">
+            {/* Undo/Redo */}
+            <div className="flex items-center gap-1">
+              <Button
+                onClick={undo}
+                disabled={!canUndo}
+                size="sm"
+                className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2
+          ${
+            canUndo
+              ? "bg-transparent hover:bg-transparent text-gray-700"
+              : "bg-transparent text-gray-400 cursor-not-allowed"
+          }`}
+                title="Undo (Ctrl+Z)"
+              >
+                <Undo className="h-4 w-4" />
+              </Button>
+              <Button
+                onClick={redo}
+                disabled={!canRedo}
+                size="sm"
+                className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2 text-sm
+          ${
+            canRedo
+              ? "bg-transparent hover:bg-transparent text-gray-700"
+              : "bg-transparent text-gray-400 cursor-not-allowed"
+          }`}
+                title="Redo (Ctrl+Y)"
+              >
+                <Redo className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Delete Button */}
             <Button
               onClick={handleDeleteRows}
               className={`px-4 h-8 text-sm rounded transition-colors
-              ${
-                selectedRows.size === 0
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-red-600 text-white hover:bg-red-700"
-              }`}
+        ${
+          selectedRows.size === 0
+            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+            : "bg-red-600 text-white hover:bg-red-700"
+        }`}
               disabled={selectedRows.size === 0 || isLoading}
             >
               {isLoading ? (
@@ -1076,6 +1438,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               )}
             </Button>
 
+            {/* Sort Popover */}
             <Popover open={sortPopoverOpen} onOpenChange={setSortPopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -1093,171 +1456,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[240px] p-0 bg-white border border-gray-200 shadow-lg">
-                <div className="flex items-center justify-between p-2 border-b border-gray-100">
-                  <span className="text-sm font-medium text-gray-900">
-                    Sort by
-                  </span>
-                  <button
-                    onClick={() => setSortPopoverOpen(false)}
-                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-500"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-
-                <div className="p-1.5">
-                  <select
-                    value={pendingSortConfig.column || ""}
-                    onChange={(e) =>
-                      setPendingSortConfig((prev) => ({
-                        ...prev,
-                        column: e.target.value || null,
-                        direction: e.target.value
-                          ? prev.direction || "asc"
-                          : null,
-                      }))
-                    }
-                    className="w-full bg-white text-[13px] text-gray-700 border border-gray-200 rounded-md 
-                      px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-300"
-                  >
-                    <option value="">Select a property</option>
-                    {columns
-                      .filter(
-                        (col) => col.type !== "button" && col.type !== "image"
-                      )
-                      .map((column) => (
-                        <option key={column.id} value={column.id}>
-                          {column.title}
-                        </option>
-                      ))}
-                  </select>
-
-                  {pendingSortConfig.column && (
-                    <div className="mt-1.5 flex gap-1">
-                      <button
-                        onClick={() =>
-                          setPendingSortConfig((prev) => ({
-                            ...prev,
-                            direction: "asc",
-                          }))
-                        }
-                        className={cn(
-                          "flex-1 px-2 py-1 text-[13px] rounded border",
-                          pendingSortConfig.direction === "asc"
-                            ? "bg-gray-100 border-gray-200 text-gray-900 font-medium"
-                            : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                        )}
-                      >
-                        A → Z
-                      </button>
-                      <button
-                        onClick={() =>
-                          setPendingSortConfig((prev) => ({
-                            ...prev,
-                            direction: "desc",
-                          }))
-                        }
-                        className={cn(
-                          "flex-1 px-2 py-1 text-[13px] rounded border",
-                          pendingSortConfig.direction === "desc"
-                            ? "bg-gray-100 border-gray-200 text-gray-900 font-medium"
-                            : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50"
-                        )}
-                      >
-                        Z → A
-                      </button>
-                    </div>
-                  )}
-
-                  {(activeSort.column || pendingSortConfig.column) && (
-                    <button
-                      onClick={() => {
-                        handleSort(null);
-                        setPendingSortConfig({
-                          column: null,
-                          direction: null,
-                        });
-                      }}
-                      className="w-full mt-1.5 py-1 text-[13px] text-red-600 hover:bg-red-50 
-                        rounded border border-transparent hover:border-red-100 transition-colors"
-                    >
-                      Remove sort
-                    </button>
-                  )}
-                </div>
-
-                <div className="p-1.5 border-t border-gray-100">
-                  <Button
-                    onClick={() => {
-                      handleSort(
-                        pendingSortConfig.column!,
-                        pendingSortConfig.direction!
-                      );
-                      setSortPopoverOpen(false);
-                    }}
-                    className="w-full h-7 text-[13px] bg-black text-white rounded-md hover:bg-black/90"
-                  >
-                    Done
-                  </Button>
-                </div>
+                {/* Your existing sort popover content */}
               </PopoverContent>
             </Popover>
 
-            <AlertDialog
-              open={showSortWarning}
-              onOpenChange={setShowSortWarning}
-            >
-              <AlertDialogContent className="bg-white p-4 max-w-[360px] rounded-lg">
-                <div className="text-lg font-medium text-gray-900 mb-2">
-                  Do you want to remove the sorting?
-                </div>
-                <AlertDialogDescription className="text-sm text-gray-600 mb-4">
-                  Removing the sorting will set the current order of rows as the
-                  default.
-                </AlertDialogDescription>
-                <div className="flex justify-end gap-2">
-                  <AlertDialogAction
-                    onClick={() => {
-                      if (pendingReorder) {
-                        setSortConfig({
-                          column: null,
-                          direction: null,
-                          originalOrder: null,
-                        });
-                        reorderRow(pendingReorder.from, pendingReorder.to);
-                        setPendingReorder(null);
-                      } else {
-                        handleSort(
-                          pendingSortConfig.column!,
-                          pendingSortConfig.direction as "asc" | "desc"
-                        );
-                        setSortPopoverOpen(false);
-                      }
-                      setShowSortWarning(false);
-                    }}
-                    className="px-4 py-1.5 bg-white text-red-500 hover:bg-red-50 border border-red-500 rounded-md text-sm"
-                  >
-                    Remove Sorting
-                  </AlertDialogAction>
-                  <AlertDialogCancel
-                    onClick={() => {
-                      setShowSortWarning(false);
-                      setPendingReorder(null);
-                      if (pendingReorder) {
-                        setData([...data]);
-                      }
-                      setPendingSortConfig({
-                        column: null,
-                        direction: null,
-                      });
-                    }}
-                    className="px-4 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 rounded-md text-sm"
-                  >
-                    Go Back
-                  </AlertDialogCancel>
-                </div>
-              </AlertDialogContent>
-            </AlertDialog>
+            {/* Add Item Button */}
             <Button
               onClick={async () => {
                 if (lastClickedRow !== null) {
@@ -1270,6 +1473,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             >
               Add Item
             </Button>
+
+            {/* Search */}
             <div className="relative w-[18rem]">
               <input
                 type="search"
@@ -1299,16 +1504,82 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               )}
             </div>
 
+            {/* Export Button */}
             <Button
               onClick={exportToCsv}
               className="p-2 rounded-md h-8 transition-all duration-200 flex items-center gap-2 text-sm
-              bg-gray-100 hover:bg-gray-200 text-gray-700"
+      bg-gray-100 hover:bg-gray-200 text-gray-700"
               title="Export to CSV"
             >
               <ExportIcon className="w-4 h-8" />
             </Button>
           </div>
         </div>
+        {/* Add this right after your toolbar div */}
+        <Dialog open={showGroupDialog} onOpenChange={setShowGroupDialog}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Create New Group</DialogTitle>
+              <DialogDescription>
+                Create a new group to organize your cards. Cards in the same
+                group will move together.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="name"
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="col-span-3"
+                  placeholder="Enter group name..."
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="color" className="text-right">
+                  Color
+                </Label>
+                <div className="col-span-3 flex gap-2">
+                  {["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#D4A5A5"].map(
+                    (color) => (
+                      <button
+                        key={color}
+                        onClick={() => setNewGroupColor(color)}
+                        className={`w-6 h-6 rounded-full ${
+                          newGroupColor === color
+                            ? "ring-2 ring-offset-2 ring-black"
+                            : ""
+                        }`}
+                        style={{ backgroundColor: color }}
+                      />
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setNewGroupName("");
+                  setNewGroupColor("");
+                  setShowGroupDialog(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={createParentCategory}
+                disabled={!newGroupName.trim() || !newGroupColor}
+              >
+                Create Group
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <div className="flex-1">
           <GridWrapper ref={ref}>
             <DataEditor
@@ -1339,7 +1610,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               isDraggable={true}
               onRowMoved={onRowMoved}
               onColumnResize={onColumnResize}
-              onCellClicked={([col, row]) => {
+              onCellClicked={async ([col, row]) => {
                 console.log("Cell clicked:", { col, row });
                 if (col === -1) {
                   // Row marker clicked
@@ -1385,6 +1656,42 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 console.log("Row data:", rowData);
 
                 // Handle different column types
+                if (
+                  column.type === "multiselect" &&
+                  column.id === "parentCategory"
+                ) {
+                  try {
+                    const cardId = rowData.card_id;
+                    if (!cardId) return;
+
+                    const updates = {
+                      parent_category_id: rowData.parent_category_id || null,
+                    };
+
+                    const { error } = await supabase
+                      .from("cards")
+                      .update(updates)
+                      .eq("card_id", cardId);
+
+                    if (error) throw error;
+
+                    // Update local state
+                    setData((prevData) =>
+                      prevData.map((item) =>
+                        item.card_id === cardId
+                          ? {
+                              ...item,
+                              parent_category_id: updates.parent_category_id,
+                            }
+                          : item
+                      )
+                    );
+                  } catch (error) {
+                    console.error("Error updating parent category:", error);
+                  }
+                  return;
+                }
+
                 if (column.type === "image") {
                   console.log("Image cell clicked, logo value:", rowData?.logo);
                   setSelectedRow({
@@ -1474,6 +1781,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   label: selectedRow.category?.label || "",
                   color: selectedRow.category?.color || "",
                 },
+                parentCategory: selectedRow.parent_category_id
+                  ? {
+                      value: selectedRow.parent_category_id,
+                      label:
+                        parentCategories.find(
+                          (cat) =>
+                            cat.category_id === selectedRow.parent_category_id
+                        )?.name || "",
+                    }
+                  : null,
                 description: selectedRow.description?.markdown || "",
                 descriptionHtml: selectedRow.description?.html || "",
                 logo: selectedRow.logo,

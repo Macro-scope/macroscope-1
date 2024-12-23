@@ -1,10 +1,12 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
+type MapSettingsType = 'none' | 'local' | 'global' | 'parentCategoryLocal';
+
 export const mapSettingsSlice = createSlice({
     name: 'map-settings',
-    initialState: { value: "none" }, //none, local, global 
+    initialState: { value: "none" as MapSettingsType },
     reducers: {
-        setMapSettings: (state, action: PayloadAction<string>) => {
+        setMapSettings: (state, action: PayloadAction<MapSettingsType>) => {
             state.value = action.payload;
         }
     },
@@ -30,6 +32,6 @@ export const handToolSlice = createSlice({
     },
 });
 
-export const { setMapSettings } = mapSettingsSlice.actions
-export const { setMapSize } = mapSizeSlice.actions
-export const { setHandTool } = handToolSlice.actions
+export const { setMapSettings } = mapSettingsSlice.actions;
+export const { setMapSize } = mapSizeSlice.actions;
+export const { setHandTool } = handToolSlice.actions;

@@ -42,6 +42,15 @@ interface FormData {
     label: string;
     color: string;
   };
+
+  parentCategory: {
+
+    value: string;
+
+    label: string;
+
+  } | null;
+
   description: string;
   last_updated: string;
 }
@@ -76,7 +85,8 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     logo: data.logo || "",
     category: data.category || { value: "", label: "", color: "" },
     description: data.description || "",
-    last_updated: data.last_updated || new Date().toISOString()
+    last_updated: data.last_updated || new Date().toISOString(),
+    parentCategory: data.parentCategory || null
   });
 
   const { updateRow } = useTableData({ mapId });

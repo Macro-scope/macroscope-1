@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback, useEffect } from 'react';
 import { GridColumn, GridColumnIcon } from '@glideapps/glide-data-grid';
 import { supabase } from '../lib/supabaseClient';
@@ -15,7 +14,9 @@ export type ColumnType =
   | 'url'
   | 'image'
   | 'button'
-  | 'uri' | 'article';
+  | 'uri'
+  | 'article'
+  | 'parentCategory';
 
 export interface CustomGridColumn extends Omit<GridColumn, 'id'> {
   title: string;
@@ -30,8 +31,36 @@ export const useTableColumns = (mapId?: string) => {
   const [tagOptions, setTagOptions] = useState<
     { value: string; label: string; color?: string }[]
   >([]);
+  
+  // Add state for parent category options
+  const [parentCategoryOptions, setParentCategoryOptions] = useState<
+    { value: string; label: string; color?: string }[]
+  >([]);
 
-  //  base columns as a function to always get fresh tagOptions
+  // Add function to fetch parent categories
+  const fetchParentCategories = useCallback(async () => {
+    if (!mapId) return;
+
+    const { data, error } = await supabase
+      .from('parent_categories')
+      .select('category_id, name, color')
+      .eq('map_id', mapId);
+
+    if (error) {
+      console.error('Error fetching parent categories:', error);
+      return;
+    }
+
+    const formattedCategories = data.map((category) => ({
+      value: category.category_id,
+      label: category.name,
+      color: category.color,
+    }));
+
+    setParentCategoryOptions(formattedCategories);
+  }, [mapId]);
+
+  // Modified base columns to include parent category
   const getBaseColumns = useCallback((): CustomGridColumn[] => [
     {
       id: 'name',
@@ -41,7 +70,6 @@ export const useTableColumns = (mapId?: string) => {
       width: 150,
       hasMenu: true,
       menuIcon: GridColumnIcon.HeaderSplitString,
-      
     },
     { id: 'url', title: 'URL', type: 'uri', icon: GridColumnIcon.HeaderUri },
     {
@@ -60,6 +88,14 @@ export const useTableColumns = (mapId?: string) => {
       options: tagOptions,
     },
     {
+      id: 'parentCategory',
+      title: 'Parent Group',
+      type: 'multiselect',
+      icon: GridColumnIcon.HeaderString,
+      width: 150,
+      options: parentCategoryOptions,
+    },
+    {
       id: 'hidden',
       title: 'Hidden',
       type: 'boolean',
@@ -69,11 +105,10 @@ export const useTableColumns = (mapId?: string) => {
     {
       id: 'description',
       title: 'Description',
-      type: 'article', 
+      type: 'article',
       icon: GridColumnIcon.HeaderMarkdown,
-      width: 200, 
+      width: 200,
       onClick: true,
-    
     },
     {
       id: 'last_updated',
@@ -89,15 +124,15 @@ export const useTableColumns = (mapId?: string) => {
       icon: GridColumnIcon.HeaderEmoji,
       width: 100,
     },
-  ], [tagOptions]); // Add tagOptions as dependency
+  ], [tagOptions, parentCategoryOptions]); // Add parentCategoryOptions as dependency
 
   // Initialize columns state
   const [columns, setColumns] = useState<CustomGridColumn[]>(getBaseColumns());
 
-  // Update columns when tagOptions changes
+  // Update columns when options change
   useEffect(() => {
     setColumns(getBaseColumns());
-  }, [tagOptions, getBaseColumns]);
+  }, [tagOptions, parentCategoryOptions, getBaseColumns]);
 
   // Fetch tags from Supabase
   const fetchTags = useCallback(async () => {
@@ -122,9 +157,11 @@ export const useTableColumns = (mapId?: string) => {
     setTagOptions(formattedTags);
   }, [mapId]);
 
+  // Fetch both tags and parent categories
   useEffect(() => {
     fetchTags();
-  }, [fetchTags]);
+    fetchParentCategories();
+  }, [fetchTags, fetchParentCategories]);
 
   const [newColumnName, setNewColumnName] = useState('');
   const [newColumnType, setNewColumnType] = useState<ColumnType>('text');
@@ -152,6 +189,7 @@ export const useTableColumns = (mapId?: string) => {
     newColumnType,
     setNewColumnType,
     addColumn,
-    refreshTags: fetchTags, 
+    refreshTags: fetchTags,
+    refreshParentCategories: fetchParentCategories, // Add this to allow refreshing parent categories
   };
 };

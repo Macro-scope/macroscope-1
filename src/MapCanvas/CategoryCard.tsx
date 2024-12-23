@@ -168,19 +168,35 @@ const ResizableNode: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const getTileInfo = async (tileId: string) => {
-      const { data } = await supabase
-        .from("tiles")
-        .select()
-        .eq("tile_id", tileId)
-        .single();
-
-      setTile(data);
-      console.log(data);
+      // Add validation to prevent empty tile_id requests
+      if (!tileId) {
+        console.log("No tile ID provided");
+        return;
+      }
+  
+      try {
+        const { data, error } = await supabase
+          .from("tiles")
+          .select()
+          .eq("tile_id", tileId)
+          .single();
+  
+        if (error) {
+          console.error("Error fetching tile:", error);
+          return;
+        }
+  
+        setTile(data);
+      } catch (error) {
+        console.error("Error in getTileInfo:", error);
+      }
     };
-
-    getTileInfo(tileId);
+  
+    // Only call getTileInfo if tileId exists
+    if (tileId) {
+      getTileInfo(tileId);
+    }
   }, [tileId]);
-
   return (
     <>
       {props.isViewer ? (
@@ -217,6 +233,10 @@ const ResizableNode: React.FC<Props> = (props) => {
                   value: tile?.tag_id || "",
                   label: tile?.tags?.name || "",
                   color: tile?.tags?.color || "",
+                },
+                parentCategory: {
+                  value: tile?.parent_tag_id || "",
+                  label: tile?.parent_tag_name || "",
                 },
                 description: tile?.description_markdown || "",
                 descriptionHtml: tile?.description || "",
