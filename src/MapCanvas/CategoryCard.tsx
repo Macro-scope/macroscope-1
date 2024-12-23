@@ -1,46 +1,25 @@
 "use client";
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Drawer, DrawerProps } from "antd";
+import { Drawer } from "antd";
 import TileInfoDrawer from "./TileInfoDrawer";
 import { useParams } from "next/navigation";
 import { setHandTool, setMapSettings } from "@/redux/mapSettingsSlice";
 import { setLocalCard, setLocalSettings } from "@/redux/localSettingsSlice";
+import { setTileData } from "@/redux/tileSettingsSlice"; 
 import { populateCardLocalSettings } from "@/hooks/populateCardLocalSettings";
 import { supabase } from "@/lib/supabaseClient";
 import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
 import debounce from "lodash/debounce";
 import TileImage from "./TileImage";
-import TileEditDrawer from "@/MapCanvas/TileEditDrawer";
-import EditItemForm from "@/components/forms/database-form";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Settings2 } from "lucide-react";
 import Image from "next/image";
 import CategoryDescription from "@/components/ui/description";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-
-type Props = {
-  tagId: string;
-  settings: any;
-  tiles: string[];
-  tagName: string;
-  description?: string; // Add this line
-  isViewer?: boolean;
-  cardId: string;
-  handleDynamicSizeChange?: (
-    size: { width: number; height: number },
-    cardId: string
-  ) => void;
-  isDoubleClick?: boolean;
-};
-
-const ResizableNode: React.FC<Props> = (props) => {
+const ResizableNode = (props) => {
   const { title, group, tileStyle } = useSelector((state: any) => ({
     title: state.globalSettings.title,
     group: state.globalSettings.group,
@@ -48,10 +27,9 @@ const ResizableNode: React.FC<Props> = (props) => {
   }));
 
   const dispatch = useDispatch();
-  const [open, setOpen] = useState(false);
-  const [placement] = useState<DrawerProps["placement"]>("right");
-  const [tileId, setTileId] = useState("");
   const resizableRef = useRef<HTMLDivElement>(null);
+  let { id: mapId } = useParams();
+  mapId = String(mapId);
 
   const openLocalSettings = async () => {
     dispatch(setMapSettings("local"));
@@ -60,9 +38,8 @@ const ResizableNode: React.FC<Props> = (props) => {
     dispatch(setLocalSettings(cardSettings));
   };
 
-  const showDrawer = async (tileId: string, name: string) => {
+  const showTileSettings = async (tileId: string, name: string) => {
     try {
-      setTileId(tileId);
       const signupButton = document.getElementById("signup-button");
       if (signupButton) {
         signupButton.setAttribute("data-umami-event", name);
@@ -71,45 +48,38 @@ const ResizableNode: React.FC<Props> = (props) => {
 
       const { data, error } = await supabase
         .from("tiles")
-        .select(
-          `
-          *,
-          tags (
-            tag_id,
-            name,
-            color
-          )
-        `
-        )
+        .select(`*, tags (tag_id, name, color)`)
         .eq("tile_id", tileId)
         .single();
 
       if (error) throw error;
 
-      const transformedData = {
-        ...data,
+      const tileData = {
+        tile_id: data.tile_id,
+        name: data.name,
+        url: data.url,
         category: {
           value: data.tag_id,
           label: data.tags?.name || "",
           color: data.tags?.color || "",
         },
+        parentCategory: {
+          value: data.parent_tag_id,
+          label: data.parent_tag_name,
+        },
+        description: data.description_markdown,
+        descriptionHtml: data.description,
+        logo: data.logo,
+        last_updated: data.updated_at,
       };
 
-      setTile(transformedData);
-      setOpen(true);
+      dispatch(setTileData(tileData));
+      dispatch(setMapSettings("tile"));
 
-      console.log("Fetched tile data:", transformedData);
     } catch (error) {
       console.error("Error fetching tile data:", error);
     }
   };
-
-  const onClose = () => {
-    setOpen(false);
-  };
-
-  let { id: mapId } = useParams();
-  mapId = String(mapId);
 
   const updateCardSize = async (width: number, height: number) => {
     await supabase
@@ -120,10 +90,9 @@ const ResizableNode: React.FC<Props> = (props) => {
 
     if (mapId) {
       try {
-        const data: any = await getMapData(mapId!);
+        const data: any = await getMapData(mapId);
         if (data) {
           dispatch(setCards(data.cards));
-          console.log(data);
         }
       } catch (error) {
         console.error("Fetching error:", error);
@@ -131,25 +100,21 @@ const ResizableNode: React.FC<Props> = (props) => {
     }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedResizeStop = useCallback(
     debounce((size: { width: number; height: number }) => {
-      // console.log("Resize stopped. Final size:", size);
-
-      if (typeof size.width === "number" && typeof size.height === "number")
-        if (size.width !== 0 && size.height !== 0)
+      if (typeof size.width === "number" && typeof size.height === "number") {
+        if (size.width !== 0 && size.height !== 0) {
           updateCardSize(size.width, size.height);
+        }
+      }
     }, 2000),
     []
   );
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
-        console.log("Div width:", width);
-        console.log("Div height:", height);
         debouncedResizeStop({ width, height });
 
         if (props.handleDynamicSizeChange) {
@@ -161,178 +126,29 @@ const ResizableNode: React.FC<Props> = (props) => {
     if (resizableRef.current) {
       resizeObserver.observe(resizableRef.current);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     return () => {
       if (resizableRef.current) {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         resizeObserver.unobserve(resizableRef.current);
       }
       debouncedResizeStop.cancel();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedResizeStop]);
+  }, [debouncedResizeStop, props]);
 
-  const [tile, setTile] = useState<any>();
-
-  useEffect(() => {
-    const getTileInfo = async (tileId: string) => {
-      // Add validation to prevent empty tile_id requests
-      if (!tileId) {
-        console.log("No tile ID provided");
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from("tiles")
-          .select()
-          .eq("tile_id", tileId)
-          .single();
-
-        if (error) {
-          console.error("Error fetching tile:", error);
-          return;
-        }
-
-        setTile(data);
-      } catch (error) {
-        console.error("Error in getTileInfo:", error);
-      }
-    };
-
-    // Only call getTileInfo if tileId exists
-    if (tileId) {
-      getTileInfo(tileId);
-    }
-  }, [tileId]);
   return (
     <>
-      {props.isViewer ? (
+      {props.isViewer && (
         <Drawer
           title="More info"
-          placement={placement}
-          onClose={onClose}
-          open={open}
-          key={placement}
+          placement="right"
+          onClose={() => dispatch(setMapSettings("none"))}
+          open={false}
           width={500}
         >
-          <TileInfoDrawer tileId={tileId} />
+          <TileInfoDrawer tileId={props.tileId} />
         </Drawer>
-      ) : (
-        // <Drawer
-        //   title="Edit Tile Info"
-        //   placement={placement}
-        //   closable={false}
-        //   onClose={onClose}
-        //   closeIcon
-        //   open={open}
-        //   key={placement}
-        //   width={640}
-        // >
-        <Sheet open={open} onOpenChange={() => setOpen(false)}>
-          <SheetContent className="z-[99]" onWheel={(e) => e.stopPropagation()}>
-            <EditItemForm
-              mapId={mapId}
-              data={{
-                tile_id: tile?.tile_id || "",
-                name: tile?.name || "",
-                url: tile?.url || "",
-                category: {
-                  value: tile?.tag_id || "",
-                  label: tile?.tags?.name || "",
-                  color: tile?.tags?.color || "",
-                },
-                parentCategory: {
-                  value: tile?.parent_tag_id || "",
-                  label: tile?.parent_tag_name || "",
-                },
-                description: tile?.description_markdown || "",
-                descriptionHtml: tile?.description || "",
-                logo: tile?.logo || "",
-                last_updated: tile?.updated_at || new Date().toISOString(),
-              }}
-              onSave={async (updatedData: any) => {
-                try {
-                  // Update the tile data
-                  const { data: updatedTile, error: updateError } =
-                    await supabase
-                      .from("tiles")
-                      .update({
-                        name: updatedData.name,
-                        url: updatedData.url,
-                        logo: updatedData.logo,
-                        description_markdown: updatedData.description,
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq("tile_id", tileId)
-                      .select()
-                      .single();
-
-                  if (updateError) throw updateError;
-
-                  // If category (tag) is being changed
-                  if (updatedData.tag_id) {
-                    // Check if a card already exists for this tag in this map
-                    const { data: existingCard, error: cardError } =
-                      await supabase
-                        .from("cards")
-                        .select("card_id")
-                        .eq("tag_id", updatedData.tag_id)
-                        .eq("map_id", mapId)
-                        .single();
-
-                    let cardId;
-
-                    if (cardError) {
-                      // Create new card if none exists
-                      const { data: newCard, error: createError } =
-                        await supabase
-                          .from("cards")
-                          .insert({
-                            map_id: mapId,
-                            tag_id: updatedData.tag_id,
-                          })
-                          .select("card_id")
-                          .single();
-
-                      if (createError) throw createError;
-                      cardId = newCard.card_id;
-                    } else {
-                      cardId = existingCard.card_id;
-                    }
-
-                    // Update the tile with the new tag_id and card_id
-                    const { error: tileUpdateError } = await supabase
-                      .from("tiles")
-                      .update({
-                        tag_id: updatedData.tag_id,
-                        card_id: cardId,
-                      })
-                      .eq("tile_id", tileId);
-
-                    if (tileUpdateError) throw tileUpdateError;
-                  }
-
-                  // Refresh map data
-                  if (mapId) {
-                    const mapData: any = await getMapData(mapId);
-                    if (mapData) {
-                      dispatch(setCards(mapData.cards));
-                    }
-                  }
-
-                  setOpen(false);
-                } catch (error) {
-                  console.error("Error updating tile:", error);
-                }
-              }}
-              onCancel={() => setOpen(false)}
-            />
-          </SheetContent>
-          {/* <TileEditDrawer tileId={tileId} /> */}
-        </Sheet>
-        // </Drawer>
       )}
+
       <div
         ref={resizableRef}
         className="group relative min-w-[200px] h-full"
@@ -343,9 +159,7 @@ const ResizableNode: React.FC<Props> = (props) => {
           height: "100%",
         }}
       >
-        {props.isViewer ? (
-          <></>
-        ) : (
+        {!props.isViewer && (
           <>
             <button
               onClick={openLocalSettings}
@@ -365,6 +179,8 @@ const ResizableNode: React.FC<Props> = (props) => {
             </div>
           </>
         )}
+
+        {/* Category Card Content */}
         <div
           className="p-2 relative h-full"
           style={{
@@ -377,17 +193,14 @@ const ResizableNode: React.FC<Props> = (props) => {
           }}
         >
           <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
-            {" "}
             <CategoryDescription
-              description={
-                props.description ||
-                "This category contains resources related to AI platforms and tools."
-              }
+              description={props.description || "This category contains resources related to AI platforms and tools."}
               maxLines={2}
               className="text-sm text-gray-600"
             />
           </div>
 
+          {/* Category Title */}
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
               title.alignment === "center"
@@ -414,7 +227,7 @@ const ResizableNode: React.FC<Props> = (props) => {
               fontWeight: title.bold ? "bold" : "normal",
               fontStyle: title.italic ? "italic" : "normal",
               textDecoration: title.underline ? "underline" : "none",
-              minWidth: "120px", // Added minimum width
+              minWidth: "120px",
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
@@ -422,10 +235,8 @@ const ResizableNode: React.FC<Props> = (props) => {
             </div>
           </div>
 
-          <div
-            className={`flex flex-wrap gap-2 p-5 rounded-md`}
-            style={{ zIndex: 1000 }}
-          >
+          {/* Tiles */}
+          <div className="flex flex-wrap gap-2 p-5 rounded-md" style={{ zIndex: 1000 }}>
             {props.tiles
               .slice()
               .sort((a: any, b: any) => a.position - b.position)
@@ -437,14 +248,14 @@ const ResizableNode: React.FC<Props> = (props) => {
                         onDoubleClick={(e) => {
                           if (props.isDoubleClick) {
                             e.stopPropagation();
-                            showDrawer(tile.tile_id, tile.name);
+                            showTileSettings(tile.tile_id, tile.name);
                             dispatch(setHandTool(false));
                           }
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!props.isDoubleClick) {
-                            showDrawer(tile.tile_id, tile.name);
+                            showTileSettings(tile.tile_id, tile.name);
                           }
                           dispatch(setHandTool(false));
                         }}

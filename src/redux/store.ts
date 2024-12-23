@@ -18,6 +18,7 @@ import {
   localParentCategoryIdSlice,
   localParentCategorySettingsSlice,
 } from "./localParentCategorySlice";
+import tileSettingsReducer from "./tileSettingsSlice"; // Changed import
 
 export const store = configureStore({
   reducer: {
@@ -36,5 +37,9 @@ export const store = configureStore({
     canvasSize: canvasSizeSlice.reducer,
     localParentCategoryId: localParentCategoryIdSlice.reducer,
     localParentCategorySettings: localParentCategorySettingsSlice.reducer,
+    tileSettings: tileSettingsReducer, // Changed reducer name
   },
 });
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;

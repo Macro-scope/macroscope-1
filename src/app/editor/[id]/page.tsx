@@ -3,6 +3,7 @@
 import GlobalSettings from "@/components/MapSettings/GlobalSettings";
 import LocalSettings from "@/components/MapSettings/LocalSettings";
 import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
+import TileSettings from "@/components/MapSettings/TileSettings";
 import ToolsMenu from "@/components/MapSettings/ToolsMenu";
 import CustomLayout from "@/layout/CustomLayout";
 import { supabase } from "@/lib/supabaseClient";
@@ -13,12 +14,13 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 
 const EditorMain = () => {
-  const { mapSettings, user } = useSelector((state: any) => ({
+  const { mapSettings, tileData } = useSelector((state: any) => ({
     mapSettings: state.mapSettings.value,
-    user: state.user.value,
+    tileData: state.tileSettings?.data // Add this to your Redux state
   }));
 
-  const { id: mapId } = useParams();
+  const { id } = useParams();
+  const mapId = Array.isArray(id) ? id[0] : id;
   const [mapOwner, setMapOwner] = useState();
 
   const router = useRouter();
@@ -37,14 +39,13 @@ const EditorMain = () => {
   }, [mapId]);
 
   const renderSettingsWindow = () => {
-    // console.log('Current mapSettings:', mapSettings); // Debug log
-
     if (mapSettings === "none") return null;
 
     const settingComponents = {
       local: <LocalSettings />,
       global: <GlobalSettings />,
-      parentCategoryLocal: <ParentCategoryLocalSettings />
+      parentCategoryLocal: <ParentCategoryLocalSettings />,
+      tile: <TileSettings mapId={mapId} tileData={tileData} />
     };
 
     const SettingComponent = settingComponents[mapSettings];
