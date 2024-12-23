@@ -19,6 +19,12 @@ import { Settings2 } from "lucide-react";
 import Image from "next/image";
 import CategoryDescription from "@/components/ui/description";
 
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+
 type Props = {
   tagId: string;
   settings: any;
@@ -425,40 +431,59 @@ const ResizableNode: React.FC<Props> = (props) => {
               .sort((a: any, b: any) => a.position - b.position)
               .map((tile: any, index) =>
                 props.tagId == tile.tag_id && !tile.hidden ? (
-                  <div
-                    onDoubleClick={(e) => {
-                      if (props.isDoubleClick) {
-                        e.stopPropagation();
-                        showDrawer(tile.tile_id, tile.name);
-                        dispatch(setHandTool(false));
-                      }
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (!props.isDoubleClick) {
-                        showDrawer(tile.tile_id, tile.name);
-                      }
-                      dispatch(setHandTool(false));
-                    }}
-                    key={index}
-                    className="bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer"
-                    style={{
-                      border: `${tileStyle.borderWeight} solid ${props.settings.tile.borderColor}`,
-                      background: `${props.settings.tile.fillColor}`,
-                      borderRadius: `${tileStyle.corner}`,
-                    }}
-                  >
-                    <div className="h-7 w-7 flex items-center">
-                      <TileImage
-                        imageUrl={
-                          tile.logo
-                            ? tile.logo
-                            : `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
-                        }
-                      />
-                    </div>
-                    <p className="m-0 min-h-full">{tile.name}</p>
-                  </div>
+                  <HoverCard key={index} openDelay={0} closeDelay={0}>
+                    <HoverCardTrigger>
+                      <div
+                        onDoubleClick={(e) => {
+                          if (props.isDoubleClick) {
+                            e.stopPropagation();
+                            showDrawer(tile.tile_id, tile.name);
+                            dispatch(setHandTool(false));
+                          }
+                        }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!props.isDoubleClick) {
+                            showDrawer(tile.tile_id, tile.name);
+                          }
+                          dispatch(setHandTool(false));
+                        }}
+                        className="bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer"
+                        style={{
+                          border: `${tileStyle.borderWeight} solid ${props.settings.tile.borderColor}`,
+                          background: `${props.settings.tile.fillColor}`,
+                          borderRadius: `${tileStyle.corner}`,
+                        }}
+                      >
+                        <div className="h-7 w-7 flex items-center">
+                          <TileImage
+                            imageUrl={
+                              tile.logo
+                                ? tile.logo
+                                : `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
+                            }
+                          />
+                        </div>
+                        <p className="m-0 min-h-full">{tile.name}</p>
+                      </div>
+                    </HoverCardTrigger>
+                    <HoverCardContent
+                      className="w-80 bg-white rounded-lg shadow-lg p-4"
+                      sideOffset={5}
+                      align="start"
+                    >
+                      <div className="absolute -top-2 left-5 w-4 h-4 bg-white rotate-45 transform -translate-x-1/2 border-t border-l border-gray-200" />
+                      <div className="relative z-10">
+                        <h4 className="text-base font-semibold mb-2">
+                          {tile.name}
+                        </h4>
+                        <p className="text-sm text-gray-600">
+                          {tile.description_markdown ||
+                            "Platform for Multi AI Agents System for complex task execution."}
+                        </p>
+                      </div>
+                    </HoverCardContent>
+                  </HoverCard>
                 ) : null
               )}
           </div>

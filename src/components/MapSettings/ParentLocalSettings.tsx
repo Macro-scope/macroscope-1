@@ -136,13 +136,14 @@ const ParentCategoryLocalSettings = () => {
             </div>
           </div>
 
-          <Separator className="border-1" />
+          {/* <Separator className="border-1" /> */}
 
           {/* Title Styles */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm">Title Styles</h3>
-            </div>
+            </div> */}
+
             {/* <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Border Color</span>
               <ColorPicker
@@ -151,7 +152,7 @@ const ParentCategoryLocalSettings = () => {
                 onChange={(color) => handleColorChange('title', 'borderColor', color)}
               />
             </div> */}
-            <div className="flex items-center justify-between">
+            {/* <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Fill Color</span>
               <ColorPicker
                 showText
@@ -159,7 +160,7 @@ const ParentCategoryLocalSettings = () => {
                 onChange={(color) => handleColorChange('title', 'fillColor', color)}
               />
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2 bg-white">

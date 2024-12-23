@@ -235,6 +235,7 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
           }}
         >
           {/* Title */}
+
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
               (localSettings?.title?.alignment || title.alignment) === "center"
@@ -247,10 +248,15 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
             style={{
               color:
                 localSettings?.title?.fontColor ||
-                title.fontColor === "default",
+                (title.fontColor === "default"
+                  ? localSettings?.container?.borderColor
+                  : title.fontColor),
               borderRadius:
                 localSettings?.title?.corner || title.corner || "8px",
-              background: localSettings?.title?.fillColor || "white",
+              background:
+                title.border === "fill"
+                  ? "white"
+                  : localSettings?.container?.fillColor,
               border: `${
                 localSettings?.title?.borderWeight ||
                 title.borderWeight ||
@@ -270,7 +276,6 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
               <p className="m-0">{props.name || "Parent Category"}</p>
             </div>
           </div>
-
           {/* Content area with conditional description and padding */}
           <div className={`flex flex-col flex-grow pt-6 px-4 pb-3`}>
             {" "}
@@ -278,7 +283,6 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
             {description && (
               <div className="min-h-[40px] mb-4">
                 {" "}
-                
                 {/* Increased bottom margin */}
                 <CategoryDescription
                   description={description}
@@ -296,8 +300,7 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
             >
               {props.children}
             </div>
-          </div>  
-      
+          </div>
         </div>
       </div>
     </Rnd>
