@@ -660,16 +660,14 @@ export default function PannableCanvas() {
           transformOrigin: "0 0",
         }}
       >
-        <a
+        {/* <a
           className="relative flex justify-center items-center bottom-3 right-24 h-8 mt-[97vh]"
           style={{ zIndex: "2000" }}
           href="https://macroscope.so"
           target="_blank"
         >
-          {/* Made with{" "} */}
           <img src="/branding.svg" alt="Macroscope" className="ml-2 mr-1 h-7" />
-          {/* <span className="font-semibold">Macroscope</span> */}
-        </a>
+        </a> */}
         <canvas
           ref={canvasRef}
           width={canvasWidth}
@@ -834,6 +832,7 @@ export default function PannableCanvas() {
                 settings={card.settings}
                 tiles={card.tiles}
                 tagName={card.name}
+                tagNameLen={card.name.length}
                 cardId={card.card_id}
                 isDoubleClick={false}
               />

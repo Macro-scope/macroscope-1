@@ -30,6 +30,7 @@ type Props = {
     cardId: string
   ) => void;
   isDoubleClick?: boolean;
+  tagNameLen: number;
 };
 
 const ResizableNode: React.FC<Props> = (props) => {
@@ -173,30 +174,50 @@ const ResizableNode: React.FC<Props> = (props) => {
         console.log("No tile ID provided");
         return;
       }
-  
+
       try {
         const { data, error } = await supabase
           .from("tiles")
           .select()
           .eq("tile_id", tileId)
           .single();
-  
+
         if (error) {
           console.error("Error fetching tile:", error);
           return;
         }
-  
+
         setTile(data);
       } catch (error) {
         console.error("Error in getTileInfo:", error);
       }
     };
-  
+
     // Only call getTileInfo if tileId exists
     if (tileId) {
       getTileInfo(tileId);
     }
   }, [tileId]);
+
+  const [width, setWidth] = useState(100);
+  const textRef = useRef(null);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) {
+      const canvas = document.createElement("canvas");
+      canvasRef.current = canvas.getContext("2d");
+    }
+
+    const ctx = canvasRef.current;
+    ctx.font = "16px Arial"; // Match the font style of the tag
+    const textWidth = ctx.measureText(props.tagName).width;
+    const capitalLettersCount = (props.tagName.match(/[A-Z]/g) || []).length;
+
+    // Calculate width: base text width + extra for capital letters
+    setWidth(textWidth + capitalLettersCount * 2);
+  }, [props.tagName]);
+
   return (
     <>
       {props.isViewer ? (
@@ -327,7 +348,7 @@ const ResizableNode: React.FC<Props> = (props) => {
       )}
       <div
         ref={resizableRef}
-        className="group relative min-w-[200px] h-full"
+        className="group relative min-w-[220px] h-full"
         onDoubleClick={openLocalSettings}
         style={{
           borderRadius: `${group.corner}`,
@@ -369,7 +390,7 @@ const ResizableNode: React.FC<Props> = (props) => {
           }}
         >
           <div
-            className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
+            className={`font-semibold absolute flex justify-center items-center -top-5 text-center px-2 w-fit  ${
               title.alignment === "center"
                 ? "left-[50%] transform -translate-x-1/2"
                 : title.alignment === "right"
@@ -377,6 +398,13 @@ const ResizableNode: React.FC<Props> = (props) => {
                 : "left-2"
             }`}
             style={{
+              // width: `${Math.max(props?.tagName?.length * 12 + props?.tagName.split(' ').length * 5, 60)}px`,
+              // width: 100,
+              // width: `${props.tagNameLen < 10 ? props.tagNameLen * 15: props.tagNameLen*8}px`,
+              // width: `${Math.max(
+              //   props.tagNameLen * (props.tagNameLen < 10 ? 15 : 8),
+              //   60
+              // )}px`,
               color: `${
                 title.fontColor === "default"
                   ? props.settings.group.borderColor
@@ -394,11 +422,36 @@ const ResizableNode: React.FC<Props> = (props) => {
               fontWeight: title.bold ? "bold" : "normal",
               fontStyle: title.italic ? "italic" : "normal",
               textDecoration: title.underline ? "underline" : "none",
-              minWidth: "120px", // Added minimum width
+              // minWidth: "120px", // Added minimum width
             }}
           >
-            <div className="w-full h-full flex justify-center items-center">
-              <p className="">{props.tagName || "Default"}</p>
+            <div
+              className="w-fit h-full flex justify-center items-center"
+              style={{
+                width: `${width}px`,
+                }}
+            >
+              {/* <p className="">{props.tagName || "Default"}</p> */}
+              <svg
+                // ref={svgRef}
+                width="100%"
+                height="30"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <text
+                  // ref={textRef}
+                  x="2"
+                  y="20"
+                  fill={`${
+                    title.fontColor === "default"
+                      ? props.settings.group.borderColor
+                      : title.fontColor
+                  }`}
+                  className="text-center"
+                >
+                  {props.tagName || "Default"}
+                </text>
+              </svg>
             </div>
           </div>
 
@@ -434,23 +487,47 @@ const ResizableNode: React.FC<Props> = (props) => {
                       borderRadius: `${tileStyle.corner}`,
                     }}
                   >
-                    <div className="h-7 w-7 flex items-center">
-                      <TileImage
+                    {/* <div className="h-7 w-7 flex items-center"> */}
+                    {/* <TileImage
                         imageUrl={
                           tile.logo
                             ? tile.logo
                             : `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
                         }
+                      /> */}
+                    <div>
+                      <img
+                        src={
+                          tile.logo
+                            ? tile.logo
+                            : `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
+                        }
+                        alt="Logo"
+                        className="h-7 w-7 rounded-sm"
                       />
                     </div>
-                    <p
+                    {/* </div> */}
+                    <svg
+                      // ref={svgRef}
+                      width="100"
+                      height="30"
+                      xmlns="http://www.w3.org/2000/svg"
+                      // className="w-[75%]"
+                    >
+                      <text ref={textRef} x="5" y="20" fill="black">
+                        {tile.name.length > 10
+                          ? `${tile.name.slice(0, 10)}...`
+                          : tile.name}
+                      </text>
+                    </svg>
+                    {/* <p
                       className="m-0 min-h-full whitespace-nowrap overflow-hidden text-ellipsis"
                       title={tile.name} // Optional: Shows the full name on hover
                     >
                       {tile.name.length > 15
                         ? `${tile.name.slice(0, 15)}...`
                         : tile.name}
-                    </p>
+                    </p> */}
                   </div>
                 ) : null
               )}
