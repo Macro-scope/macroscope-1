@@ -1,16 +1,16 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Camera, Link2, Trash2, Upload, X, AlertCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useCallback, useEffect, useState } from 'react';
+import { Camera, Link2, Trash2, Upload, X, AlertCircle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,14 +20,14 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { ImageUpload } from "../database/image-upload";
-import { supabase } from "@/lib/supabaseClient";
-import { TiptapEditor } from "../editor/tiptap-editor";
-import { useTableData } from "@/hooks/use-table-data";
-import { useTableColumns } from "../../hooks/use-table-columns";
-import Select from "react-select/creatable";
-import { useParams } from "react-router-dom";
+} from '@/components/ui/alert-dialog';
+import { ImageUpload } from '../database/image-upload';
+import { supabase } from '@/lib/supabaseClient';
+import { TiptapEditor } from '../editor/tiptap-editor';
+import { useTableData } from '@/hooks/use-table-data';
+import { useTableColumns } from '../../hooks/use-table-columns';
+import Select from 'react-select/creatable';
+import { useParams } from 'react-router-dom';
 
 interface FormData {
   name: string;
@@ -61,11 +61,11 @@ export default function EditItemForm({
   mapId,
 }: EditItemFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    name: data.name || "",
-    url: data.url || "",
-    logo: data.logo || "",
-    category: data.category || { value: "", label: "", color: "" },
-    description: data.description || "",
+    name: data.name || '',
+    url: data.url || '',
+    logo: data.logo || '',
+    category: data.category || { value: '', label: '', color: '' },
+    description: data.description || '',
     last_updated: data.last_updated || new Date().toISOString(),
   });
 
@@ -81,9 +81,9 @@ export default function EditItemForm({
   const fetchTags = useCallback(async () => {
     try {
       const { data: tags, error } = await supabase
-        .from("tags")
-        .select("*")
-        .eq("map_id", mapId);
+        .from('tags')
+        .select('*')
+        .eq('map_id', mapId);
 
       if (error) throw error;
 
@@ -95,7 +95,7 @@ export default function EditItemForm({
 
       setTagOptions(formattedTags);
     } catch (error) {
-      console.error("Error fetching tags:", error);
+      console.error('Error fetching tags:', error);
     }
   }, [mapId]);
 
@@ -151,18 +151,18 @@ export default function EditItemForm({
       });
       setIsDescriptionDialogOpen(false);
     } catch (error) {
-      console.error("Error saving description:", error);
+      console.error('Error saving description:', error);
     }
   };
 
   const handleCreateNewTag = async (tagName: string) => {
     try {
       const { data: newTag, error: tagError } = await supabase
-        .from("tags")
+        .from('tags')
         .insert({
           map_id: mapId,
           name: tagName,
-          color: "#000000",
+          color: '#000000',
         })
         .select()
         .single();
@@ -170,13 +170,13 @@ export default function EditItemForm({
       if (tagError) throw tagError;
 
       const { data: newCard, error: cardError } = await supabase
-        .from("cards")
+        .from('cards')
         .insert({
           map_id: mapId,
           tag_id: newTag.tag_id,
           name: tagName,
         })
-        .select("*, tags!inner(tag_id, name, color)")
+        .select('*, tags!inner(tag_id, name, color)')
         .single();
 
       if (cardError) throw cardError;
@@ -186,14 +186,14 @@ export default function EditItemForm({
         category: {
           value: newTag.tag_id,
           label: tagName,
-          color: "#000000",
+          color: '#000000',
         },
       }));
 
       await fetchTags();
       return newCard;
     } catch (error) {
-      console.error("Error creating new tag:", error);
+      console.error('Error creating new tag:', error);
       throw error;
     }
   };
@@ -238,8 +238,8 @@ export default function EditItemForm({
                   variant="destructive"
                   size="sm"
                   onClick={() => {
-                    setFormData((prev) => ({ ...prev, logo: "" }));
-                    onSave({ logo: "" });
+                    setFormData((prev) => ({ ...prev, logo: '' }));
+                    onSave({ logo: '' });
                   }}
                 >
                   <Trash2 className="w-4 h-4" />
@@ -289,7 +289,7 @@ export default function EditItemForm({
                   if (!newValue) {
                     setFormData((prev) => ({
                       ...prev,
-                      category: { value: "", label: "", color: "" },
+                      category: { value: '', label: '', color: '' },
                     }));
                     return;
                   }
@@ -298,7 +298,7 @@ export default function EditItemForm({
                     try {
                       await handleCreateNewTag(newValue.label);
                     } catch (error) {
-                      console.error("Error creating new tag:", error);
+                      console.error('Error creating new tag:', error);
                     }
                   } else {
                     setFormData((prev) => ({
@@ -313,17 +313,17 @@ export default function EditItemForm({
                 }}
                 onCreateOption={handleCreateNewTag}
                 classNames={{
-                  control: () => "border rounded-md !min-h-[40px]",
-                  menu: () => "mt-1 bg-white border rounded-md shadow-lg",
-                  option: () => "px-3 py-2 hover:bg-gray-50",
+                  control: () => 'border rounded-md !min-h-[40px]',
+                  menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
+                  option: () => 'px-3 py-2 hover:bg-gray-50',
                 }}
                 theme={(theme) => ({
                   ...theme,
                   colors: {
                     ...theme.colors,
-                    primary: "black",
-                    primary25: "#f9fafb",
-                    primary50: "#f3f4f6",
+                    primary: 'black',
+                    primary25: '#f9fafb',
+                    primary50: '#f3f4f6',
                   },
                 })}
               />
@@ -353,7 +353,7 @@ export default function EditItemForm({
             </div>
 
             <div className="text-sm text-gray-500">
-              Last Modified:{" "}
+              Last Modified:{' '}
               <span className="font-medium">
                 {new Date(data.last_updated).toLocaleString()}
               </span>
@@ -399,7 +399,7 @@ export default function EditItemForm({
             <DialogTitle>Edit Description</DialogTitle>
           </DialogHeader>
           <TiptapEditor
-            initialContent={data.descriptionHtml || ""}
+            initialContent={data.descriptionHtml || ''}
             onSave={handleDescriptionSave}
             onCancel={() => setIsDescriptionDialogOpen(false)}
           />
@@ -444,7 +444,7 @@ export default function EditItemForm({
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                handleSubmit(new Event("submit") as any);
+                handleSubmit(new Event('submit') as any);
                 setShowDiscardDialog(false);
               }}
             >

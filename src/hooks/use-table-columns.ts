@@ -15,7 +15,8 @@ export type ColumnType =
   | 'url'
   | 'image'
   | 'button'
-  | 'uri' | 'article';
+  | 'uri'
+  | 'article';
 
 export interface CustomGridColumn extends Omit<GridColumn, 'id'> {
   title: string;
@@ -32,64 +33,68 @@ export const useTableColumns = (mapId?: string) => {
   >([]);
 
   //  base columns as a function to always get fresh tagOptions
-  const getBaseColumns = useCallback((): CustomGridColumn[] => [
-    {
-      id: 'name',
-      title: 'Name',
-      type: 'text',
-      icon: GridColumnIcon.HeaderString,
-      width: 150,
-      hasMenu: true,
-      menuIcon: GridColumnIcon.HeaderSplitString,
-      
-    },
-    { id: 'url', title: 'URL', type: 'uri', icon: GridColumnIcon.HeaderUri },
-    {
-      id: 'logo',
-      title: 'Logo',
-      type: 'image',
-      icon: GridColumnIcon.HeaderImage,
-      width: 150,
-    },
-    {
-      id: 'category',
-      title: 'Category',
-      type: 'multiselect',
-      icon: GridColumnIcon.HeaderString,
-      width: 150,
-      options: tagOptions,
-    },
-    {
-      id: 'hidden',
-      title: 'Hidden',
-      type: 'boolean',
-      icon: GridColumnIcon.HeaderBoolean,
-      width: 100,
-    },
-    {
-      id: 'description',
-      title: 'Description',
-      type: 'article', 
-      icon: GridColumnIcon.HeaderMarkdown,
-      width: 200, 
-      onClick: true,
-    
-    },
-    {
-      id: 'last_updated',
-      title: 'Last Updated',
-      type: 'date',
-      icon: GridColumnIcon.HeaderDate,
-      width: 150,
-    },
-    {
-      id: 'actions',
-      title: 'Actions',
-      type: 'button',
-      icon: GridColumnIcon.HeaderEmoji,
-      width: 100,
-    },
-  ], [tagOptions]); // Add tagOptions as dependency
+  const getBaseColumns = useCallback(
+    (): CustomGridColumn[] => [
+      {
+        id: 'name',
+        title: 'Name',
+        type: 'text',
+        icon: GridColumnIcon.HeaderString,
+        width: 150,
+        hasMenu: true,
+        menuIcon: GridColumnIcon.HeaderSplitString,
+      },
+      { id: 'url', title: 'URL', type: 'uri', icon: GridColumnIcon.HeaderUri },
+      {
+        id: 'logo',
+        title: 'Logo',
+        type: 'image',
+        icon: GridColumnIcon.HeaderImage,
+        width: 150,
+      },
+      {
+        id: 'category',
+        title: 'Category',
+        type: 'multiselect',
+        icon: GridColumnIcon.HeaderString,
+        width: 150,
+        options: tagOptions,
+        hasMenu: true,
+        menuIcon: GridColumnIcon.HeaderBoolean,
+        onClick: true,
+      },
+      {
+        id: 'hidden',
+        title: 'Hidden',
+        type: 'boolean',
+        icon: GridColumnIcon.HeaderBoolean,
+        width: 100,
+      },
+      {
+        id: 'description',
+        title: 'Description',
+        type: 'article',
+        icon: GridColumnIcon.HeaderMarkdown,
+        width: 200,
+        onClick: true,
+      },
+      {
+        id: 'last_updated',
+        title: 'Last Updated',
+        type: 'date',
+        icon: GridColumnIcon.HeaderDate,
+        width: 150,
+      },
+      {
+        id: 'actions',
+        title: 'Actions',
+        type: 'button',
+        icon: GridColumnIcon.HeaderEmoji,
+        width: 100,
+      },
+    ],
+    [tagOptions]
+  ); // Add tagOptions as dependency
 
   // Initialize columns state
   const [columns, setColumns] = useState<CustomGridColumn[]>(getBaseColumns());
@@ -152,6 +157,6 @@ export const useTableColumns = (mapId?: string) => {
     newColumnType,
     setNewColumnType,
     addColumn,
-    refreshTags: fetchTags, 
+    refreshTags: fetchTags,
   };
 };

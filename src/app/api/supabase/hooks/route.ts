@@ -3,7 +3,8 @@ import { createHmac } from 'crypto';
 import { sendWelcomeEmail } from '@/lib/zeptomail';
 
 // Get this from your Supabase dashboard
-const WEBHOOK_SECRET = "v1,whsec_xWumkRuifO9/dr9B7dA81oNSnzalnyp2Nduzy13wiNFtQfoeYmRae2t3cLumqtOtL2JP/gUhBMlpla4c";
+const WEBHOOK_SECRET =
+  'v1,whsec_xWumkRuifO9/dr9B7dA81oNSnzalnyp2Nduzy13wiNFtQfoeYmRae2t3cLumqtOtL2JP/gUhBMlpla4c';
 
 function verifySignature(body: string, signature: string | null): boolean {
   if (!WEBHOOK_SECRET || !signature) return false;
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
     console.log('Headers:', {
       authToken,
       signature,
-      contentType: request.headers.get('content-type')
+      contentType: request.headers.get('content-type'),
     });
 
     const payload = JSON.parse(body);
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
       const { user, email_data } = payload;
       if (email_data.email_action_type === 'signup') {
         const result = await sendWelcomeEmail(
-          user.email, 
+          user.email,
           user.email.split('@')[0]
         );
         return NextResponse.json({ success: true });
@@ -47,19 +48,22 @@ export async function POST(request: Request) {
       const authEvent = JSON.parse(payload.event_message).auth_event;
       if (authEvent && authEvent.action === 'user_confirmation_requested') {
         const email = authEvent.actor_username;
-        const result = await sendWelcomeEmail(
-          email, 
-          email.split('@')[0]
-        );
+        const result = await sendWelcomeEmail(email, email.split('@')[0]);
         return NextResponse.json({ success: true });
       }
     }
 
-    return NextResponse.json({ error: 'Unsupported event type' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Unsupported event type' },
+      { status: 400 }
+    );
   } catch (error) {
     console.error('Hook error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to process hook' },
+      {
+        error:
+          error instanceof Error ? error.message : 'Failed to process hook',
+      },
       { status: 500 }
     );
   }

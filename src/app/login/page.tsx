@@ -1,19 +1,19 @@
-"use client"
-import { supabase } from "../../lib/supabaseClient";
-import { Button, Input, Tabs, message, Modal, Form } from "antd";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { FaGoogle } from "react-icons/fa6";
-import { LoginLogo } from "@/components/icons";
-import ReCAPTCHA from "react-google-recaptcha";
-import { sendWelcomeEmail } from "../../lib/zeptomail";
+'use client';
+import { supabase } from '../../lib/supabaseClient';
+import { Button, Input, Tabs, message, Modal, Form } from 'antd';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FaGoogle } from 'react-icons/fa6';
+import { LoginLogo } from '@/components/icons';
+import ReCAPTCHA from 'react-google-recaptcha';
+import { sendWelcomeEmail } from '../../lib/zeptomail';
 
 const { TabPane } = Tabs;
 
 const Login = () => {
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [name, setName] = useState("");
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
   const [showNameModal, setShowNameModal] = useState(false);
@@ -22,34 +22,31 @@ const Login = () => {
 
   const redirectUrl = process.env.NEXT_PUBLIC_APP_URL
     ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`
-    : "https://macroscope-so-nextjs.vercel.app/dashboard";
+    : 'https://macroscope-so-nextjs.vercel.app/dashboard';
 
   if (!process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY) {
     console.warn('ReCAPTCHA site key is not configured');
   }
 
-  
- 
-
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         redirectTo: redirectUrl,
       },
     });
 
-    if (error) message.error("Error during sign in: " + error.message);
+    if (error) message.error('Error during sign in: ' + error.message);
   };
 
   const handleOtpRequest = async () => {
     if (!email) {
-      message.error("Please enter your email");
+      message.error('Please enter your email');
       return;
     }
 
     if (!recaptchaToken) {
-      message.error("Please complete the reCAPTCHA");
+      message.error('Please complete the reCAPTCHA');
       return;
     }
 
@@ -66,7 +63,7 @@ const Login = () => {
       if (error) throw error;
 
       setShowOtpInput(true);
-      message.success("Check your email for the OTP code!");
+      message.success('Check your email for the OTP code!');
     } catch (error: any) {
       message.error(error.message);
     } finally {
@@ -76,7 +73,7 @@ const Login = () => {
 
   const verifyOtp = async () => {
     if (!otp) {
-      message.error("Please enter the OTP code");
+      message.error('Please enter the OTP code');
       return;
     }
 
@@ -85,7 +82,7 @@ const Login = () => {
       const { data, error } = await supabase.auth.verifyOtp({
         email,
         token: otp,
-        type: 'email'
+        type: 'email',
       });
 
       if (error) throw error;
@@ -117,8 +114,11 @@ const Login = () => {
 
     setLoading(true);
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError || !user?.id) {
         throw new Error('Authentication error: User not found');
       }
@@ -147,8 +147,8 @@ const Login = () => {
           name: name.trim(),
           email: email.toLowerCase(),
           created_at: new Date().toISOString(),
-          avatar_url:  user.user_metadata.avatar_url || null,
-          user_id: user.id
+          avatar_url: user.user_metadata.avatar_url || null,
+          user_id: user.id,
         })
         .select()
         .single();
@@ -169,16 +169,19 @@ const Login = () => {
           },
           body: JSON.stringify({
             email: email.toLowerCase(),
-            name: name.trim()
-          })
+            name: name.trim(),
+          }),
         });
-  
+
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(`Failed to send welcome email: ${errorData.error || 'Unknown error'}`);
-         
+          throw new Error(
+            `Failed to send welcome email: ${
+              errorData.error || 'Unknown error'
+            }`
+          );
         }
-        
+
         console.log('Welcome email sent successfully');
       } catch (error) {
         console.error('Failed to send welcome email:', error);
@@ -193,7 +196,7 @@ const Login = () => {
     } catch (error: any) {
       console.error('Error in handleNameSubmit:', error);
       message.error(error.message || 'Failed to create user');
-      
+
       if (error.message.includes('Authentication error')) {
         router.push('/login');
       }
@@ -218,7 +221,9 @@ const Login = () => {
           {showNameModal ? (
             <>
               <div>
-                <label className="block text-sm font-medium mb-2">Your name</label>
+                <label className="block text-sm font-medium mb-2">
+                  Your name
+                </label>
                 <Input
                   placeholder="Enter your name"
                   value={name}
@@ -226,7 +231,7 @@ const Login = () => {
                   size="large"
                 />
               </div>
-              <Button 
+              <Button
                 onClick={handleNameSubmit}
                 loading={loading}
                 type="primary"
@@ -238,13 +243,13 @@ const Login = () => {
             </>
           ) : (
             <>
-              <Button 
-                onClick={handleGoogleLogin} 
-                size="large" 
-                block 
+              <Button
+                onClick={handleGoogleLogin}
+                size="large"
+                block
                 className="flex items-center justify-center gap-2 h-[40px] border-gray-200"
               >
-                <FaGoogle className="text-[16px]"/>
+                <FaGoogle className="text-[16px]" />
                 <span>Continue with Google</span>
               </Button>
 
@@ -269,13 +274,14 @@ const Login = () => {
                   />
                 </div>
 
-                {!showOtpInput && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-                  <ReCAPTCHA
-                    sitekey="6LfIlY4qAAAAAEtEim_pHapgHV-L7rZskn0yXEp_"
-                    onChange={(token) => setRecaptchaToken(token)}
-                    className="flex justify-center"
-                  />
-                )}
+                {!showOtpInput &&
+                  process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+                    <ReCAPTCHA
+                      sitekey="6LfIlY4qAAAAAEtEim_pHapgHV-L7rZskn0yXEp_"
+                      onChange={(token) => setRecaptchaToken(token)}
+                      className="flex justify-center"
+                    />
+                  )}
 
                 {showOtpInput && (
                   <div>
@@ -292,7 +298,7 @@ const Login = () => {
                   </div>
                 )}
 
-                <Button 
+                <Button
                   onClick={showOtpInput ? verifyOtp : handleOtpRequest}
                   loading={loading}
                   type="primary"
@@ -309,9 +315,13 @@ const Login = () => {
       </div>
 
       <div className="text-center text-sm absolute bottom-2 text-gray-500 mt-8">
-        <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+        <a href="#" className="text-blue-600 hover:underline">
+          Privacy Policy
+        </a>
         {' & '}
-        <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>
+        <a href="#" className="text-blue-600 hover:underline">
+          Terms of Service
+        </a>
         <p>We never share your data or misuse it in any way.</p>
       </div>
     </div>
