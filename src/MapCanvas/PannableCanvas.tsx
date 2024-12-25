@@ -660,14 +660,14 @@ export default function PannableCanvas() {
           transformOrigin: "0 0",
         }}
       >
-        {/* <a
-          className="relative flex justify-center items-center bottom-3 right-24 h-8 mt-[97vh]"
+        <a
+          className="absolute flex justify-center items-center bottom-3 right-3 h-8"
           style={{ zIndex: "2000" }}
           href="https://macroscope.so"
           target="_blank"
         >
           <img src="/branding.svg" alt="Macroscope" className="ml-2 mr-1 h-7" />
-        </a> */}
+        </a>
         <canvas
           ref={canvasRef}
           width={canvasWidth}
