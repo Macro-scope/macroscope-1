@@ -1054,7 +1054,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     // <CustomLayout>
     <div>
       <div className="h-[calc(100vh-60px)] w-full p-2 flex flex-col">
+        {/* Toolbar */}
         <div className="mb-2 flex justify-end items-center">
+          {/* ... toolbar buttons ... */}
           <div className="flex items-center gap-1">
             <CategoryMenu
               mapId={mapId}
