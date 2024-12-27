@@ -30,7 +30,7 @@ type Props = {
     cardId: string
   ) => void;
   isDoubleClick?: boolean;
-  tagNameLen: number;
+  tagNameLen?: number;
 };
 
 const ResizableNode: React.FC<Props> = (props) => {
@@ -500,7 +500,7 @@ const ResizableNode: React.FC<Props> = (props) => {
                         src={
                           tile.logo
                             ? tile.logo
-                            : `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
+                            : `/default_image.svg`
                         }
                         alt="Logo"
                         className="h-7 w-7 rounded-sm"
@@ -509,15 +509,22 @@ const ResizableNode: React.FC<Props> = (props) => {
                     {/* </div> */}
                     <svg
                       // ref={svgRef}
-                      width="100"
+                      // width="100"
+                      // style={{
+                      //   minWidth: 100,
+                      //   maxWidth: width
+                      // }}
+                      width = {tile?.name?.length > 20
+                        ? "200"
+                        : "100"}
                       height="30"
                       xmlns="http://www.w3.org/2000/svg"
                       // className="w-[75%]"
                     >
                       <text ref={textRef} x="5" y="20" fill="black">
-                        {tile.name.length > 10
-                          ? `${tile.name.slice(0, 10)}...`
-                          : tile.name}
+                        {tile?.name?.length > 20
+                          ? `${tile?.name?.slice(0, 20)}...`
+                          : tile?.name}
                       </text>
                     </svg>
                     {/* <p

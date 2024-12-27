@@ -72,7 +72,7 @@ const ExportImageSettings = (props: Props) => {
       // Create a link element to trigger the download
       const link = document.createElement("a");
       link.href = dataURL;
-      link.download = "div-image.png"; // File name for the downloaded image
+      link.download = "Macroscope-Map.png"; // File name for the downloaded image
       link.click();
     } catch (error) {
       console.error("Error capturing the div:", error);

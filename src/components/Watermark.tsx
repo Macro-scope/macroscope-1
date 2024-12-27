@@ -13,7 +13,7 @@ const Watermark = (props: Props) => {
       <img
         src="/watermark.svg"
         alt="Macroscope"
-        className="ml-2 mr-1 h-[20vh] pointer-events-none"
+        className="ml-2 mr-1  pointer-events-none"
         // SVG is black by default, so no filter needed
         draggable="false"
         onDragStart={(e) => e.preventDefault()}

@@ -19,6 +19,7 @@ import { IoClose } from "react-icons/io5";
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 import ParentCategory from "./ParentCategory";
 import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
+import Watermark from "@/components/Watermark";
 
 // var CANVAS_WIDTH = 3000;
 // var CANVAS_HEIGHT = 2000;
@@ -668,6 +669,15 @@ export default function PannableCanvas() {
         >
           <img src="/branding.svg" alt="Macroscope" className="ml-2 mr-1 h-7" />
         </a>
+        <img
+          src="/watermark.svg"
+          alt="Macroscope"
+          className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none"
+          style={{zIndex: 9000}}
+          // SVG is black by default, so no filter needed
+          draggable="false"
+          onDragStart={(e) => e.preventDefault()}
+        />
         <canvas
           ref={canvasRef}
           width={canvasWidth}
@@ -701,7 +711,7 @@ export default function PannableCanvas() {
               }}
               color={category.color}
               mapId={mapId}
-              settings={ category.settings }
+              settings={category.settings}
               onUpdate={async (updates) => {
                 try {
                   if (updates.settings) {
