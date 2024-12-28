@@ -2,7 +2,7 @@
 
 import StarCellRenderer, { type StarCell } from "./cells/star-cell";
 import SparklineCellRenderer, { type SparklineCell } from "./cells/sparkline-cell";
-import CategoriesCellRenderer, { type CategoriesCell } from "./cells/tags-cell"; 
+import CategoriesCellRenderer, { type CategoriesCell } from "./cells/categories-cell"; 
 import UserProfileCellRenderer, { type UserProfileCell } from "./cells/user-profile-cell";
 import DropdownCellRenderer, { type DropdownCell } from "./cells/dropdown-cell";
 import type { ArticleCell } from "./cells/article-cell-types";

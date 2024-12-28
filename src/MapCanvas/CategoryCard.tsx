@@ -250,7 +250,7 @@ const ResizableNode = (props) => {
               .slice()
               .sort((a: any, b: any) => a.position - b.position)
               .map((tile: any, index) =>
-                props.categoryId == tile.category_id && !tile.hidden ? ( 
+                props.cardId == tile.card_id && !tile.hidden ?  ( 
                   <HoverCard key={index} openDelay={0} closeDelay={0}>
                     <HoverCardTrigger>
                       <div
