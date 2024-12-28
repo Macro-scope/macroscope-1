@@ -118,7 +118,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             name: item.name || "",
             url: item.url || "",
             logo: item.logo || "",
-            tag_id: item.tag_id,
+            category_id: item.category_id,
             card_id: item.card_id,
             parent_category_id: item.parent_category_id,
             hidden: item.hidden || false,
@@ -181,7 +181,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             name: item.name,
             url: item.url,
             logo: item.logo,
-            tag_id: item.tag_id,
+            category_id: item.category_id,
             card_id: item.card_id,
             hidden: item.hidden,
             position: item.position,
@@ -200,7 +200,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name: item.name,
           url: item.url,
           logo: item.logo,
-          tag_id: item.tag_id,
+          category_id: item.category_id,
           card_id: item.card_id,
           hidden: item.hidden,
           position: item.position,
@@ -258,12 +258,12 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           .from("cards")
           .select(
             `
-            *,
-            tags (
-              name,
-              color
-            )
-          `
+          *,
+          categories ( 
+            name,
+            color
+          )
+        `
           )
           .eq("map_id", mapId);
 
@@ -278,7 +278,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           cards (
             card_id,
             parent_category_id,
-            tags (
+            categories ( 
               name,
               color
             ),
@@ -306,8 +306,8 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           logo: tile.logo || "",
           category: {
             value: tile.card_id,
-            label: tile.cards.tags.name,
-            color: tile.cards.tags.color,
+            label: tile.cards.categories.name,
+            color: tile.cards.categories.color,
           },
           parentCategory: tile.parent_categories
             ? {
@@ -325,7 +325,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           hidden: tile.hidden || false,
           last_updated: tile.updated_at || tile.created_at,
           card_id: tile.card_id,
-          tag_id: tile.tag_id,
+          category_id: tile.category_id,
           parent_category_id: tile.parent_category_id,
           position: tile.position,
         }));
@@ -348,44 +348,41 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         // Get the first card for the map
         const { data: cardsData, error: cardError } = await supabase
           .from("cards")
-          .select("*, tags!inner(tag_id, name, color)")
+          .select("*, categories!inner(category_id, name, color)")
           .eq("map_id", mapId)
           .limit(1);
 
         let cardData;
 
-        // If no cards exist, create a new tag and card
+        // If no cards exist, create
         if (!cardsData || cardsData.length === 0) {
-          // Create a new tag
-          const { data: newTag, error: tagError } = await supabase
-            .from("tags")
+          // Create a new category
+          const { data: newCategory, error: categoryError } = await supabase
+            .from("categories")
             .insert({
               map_id: mapId,
               name: "Other",
-              color: "#808080", // Default gray color
+              color: "#808080",
             })
             .select()
             .single();
 
-          if (tagError) throw tagError;
+          if (categoryError) throw categoryError;
 
-          // Create a new card with the new tag
+          // Create a new card with the new category
           const { data: newCard, error: cardCreateError } = await supabase
             .from("cards")
             .insert({
               map_id: mapId,
-              tag_id: newTag.tag_id,
+              category_id: newCategory.category_id,
               name: "Other",
             })
-            .select("*, tags!inner(tag_id, name, color)")
+            .select("*, categories!inner(category_id, name, color)")
             .single();
 
           if (cardCreateError) throw cardCreateError;
           cardData = newCard;
-        } else {
-          cardData = cardsData[0];
         }
-
         // Continue with the rest of the function using cardData
         if (position !== undefined) {
           const { error: updateError } = await supabase.rpc(
@@ -418,7 +415,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name: "New Tile",
           url: "",
           logo: "",
-          tag_id: cardData.tag_id,
+          category_id: cardData.category_id,
           card_id: cardData.card_id,
           hidden: false,
           position: newPosition,
@@ -429,15 +426,15 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           .insert([newRowData])
           .select(
             `
-          *,
-          cards!inner (
-            card_id,
-            tags (
-              name,
-              color
+            *,
+            cards!inner (
+              card_id,
+              categories ( 
+                name,
+                color
+              )
             )
-          )
-        `
+          `
           )
           .single();
 
@@ -451,13 +448,13 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           logo: insertedData.logo,
           category: {
             value: insertedData.card_id,
-            label: insertedData.cards.tags.name,
-            color: insertedData.cards.tags.color,
+            label: insertedData.cards.categories.name,
+            color: insertedData.cards.categories.color,
           },
           hidden: insertedData.hidden,
           last_updated: insertedData.updated_at || insertedData.created_at,
           card_id: insertedData.card_id,
-          tag_id: insertedData.tag_id,
+          category_id: insertedData.category_id,
           position: insertedData.position,
         };
 
@@ -485,15 +482,15 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   );
 
   const updateRow = async (id: string, updatedData: any) => {
-    console.log('updateRow called with:', { id, updatedData });
+    console.log("updateRow called with:", { id, updatedData });
     try {
-      dispatch(setSaveStatus('saving'));
+      dispatch(setSaveStatus("saving"));
 
-      if ('url' in updatedData && updatedData.url !== '') {
-        console.log('URL update detected:', updatedData.url);
+      if ("url" in updatedData && updatedData.url !== "") {
+        console.log("URL update detected:", updatedData.url);
         const logoUrl = await getFaviconFromUrl(updatedData.url);
         if (logoUrl) {
-          console.log('New logo URL:', logoUrl);
+          console.log("New logo URL:", logoUrl);
           updatedData.logo = logoUrl;
         }
       }
@@ -503,21 +500,21 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         name: updatedData.name,
         url: updatedData.url,
         logo: updatedData.logo,
-        tag_id: updatedData.tag_id,
+        category_id: updatedData.category_id,
         card_id: updatedData.card_id,
         parent_category_id: updatedData.parent_category_id,
         hidden: updatedData.hidden,
         position: updatedData.position,
         ...(updatedData.description && {
           description: updatedData.description.html,
-          description_markdown: updatedData.description.markdown
-        })
+          description_markdown: updatedData.description.markdown,
+        }),
       };
 
       const { error } = await supabase
-        .from('tiles')
+        .from("tiles")
         .update(dataToUpdate)
-        .eq('tile_id', id);
+        .eq("tile_id", id);
 
       if (error) throw error;
 
@@ -533,11 +530,11 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         )
       );
 
-      dispatch(setSaveStatus('saved'));
-      setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
+      dispatch(setSaveStatus("saved"));
+      setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
     } catch (error) {
-      console.error('Error in updateRow:', error);
-      dispatch(setSaveStatus('idle'));
+      console.error("Error in updateRow:", error);
+      dispatch(setSaveStatus("idle"));
       throw error;
     }
   };
@@ -581,7 +578,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name,
           url,
           logo,
-          tag_id,
+          category_id,
           card_id,
           hidden,
           position
@@ -601,7 +598,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name: tile.name,
           url: tile.url,
           logo: tile.logo,
-          tag_id: tile.tag_id,
+          category_id: tile.category_id,
           card_id: tile.card_id,
           hidden: tile.hidden,
           position: index,
@@ -637,15 +634,15 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           .from("tiles")
           .select(
             `
-          *,
-          cards!inner (
-            card_id,
-            tags (
-              name,
-              color
-            )
+        *,
+        cards!inner (
+          card_id,
+          categories ( 
+            name,
+            color
           )
-        `
+        )
+      `
           )
           .eq("cards.map_id", mapId)
           .order("position");
@@ -663,13 +660,13 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             logo: tile.logo || "",
             category: {
               value: tile.card_id,
-              label: tile.cards.tags.name,
-              color: tile.cards.tags.color,
+              label: tile.cards.categories.name,
+              color: tile.cards.categories.color,
             },
             hidden: tile.hidden || false,
             last_updated: tile.updated_at || tile.created_at,
             card_id: tile.card_id,
-            tag_id: tile.tag_id,
+            category_id: tile.category_id,
             position: tile.position,
           }));
           setData(transformedData);

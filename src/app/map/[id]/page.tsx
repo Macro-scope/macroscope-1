@@ -589,7 +589,7 @@ export default function PublishedMap() {
                   className="mappedCards z-50"
                 >
                   <ResizableNode
-                    tagId={card.tag_id}
+                    tagId={card.category_id}
                     settings={card.settings}
                     tiles={card.tiles}
                     tagName={card.name}

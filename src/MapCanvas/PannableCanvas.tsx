@@ -709,7 +709,7 @@ export default function PannableCanvas() {
               }}
               color={category.color}
               mapId={mapId}
-              settings={ category.settings }
+              settings={category.settings}
               onUpdate={async (updates) => {
                 try {
                   if (updates.settings) {
@@ -836,7 +836,7 @@ export default function PannableCanvas() {
               className="mappedCards z-50"
             >
               <ResizableNode
-                tagId={card.tag_id}
+                tagId={card.category_id}
                 settings={card.settings}
                 tiles={card.tiles}
                 tagName={card.name}

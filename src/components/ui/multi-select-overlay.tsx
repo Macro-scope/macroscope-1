@@ -97,7 +97,7 @@ export const MultiselectOverlay = React.memo<MultiselectOverlayProps>(
       );
     };
 
-    // Add custom Option component to display tags with their colors
+    // Add custom Option component to display with their colors
     const Option = ({ children, ...props }: any) => {
       return (
         <components.Option {...props}>

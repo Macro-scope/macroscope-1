@@ -9,7 +9,7 @@ import type { StarCell } from "./cells/star-cell.js";
 import type { SparklineCell } from "./cells/sparkline-cell.js";
 import range from "lodash/range.js";
 import uniq from "lodash/uniq.js";
-import type { TagsCell } from "./cells/tags-cell.js";
+import type { CategoriesCell } from "./cells/categories-cell.js";
 import type { UserProfileCell } from "./cells/user-profile-cell.js";
 import type { DropdownCell } from "./cells/dropdown-cell.js";
 // import type { ArticleCell } from "./cells/article-cell-types.js";
@@ -144,29 +144,29 @@ function rand(): number {
     return (num = (num * 16807) % 2147483647) / 2147483647;
 }
 
-const possibleTags = [
+const possibleCategories = [ 
     {
-        tag: "Bug",
+        category: "Bug",  // Changed from tag
         color: "#ff4d4d35",
     },
     {
-        tag: "Feature",
+        category: "Feature",  // Changed from tag
         color: "#35f8ff35",
     },
     {
-        tag: "Enhancement",
+        category: "Enhancement",  // Changed from tag
         color: "#48ff5735",
     },
     {
-        tag: "First Issue",
+        category: "First Issue",  // Changed from tag
         color: "#436fff35",
     },
     {
-        tag: "PR",
+        category: "PR",  // Changed from tag
         color: "#e0ff3235",
     },
     {
-        tag: "Assigned",
+        category: "Assigned",  // Changed from tag
         color: "#ff1eec35",
     },
 ];
@@ -249,16 +249,16 @@ export const CustomCells: React.VFC = () => {
                             copyData: "4",
                             readonly: row % 2 === 0,
                             data: {
-                                kind: "tags-cell",
-                                possibleTags: possibleTags,
-                                tags: uniq([
-                                    possibleTags[Math.round(rand() * 1000) % possibleTags.length].tag,
-                                    possibleTags[Math.round(rand() * 1000) % possibleTags.length].tag,
-                                    possibleTags[Math.round(rand() * 1000) % possibleTags.length].tag,
-                                    possibleTags[Math.round(rand() * 1000) % possibleTags.length].tag,
+                                kind: "categories-cell", 
+                                possibleCategories: possibleCategories, 
+                                categories: uniq([  
+                                    possibleCategories[Math.round(rand() * 1000) % possibleCategories.length].category,  // Changed from tag
+                                    possibleCategories[Math.round(rand() * 1000) % possibleCategories.length].category,  // Changed from tag
+                                    possibleCategories[Math.round(rand() * 1000) % possibleCategories.length].category,  // Changed from tag
+                                    possibleCategories[Math.round(rand() * 1000) % possibleCategories.length].category,  // Changed from tag
                                 ]),
                             },
-                        } as TagsCell;
+                        } as CategoriesCell; 
                     } else if (col === 5) {
                         num = row + 1;
                         rand();
@@ -496,7 +496,7 @@ export const CustomCells: React.VFC = () => {
                         width: 150,
                     },
                     {
-                        title: "Tags",
+                        title: "Categories",
                         width: 250,
                     },
                     {

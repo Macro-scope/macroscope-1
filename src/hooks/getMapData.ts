@@ -10,13 +10,13 @@ export const getMapData = async (mapId: string) => {
                 *,
                 tiles (*)
             ),
-            tags (*)`
+            categories (*)` 
       )
       .eq('map_id', mapId)
       .single();
 
     if (error)
-      console.log(error)
+      console.log(error);
 
     return data;
   } catch (error) {
