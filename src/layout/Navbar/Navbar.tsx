@@ -9,6 +9,8 @@ import {
   Modal,
   Tag,
 } from "antd";
+
+import { X } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
@@ -381,7 +383,6 @@ const Navbar = () => {
             </Button>,
           ]}
           open={isMapModalOpen}
-          // onOk={createNewProject}
           onCancel={handleCancelMap}
         >
           <Input
@@ -393,29 +394,25 @@ const Navbar = () => {
             required
           />
         </Modal>
-        <ConfigProvider
-          theme={{
-            components: {
-              Drawer: {
-                /* here is your component tokens */
-                footerPaddingBlock: 0,
-              },
-            },
-          }}
-        >
-          <Drawer
-            title="Publish Settings"
-            open={isModalOpen}
-            onClose={oncloseModal}
-            zIndex={10000}
-            // onOk={handlePublish}
-            // okText="Publish"
-            // onCancel={handleUnpublish}
-            // cancelText="Unpublish"
-          >
-            <PublishMapSettings isPrevopen={setIsModalOpen} />
-          </Drawer>
-        </ConfigProvider>
+        
+        {isModalOpen && (
+         <div className="fixed top-[47px] right-0 h-[calc(100vh-50px)] bg-white shadow-lg z-40 flex">
+            <div className="w-[420px] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <span className="text-base font-medium">Publish Settings</span>
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-0 h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <PublishMapSettings isPrevopen={setIsModalOpen} />
+            </div>
+          </div>
+        )}
 
         <Modal
           title="Published Site"
