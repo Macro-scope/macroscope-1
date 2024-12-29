@@ -1,124 +1,198 @@
 "use client";
-import { supabase } from '@/lib/supabaseClient';
-import React, { useEffect, useState } from 'react';
-import { BiCopy } from 'react-icons/bi';
-import { FaCheck } from 'react-icons/fa6';
-import { useParams } from 'react-router-dom';
 
-type Props = {};
+import React, { useState } from "react";
+import { BiCopy } from "react-icons/bi";
+import { FaCheck } from "react-icons/fa6";
+import { TbPlugConnectedX, TbShare3 } from "react-icons/tb"
+import { CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const EmbedSettings = (props: Props) => {
-  let { id: mapId } = useParams();
-  mapId = String(mapId);
-
-  const [mapName, setMapName] = useState<any>();
-  useEffect(() => {
-    const getMapName = async () => {
-      const { data } = await supabase
-        .from("maps")
-        .select("name")
-        .eq("map_id", mapId)
-        .single();
-
-      console.log(data?.name);
-      setMapName(data?.name);
-    };
-    getMapName();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  console.log(mapId, mapName);
-
+const EmbedSettings = () => {
+  const [publishStatus, setPublishStatus] = useState("published");
+  const [isLoading, setIsLoading] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [isToggled, setIsToggled] = useState(false);
-  const [isPro, setIsPro] = useState(true);
+  const [showUnpublishDialog, setShowUnpublishDialog] = useState(false);
+
+  const dummyEmbedCode = `<iframe
+  src="https://app.macroscope.so/embed/map"
+  width="100%"
+  height="600"
+  frameborder="0"
+></iframe>`;
+
+  const handlePublish = async () => {
+    setIsLoading(true);
+    setTimeout(() => {
+      setPublishStatus("published");
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(dummyEmbedCode);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  const handleUnpublish = () => {
+    setPublishStatus("unpublished");
+    setShowUnpublishDialog(false);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "published":
+        return "bg-green-500 text-green-700";
+      case "unpublished":
+        return "bg-yellow-500 text-yellow-700";
+      case "error":
+        return "bg-red-500 text-red-700";
+      default:
+        return "bg-gray-500 text-gray-700";
+    }
+  };
+
+  const getStatusText = () => {
+    switch (publishStatus) {
+      case "published":
+        return "Published";
+      case "unpublished":
+        return "Not Published";
+      case "error":
+        return "Error";
+      default:
+        return "";
+    }
+  };
 
   return (
-    // <>
-    //   {isPro ? (
-    //     <div>
-    //       <div className="flex gap-24 justify-center">
-    //         <div>
-    //           <h2 className="font-medium text-xl text-gray-800">Status</h2>
-    //           <li className="flex items-center space-x-3">
-    //             <div className="w-2 h-2 rounded-full bg-green-500"></div>
-    //             <span className="text-gray-800 font-medium">Published</span>
-    //           </li>
-    //         </div>
-    //         <button className="px-8 py-2 rounded-2xl bg-black text-white hover:bg-gray-800">
-    //           Publish
-    //         </button>
-    //       </div>
+    <div className="w-full max-w-3xl mx-auto space-y-6">
+      {/* Status Row */}
+       {/* Status Row */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h3 className="text-base font-semibold text-gray-900">Status</h3>
+            <div className="flex items-center gap-2">
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="text-sm font-medium text-gray-900">Published</span>
+              <span className="text-sm text-gray-500">4min ago</span>
+            </div>
+          </div>
+          <Button
+            variant="default"
+            onClick={handlePublish}
+            disabled={isLoading || publishStatus === 'published'}
+            className="bg-black hover:bg-gray-800 text-white gap-2"
+          >
+            <TbShare3 className="h-4 w-4" />
+            {isLoading ? "Publishing..." : "Publish"}
+          </Button>
+        </div>
+        <div className="h-px bg-gray-200" />
+      </div>
 
-    //       <hr className="border-t-2 my-6" />
 
-    //       <div className="flex flex-col gap-4">
-    //         <h1 className="font-medium text-xl text-gray-800">Embed</h1>
-    //         <p className="text-gray-600">Copy the code below and paste it in your web page's HTML</p>
-    //         <div className="flex items-center gap-2">
-    //           <button
-    //             onClick={() => {
-    //               navigator.clipboard.writeText(
-    //                 `app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`
-    //               );
-    //               setIsCopied(true);
-    //             }}
-    //             className="text-blue-500"
-    //           >
-    //             {isCopied ? <FaCheck size={20} /> : <BiCopy size={20} />}
-    //           </button>
-    //           <input
-    //             type="text"
-    //             className="w-full p-4 bg-gray-200 border border-gray-300 rounded-lg"
-    //             value={`app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`}
-    //             readOnly
-    //           />
-    //         </div>
-    //       </div>
+      {/* Embed Code */}
+      <div>
+        <h3 className="text-sm font-medium mb-2 text-gray-700">Embed Code</h3>
+        <p className="text-sm text-gray-600 mb-3">
+          Copy the code below and paste it in your web page's HTML
+        </p>
+        <div className="relative bg-gray-50 rounded-lg border overflow-hidden">
+          <pre className="text-sm font-mono p-4 pb-14 overflow-x-auto whitespace-pre text-gray-800">
+            <code>
+              <span className="text-blue-600">&lt;iframe</span>
+              {"\n"} <span className="text-purple-600">src</span>=
+              <span className="text-green-600">
+                "https://app.macroscope.so/embed/map"
+              </span>
+              {"\n"} <span className="text-purple-600">width</span>=
+              <span className="text-green-600">"100%"</span>
+              {"\n"} <span className="text-purple-600">height</span>=
+              <span className="text-green-600">"600"</span>
+              {"\n"} <span className="text-purple-600">frameborder</span>=
+              <span className="text-green-600">"0"</span>
+              {"\n"}
+              <span className="text-blue-600">&gt;&lt;/iframe&gt;</span>
+            </code>
+          </pre>
+          <div className="absolute right-3 bottom-3">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={handleCopyCode}
+                    className="h-8 w-8 bg-white"
+                  >
+                    {isCopied ? <FaCheck size={16} /> : <BiCopy size={16} />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {isCopied ? "Copied!" : "Copy code"}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+        </div>
+      </div>
 
-    //       <div className="flex justify-start gap-8 mt-10">
-    //         <h1 className="font-medium text-base text-gray-800">
-    //           Macroscope branding <span className="py-1 px-2 bg-green-300">Pro</span>
-    //         </h1>
-    //         <label className="flex items-center cursor-pointer">
-    //           <div
-    //             className={`relative w-12 h-6 ${isToggled ? "bg-black" : "bg-gray-300"} rounded-full transition-colors duration-300`}
-    //             onClick={() => setIsToggled(!isToggled)}
-    //           >
-    //             <div
-    //               className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 transform ${isToggled ? "translate-x-6" : "translate-x-1"}`}
-    //             ></div>
-    //           </div>
-    //         </label>
-    //       </div>
-    //     </div>
-    //   ) : (
-    //     <div className="flex flex-col justify-center items-center">
-    //       <div className="flex items-center space-x-2">
-    //         <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-gray-500" viewBox="0 0 24 24" fill="currentColor">
-    //           <path d="M12 2L2 9l10 13 10-13-10-7zM4.4 9h15.2L12 20.3 4.4 9zM7 3h10l-2 5H9l-2-5z" />
-    //         </svg>
-    //         <h1 className="font-medium text-xl text-gray-800">Pro Feature</h1>
-    //       </div>
-    //       <button className="bg-gray-200 py-2 px-3 mt-4 rounded-md hover:bg-gray-300 text-gray-800">
-    //         Upgrade
-    //       </button>
-    //     </div>
-    //   )}
+      {/* Unpublish */}
+      <div className="pt-4 border-t">
+        <div className="flex items-center justify-between p-4">
+          <span className="text-sm font-medium text-red-500">Danger Zone</span>
+          <Button
+            variant="ghost"
+            onClick={() => setShowUnpublishDialog(true)}
+            className="text-red-500 hover:text-red-600 hover:bg-red-50"
+          >
+            <TbPlugConnectedX className="mr-2 h-4 w-4" />
+            Unpublish
+          </Button>
+        </div>
+      </div>
 
-    //   <div className="w-full border-2 mt-20"></div>
-    // </>
-  //  <div>
-  //     Coming soon
-  //   </div> 
-  <div className="flex flex-col items-center  justify-center h-full py-20">
-  <h2 className="text-xl text-gray-600 font-medium mb-2">Coming soon</h2>
-  <p className="text-xs text-gray-400">
-    We are working on this feature.
-  </p>
-  <p className="text-xs text-gray-400">
-    You can expect the feature to be available in 1-2 weeks
-  </p>
-</div>
+      {/* Unpublish Dialog */}
+      <AlertDialog
+        open={showUnpublishDialog}
+        onOpenChange={setShowUnpublishDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to unpublish?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              This will make your map inaccessible to others.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Go Back</AlertDialogCancel>
+            <AlertDialogAction onClick={handleUnpublish}>
+              Unpublish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 };
 

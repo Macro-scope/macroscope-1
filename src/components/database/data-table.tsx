@@ -64,7 +64,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogDescription
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -208,7 +208,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   const [parentCategories, setParentCategories] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
 
-  const { columns, refreshTags } = useTableColumns(mapId);
+  const { columns, refreshCategories } = useTableColumns(mapId);
   const { ref, width, height } = useResizeDetector();
   const [columnSizes, setColumnSizes] = useState(() =>
     columns.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {})
@@ -389,7 +389,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         const { error } = await supabase
           .from("cards")
           .update({
-            parent_category_id: groupId
+            parent_category_id: groupId,
           })
           .eq("card_id", cardId);
 
@@ -400,20 +400,21 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
       // Refresh data
       const { data: refreshedData, error } = await supabase
-      .from("tiles")
-      .select(
-        `
+        .from("tiles")
+        .select(
+          `
         *,
         cards (
           card_id,
           parent_category_id,
-          tags (
+          categories (
             name,
             color
           )
         )
-      `)
-      .order("position");
+      `
+        )
+        .order("position");
 
       if (error) throw error;
       if (refreshedData) {
@@ -791,16 +792,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             const { data: cardData, error: cardError } = await supabase
               .from("cards")
               .select("card_id")
-              .eq("tag_id", existingOption.value)
+              .eq("category_id", existingOption.value)
               .eq("map_id", mapId)
               .single();
 
             if (cardError) throw cardError;
 
-            // Update with the correct card_id and tag_id
+            // Update with the correct card_id and category_id
             const updateData = {
               card_id: cardData.card_id,
-              tag_id: existingOption.value,
+              category_id: existingOption.value,
             };
 
             await updateRow(rowData.id, updateData);
@@ -817,7 +818,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                         color: existingOption.color,
                       },
                       card_id: cardData.card_id,
-                      tag_id: existingOption.value,
+                      category_id: existingOption.value,
                     }
                   : item
               )
@@ -837,20 +838,20 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               randomColor,
               pos
             );
-            await refreshTags();
+            await refreshCategories();
 
             // Get the newly created card
             const { data: cardData, error: cardError } = await supabase
               .from("cards")
-              .select("card_id, tags!inner(name, color)")
-              .eq("tag_id", result.tag.tag_id)
+              .select("card_id, categories!inner(name, color)")
+              .eq("category_id", result.tag.category_id)
               .single();
 
             if (cardError) throw cardError;
 
             const updateData = {
               card_id: cardData.card_id,
-              tag_id: result.tag.tag_id,
+              category_id: result.tag.category_id,
             };
 
             await updateRow(rowData.id, updateData);
@@ -867,7 +868,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                         color: randomColor,
                       },
                       card_id: cardData.card_id,
-                      tag_id: result.tag.tag_id,
+                      category_id: result.tag.category_id,
                     }
                   : item
               )
@@ -880,7 +881,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           // Handle clearing the selection
           const updateData = {
             card_id: null,
-            tag_id: null,
+            category_id: null,
           };
           await updateRow(rowData.id, updateData);
         }
@@ -892,7 +893,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         await updateRow(rowData.id, updateData);
       }
     },
-    [columns, data, updateRow, mapId, refreshTags, setData]
+    [columns, data, updateRow, mapId, refreshCategories, setData]
   );
   const onRowMoved = useCallback(
     async (from: number, to: number) => {
@@ -1208,14 +1209,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     console.log("Header menu clicked for column:", column);
   };
 
-  function setNewGroupColor(color: string): void {
-   
-    
-  }
+  function setNewGroupColor(color: string): void {}
 
   const handleSortWarningResponse = (proceed: boolean) => {
     setShowSortWarning(false);
-    
+
     if (proceed) {
       // If proceeding with sort, apply the pending sort
       if (pendingSortConfig.column) {
@@ -1233,7 +1231,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         direction: null,
       });
     }
-    
+
     // Clear pending configurations
     setPendingSortConfig({ column: null, direction: null });
     setPendingReorder(null);
@@ -1258,11 +1256,15 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         <DialogHeader>
           <DialogTitle>Warning: Manual Order Will Be Lost</DialogTitle>
           <DialogDescription>
-            Sorting will remove any manual ordering you've done. Do you want to proceed?
+            Sorting will remove any manual ordering you've done. Do you want to
+            proceed?
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-end gap-3 mt-4">
-          <Button variant="outline" onClick={() => handleSortWarningResponse(false)}>
+          <Button
+            variant="outline"
+            onClick={() => handleSortWarningResponse(false)}
+          >
             Cancel
           </Button>
           <Button onClick={() => handleSortWarningResponse(true)}>
@@ -1762,7 +1764,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 name: selectedRow.name,
                 url: selectedRow.url,
                 category: {
-                  value: selectedRow.tag_id || "",
+                  value: selectedRow.category_id || "",
                   label: selectedRow.category?.label || "",
                   color: selectedRow.category?.color || "",
                 },
@@ -1783,7 +1785,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               }}
               onSave={async (updatedData: any) => {
                 try {
-                  if (updatedData.tag_id) {
+                  if (updatedData.category_id) {
                     // ... existing tag handling code ...
                   } else {
                     await updateRow(selectedRow.id, updatedData);

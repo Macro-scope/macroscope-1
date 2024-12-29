@@ -205,37 +205,60 @@ export default function PannableCanvas() {
   };
 
   const handleFitContent = () => {
-    if (!mapCards?.data?.length) return;
+    // Check if we have any content to fit
+    if (!mapCards?.data?.length && (!images || !images.length)) return;
 
-    // Calculate the bounding box of all cards
-    let minX = 0;
-    let minY = 0;
-    let maxX = 0;
-    let maxY = 0;
+    // Initialize bounding box with first card's position if it exists
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
 
-    mapCards.data.forEach((card: any) => {
-      minX = Math.min(minX, Number(card.position[0]));
-      minY = Math.min(minY, Number(card.position[1]));
-      maxX = Math.max(
-        maxX,
-        Number(card.position[0]) + Number(card.dimension[0])
-      );
-      maxY = Math.max(
-        maxY,
-        Number(card.position[1]) + Number(card.dimension[1])
-      );
-    });
+    // Include cards in bounding box calculation
+    if (mapCards?.data?.length) {
+      mapCards.data.forEach((card: any) => {
+        const x = Number(card.position[0]);
+        const y = Number(card.position[1]);
+        const width = Number(card.dimension[0]);
+        const height = Number(card.dimension[1]);
+        
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + width);
+        maxY = Math.max(maxY, y + height);
+      });
+    }
+
+    // Include images in bounding box calculation
+    if (images?.length) {
+      images.forEach((image: any) => {
+        const x = Number(image.position[0]);
+        const y = Number(image.position[1]);
+        const width = Number(image.dimension[0]);
+        const height = Number(image.dimension[1]);
+        
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x + width);
+        maxY = Math.max(maxY, y + height);
+      });
+    }
+
+    // If we found no valid content, return
+    if (minX === Infinity || minY === Infinity) return;
 
     // Add padding
-    const padding = 50;
+    const padding = 100;
     minX -= padding;
     minY -= padding;
     maxX += padding;
     maxY += padding;
 
-    // Calculate required zoom
+    // Calculate content dimensions
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
+
+    // Calculate required zoom
     const zoomX = viewportSize.width / contentWidth;
     const zoomY = viewportSize.height / contentHeight;
     const newZoom = Math.max(
@@ -243,16 +266,22 @@ export default function PannableCanvas() {
       Math.min(MAX_ZOOM, Math.min(zoomX, zoomY))
     );
 
-    // Calculate center position
-    // const centerX = (minX + maxX) / 2;
-    // const centerY = (minY + maxY) / 2;
+    // Calculate the center position of the content
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
 
-    // Update zoom and offset to center content
-    updateZoom(newZoom, maxX, maxY);
-    // setOffset({
-    //   x: viewportSize.width / 2 - centerX * newZoom,
-    //   y: viewportSize.height / 2 - centerY * newZoom,
-    // });
+    // Calculate new offset to center the content
+    const newOffset = {
+      x: viewportSize.width / 2 - centerX * newZoom,
+      y: viewportSize.height / 2 - centerY * newZoom
+    };
+
+    // Apply zoom and offset
+    setZoom(newZoom);
+    setOffset({
+      x: Math.min(0, Math.max(viewportSize.width - canvasWidth * newZoom, newOffset.x)),
+      y: Math.min(0, Math.max(viewportSize.height - canvasHeight * newZoom, newOffset.y))
+    });
   };
 
   let { id: mapId } = useParams();
@@ -709,7 +738,7 @@ export default function PannableCanvas() {
               }}
               color={category.color}
               mapId={mapId}
-              settings={ category.settings }
+              settings={category.settings}
               onUpdate={async (updates) => {
                 try {
                   if (updates.settings) {
@@ -836,7 +865,7 @@ export default function PannableCanvas() {
               className="mappedCards z-50"
             >
               <ResizableNode
-                tagId={card.tag_id}
+                tagId={card.category_id}
                 settings={card.settings}
                 tiles={card.tiles}
                 tagName={card.name}

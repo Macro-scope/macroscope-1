@@ -9,6 +9,8 @@ import {
   Modal,
   Tag,
 } from "antd";
+
+import { X } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 import { useState, useEffect } from "react";
 import { User } from "@supabase/supabase-js";
@@ -215,7 +217,6 @@ const Navbar = () => {
   };
 
   const createNewProject = async () => {
-    //store template in supabase
     const userId = (await getCurrentUserId()) || null;
 
     if (userId) {
@@ -229,28 +230,33 @@ const Navbar = () => {
         ])
         .select("map_id")
         .single();
+
       console.log("There ==== ", data);
 
       if (error) {
         console.error("Error inserting data:", error);
       } else {
-        //create a tile and a card
-        const { data: tagData, error: tagError } = await supabase
-          .from("tags")
+        // Create a category instead of a tag
+        const { data: categoryData, error: categoryError } = await supabase
+          .from("categories")
           .insert([{ name: "Other", map_id: data.map_id }])
-          .select("tag_id, name")
+          .select("category_id, name") // Changed from category_id
           .single();
 
-        if (tagError) {
-          console.error("Error inserting tag:", tagError);
+        if (categoryError) {
+          console.error("Error inserting category:", categoryError);
           return;
         }
 
-        // Insert a new card
+        // Insert a new card with category_id
         const { data: cardData, error: cardError } = await supabase
           .from("cards")
           .insert([
-            { tag_id: tagData.tag_id, map_id: data.map_id, name: tagData.name }, // Use the tag_id from the previous insert
+            {
+              category_id: categoryData.category_id, // Changed from category_id
+              map_id: data.map_id,
+              name: categoryData.name,
+            },
           ])
           .select("card_id")
           .single();
@@ -260,16 +266,15 @@ const Navbar = () => {
           return;
         }
 
-        // Insert a new tile
         const { data: tileData, error: tileError } = await supabase
           .from("tiles")
           .insert([
             {
-              tag_id: tagData.tag_id,
+              category_id: categoryData.category_id, // Changed from category_id
               card_id: cardData.card_id,
               name: "Macroscope",
               url: "macroscope.so",
-            }, // Use the card_id from the previous insert
+            },
           ])
           .single();
 
@@ -284,7 +289,6 @@ const Navbar = () => {
       router.push(`/editor/${data?.map_id}`);
     } else {
       console.error("No user is currently logged in");
-      // Handle the case where no user is logged in
     }
   };
 
@@ -379,7 +383,6 @@ const Navbar = () => {
             </Button>,
           ]}
           open={isMapModalOpen}
-          // onOk={createNewProject}
           onCancel={handleCancelMap}
         >
           <Input
@@ -391,29 +394,25 @@ const Navbar = () => {
             required
           />
         </Modal>
-        <ConfigProvider
-          theme={{
-            components: {
-              Drawer: {
-                /* here is your component tokens */
-                footerPaddingBlock: 0,
-              },
-            },
-          }}
-        >
-          <Drawer
-            title="Publish Settings"
-            open={isModalOpen}
-            onClose={oncloseModal}
-            zIndex={10000}
-            // onOk={handlePublish}
-            // okText="Publish"
-            // onCancel={handleUnpublish}
-            // cancelText="Unpublish"
-          >
-            <PublishMapSettings isPrevopen={setIsModalOpen} />
-          </Drawer>
-        </ConfigProvider>
+        
+        {isModalOpen && (
+         <div className="fixed top-[47px] right-0 h-[calc(100vh-50px)] bg-white shadow-lg z-40 flex">
+            <div className="w-[420px] flex flex-col">
+              <div className="flex items-center justify-between p-4 border-b">
+                <span className="text-base font-medium">Publish Settings</span>
+                <Button
+                  type="text"
+                  size="small"
+                  onClick={() => setIsModalOpen(false)}
+                  className="p-0 h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <PublishMapSettings isPrevopen={setIsModalOpen} />
+            </div>
+          </div>
+        )}
 
         <Modal
           title="Published Site"
@@ -499,11 +498,18 @@ const Navbar = () => {
                 <div className="flex justify-center items-center gap-3">
                   <button
                     onClick={() => {
-                      window.open(`https://app.macroscope.so/map/${mapId}`, '_blank');
+                      window.open(
+                        `https://app.macroscope.so/map/${mapId}`,
+                        "_blank"
+                      );
                     }}
                     title="Preview Map"
                   >
-                    <img src="/goto_map_icon.svg" alt="" className="w-[20px] h-[20px]" />
+                    <img
+                      src="/goto_map_icon.svg"
+                      alt=""
+                      className="w-[20px] h-[20px]"
+                    />
                   </button>
                   <button
                     onClick={showModal}

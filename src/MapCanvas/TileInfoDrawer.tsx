@@ -10,6 +10,7 @@ type Props = {
 
 const TileInfoDrawer = (props: Props) => {
   const [tile, setTile] = useState<any>();
+  const [categoryName, setCategoryName] = useState<string | null>(null);
 
   useEffect(() => {
     const getTileInfo = async (tileId: string) => {
@@ -20,25 +21,23 @@ const TileInfoDrawer = (props: Props) => {
         .single();
 
       setTile(data);
-      getTileTag(data?.tag_id);
-      // console.log(data);
+      if (data?.category_id) {
+        getTileCategory(data.category_id);
+      }
     };
 
     getTileInfo(props.tileId);
   }, [props.tileId]);
 
-  const [tagName, setTagName] = useState<string | null>(null);
-
-  const getTileTag = async (tagId: string) => {
-    console.log("Hello server");
+  const getTileCategory = async (categoryId: string) => {
     try {
       const { data } = await supabase
-        .from("tags")
+        .from("categories") 
         .select()
-        .eq("tag_id", tagId)
+        .eq("category_id", "category_id")  
         .single();
       console.log(data);
-      setTagName(data?.name);
+      setCategoryName(data?.name);
     } catch (error) {
       console.log(error);
     }
@@ -49,9 +48,11 @@ const TileInfoDrawer = (props: Props) => {
       <div className="flex items-center gap-5 h-16">
         <img src={tile?.logo} className="h-full rounded-md" alt="" />
         <div className="">
-          <div className="text-4xl font-semibold flex items-center gap-2">{tile?.name} <a href={tile.url}><FiExternalLink className="text-xl" /></a></div>
+          <div className="text-4xl font-semibold flex items-center gap-2">
+            {tile?.name} <a href={tile?.url}><FiExternalLink className="text-xl" /></a>
+          </div>
           <div className="px-4 bg-blue-500 text-white w-fit rounded-full mt-2">
-            {tagName || "Other"}
+            {categoryName || "Other"}
           </div>
         </div>
       </div>

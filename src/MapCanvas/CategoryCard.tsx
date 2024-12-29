@@ -7,7 +7,7 @@ import TileInfoDrawer from "./TileInfoDrawer";
 import { useParams } from "next/navigation";
 import { setHandTool, setMapSettings } from "@/redux/mapSettingsSlice";
 import { setLocalCard, setLocalSettings } from "@/redux/localSettingsSlice";
-import { setTileData } from "@/redux/tileSettingsSlice"; 
+import { setTileData } from "@/redux/tileSettingsSlice";
 import { populateCardLocalSettings } from "@/hooks/populateCardLocalSettings";
 import { supabase } from "@/lib/supabaseClient";
 import { getMapData } from "@/hooks/getMapData";
@@ -17,7 +17,11 @@ import TileImage from "./TileImage";
 import { Settings2 } from "lucide-react";
 import Image from "next/image";
 import CategoryDescription from "@/components/ui/description";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
 
 const ResizableNode = (props) => {
   const { title, group, tileStyle } = useSelector((state: any) => ({
@@ -48,7 +52,7 @@ const ResizableNode = (props) => {
 
       const { data, error } = await supabase
         .from("tiles")
-        .select(`*, tags (tag_id, name, color)`)
+        .select(`*, categories (category_id, name, color)`)
         .eq("tile_id", tileId)
         .single();
 
@@ -59,13 +63,13 @@ const ResizableNode = (props) => {
         name: data.name,
         url: data.url,
         category: {
-          value: data.tag_id,
-          label: data.tags?.name || "",
-          color: data.tags?.color || "",
+          value: data.category_id,
+          label: data.categories?.name || "",
+          color: data.categories?.color || "",
         },
         parentCategory: {
-          value: data.parent_tag_id,
-          label: data.parent_tag_name,
+          value: data.parent_category_id,
+          label: data.parent_category_name,
         },
         description: data.description_markdown,
         descriptionHtml: data.description,
@@ -75,7 +79,6 @@ const ResizableNode = (props) => {
 
       dispatch(setTileData(tileData));
       dispatch(setMapSettings("tile"));
-
     } catch (error) {
       console.error("Error fetching tile data:", error);
     }
@@ -194,7 +197,10 @@ const ResizableNode = (props) => {
         >
           <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
             <CategoryDescription
-              description={props.description || "This category contains resources related to AI platforms and tools."}
+              description={
+                props.description ||
+                "This category contains resources related to AI platforms and tools."
+              }
               maxLines={2}
               className="text-sm text-gray-600"
             />
@@ -231,17 +237,20 @@ const ResizableNode = (props) => {
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
-              <p className="">{props.tagName || "Default"}</p>
+              <p className="">{props.categoryName || "Default"}</p>
             </div>
           </div>
 
           {/* Tiles */}
-          <div className="flex flex-wrap gap-2 p-5 rounded-md" style={{ zIndex: 1000 }}>
+          <div
+            className="flex flex-wrap gap-2 p-5 rounded-md"
+            style={{ zIndex: 1000 }}
+          >
             {props.tiles
               .slice()
               .sort((a: any, b: any) => a.position - b.position)
               .map((tile: any, index) =>
-                props.tagId == tile.tag_id && !tile.hidden ? (
+                props.cardId == tile.card_id && !tile.hidden ?  ( 
                   <HoverCard key={index} openDelay={0} closeDelay={0}>
                     <HoverCardTrigger>
                       <div
