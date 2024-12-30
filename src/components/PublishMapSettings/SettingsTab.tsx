@@ -39,7 +39,7 @@ const SettingsTab = () => {
     <div className="flex flex-col space-y-6 p-4">
       {/* Title Section */}
       <div className="space-y-2">
-        <Label htmlFor="title" className="block text-sm font-normal">
+        <Label htmlFor="title" className="block font-medium text-sm">
           Title
         </Label>
         <Input
@@ -52,7 +52,7 @@ const SettingsTab = () => {
       {/* Description Section */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label className="block text-sm font-normal">
+          <Label className="block font-medium text-sm">
             Description
           </Label>
           <Button
@@ -73,7 +73,7 @@ const SettingsTab = () => {
 
       {/* NavBar Logo Section */}
       <div className="space-y-2">
-        <Label className="block text-sm font-normal">
+        <Label className="block font-medium text-sm">
           NavBar Logo
         </Label>
         <p className="text-xs text-gray-500">
@@ -134,7 +134,7 @@ const SettingsTab = () => {
 
       {/* Suggestion Form Link */}
       <div className="space-y-2">
-        <Label htmlFor="suggestion-link" className="block text-sm font-normal">
+        <Label htmlFor="suggestion-link" className="block font-medium text-sm">
           Suggestion form link
         </Label>
         <Input

@@ -1,10 +1,9 @@
 "use client";
-import { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import { useDispatch, useSelector } from "react-redux";
 import { CiMaximize2 } from "react-icons/ci";
 import { LuMinus, LuPlus } from "react-icons/lu";
-import { PiCursorLight, PiHandLight } from "react-icons/pi";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import MapNavbar from "@/components/PublishedNavbar/MapNavbar";
@@ -13,8 +12,6 @@ import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
 import { setGlobalSettings } from "@/redux/globalSettingsSlice";
-import Image from "next/image";
-import Watermark from "@/components/Watermark";
 
 const PADDING = 10; // Padding around the content
 const MIN_ZOOM = 0.5;
@@ -43,25 +40,18 @@ const ImageCard = ({ src, onDelete }: any) => {
 };
 
 export default function PublishedMap() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [startPan, setStartPan] = useState({ x: 0, y: 0 });
   const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
   const [zoom, setZoom] = useState(1);
-  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const [canvasWidth, setCanvasWidth] = useState(3000);
   const [canvasHeight, setCanvasHeight] = useState(3000);
-
   const [handtool, setHandtool] = useState(true);
 
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, []);
+
 
   //temporary code
   const params = useParams();
@@ -525,7 +515,7 @@ export default function PublishedMap() {
     };
   }, [isDraggingHorizontal, isDraggingVertical]);
 
-  if (isPublished)
+
     return (
       <div>
         <MapNavbar />
@@ -720,10 +710,5 @@ export default function PublishedMap() {
         </div>
       </div>
     );
-  else
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <h1 className="text-3xl">Loading...</h1>
-      </div>
-    );
+
 }

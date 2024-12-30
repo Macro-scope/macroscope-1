@@ -173,7 +173,7 @@ const GlobalSettings = () => {
       <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
         <div className="p-2">
           <div className="flex items-center justify-between">
-            <span className="text-base">Global Settings</span>
+            <span className="font-medium text-md">Global Settings</span>
             <Button
               variant="ghost"
               size="icon"

@@ -81,7 +81,7 @@ const ExportImageSettings = (props: Props) => {
   return (
     <div className="p-6">
       <div className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-gray-800">Download full map as an image</h2>
+        <h2 className="font-medium text-sm text-gray-800">Download full map as an image</h2>
         <button
           className="flex items-center px-4 py-2 w-40 bg-black text-white text-sm rounded hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-gray-600"
           onClick={exportAsImage}

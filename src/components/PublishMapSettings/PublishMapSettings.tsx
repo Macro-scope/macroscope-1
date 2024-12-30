@@ -27,22 +27,22 @@ const PublishMapSettings = (props: Props) => {
   const items: TabsProps["items"] = [
     {
       key: "1",
-      label: "Settings",
+      label: <span className="font-medium text-sm">Settings</span>,
       children: <SettingsTab />,
     },
     {
       key: "2",
-      label: "Website",
+      label: <span className="font-medium text-sm">Website</span>,
       children: <WebsiteSettings isPrevOpen={props.isPrevopen} />,
     },
     {
       key: "3",
-      label: "Embed",
+      label: <span className="font-medium text-sm">Embed</span>,
       children: <EmbedSettings />,
     },
     {
       key: "4",
-      label: "Image",
+      label: <span className="font-medium text-sm">Image</span>,
       children: <ExportImageSettings />,
     },
   ];

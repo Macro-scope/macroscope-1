@@ -98,7 +98,7 @@ const ParentCategoryLocalSettings = () => {
       <Card className="w-[360px] border-none shadow-none h-full">
         <div className="p-2">
           <div className="flex items-center justify-between">
-            <span className="text-base">Parent Category Settings</span>
+            <span className="font-medium text-md">Parent Category Settings</span>
             <Button
               variant="ghost"
               size="icon"
