@@ -399,7 +399,7 @@ const Navbar = () => {
          <div className="fixed top-[47px] right-0 h-[calc(100vh-50px)] bg-white shadow-lg z-40 flex">
             <div className="w-[420px] flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
-                <span className="text-base font-medium">Publish Settings</span>
+                <span className="font-medium text-md">Publish Settings</span>
                 <Button
                   type="text"
                   size="small"
@@ -499,7 +499,7 @@ const Navbar = () => {
                   <button
                     onClick={() => {
                       window.open(
-                        `https://app.macroscope.so/map/${mapId}`,
+                        `https://app.macroscope.so/preview/${mapId}`,
                         "_blank"
                       );
                     }}

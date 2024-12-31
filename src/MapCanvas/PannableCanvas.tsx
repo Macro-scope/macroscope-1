@@ -203,87 +203,70 @@ export default function PannableCanvas() {
     const newZoom = Math.max(MIN_ZOOM, zoom - ZOOM_BUTTON_STEP);
     updateZoom(newZoom);
   };
-
   const handleFitContent = () => {
-    // Check if we have any content to fit
+
     if (!mapCards?.data?.length && (!images || !images.length)) return;
 
-    // Initialize bounding box with first card's position if it exists
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    // Include cards in bounding box calculation
-    if (mapCards?.data?.length) {
-      mapCards.data.forEach((card: any) => {
-        const x = Number(card.position[0]);
-        const y = Number(card.position[1]);
-        const width = Number(card.dimension[0]);
-        const height = Number(card.dimension[1]);
-        
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + width);
-        maxY = Math.max(maxY, y + height);
-      });
-    }
-
-    // Include images in bounding box calculation
-    if (images?.length) {
-      images.forEach((image: any) => {
-        const x = Number(image.position[0]);
-        const y = Number(image.position[1]);
-        const width = Number(image.dimension[0]);
-        const height = Number(image.dimension[1]);
-        
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x + width);
-        maxY = Math.max(maxY, y + height);
-      });
-    }
-
-    // If we found no valid content, return
-    if (minX === Infinity || minY === Infinity) return;
-
-    // Add padding
-    const padding = 100;
-    minX -= padding;
-    minY -= padding;
-    maxX += padding;
-    maxY += padding;
-
-    // Calculate content dimensions
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-
-    // Calculate required zoom
-    const zoomX = viewportSize.width / contentWidth;
-    const zoomY = viewportSize.height / contentHeight;
-    const newZoom = Math.max(
-      MIN_ZOOM,
-      Math.min(MAX_ZOOM, Math.min(zoomX, zoomY))
-    );
-
-    // Calculate the center position of the content
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-
-    // Calculate new offset to center the content
-    const newOffset = {
-      x: viewportSize.width / 2 - centerX * newZoom,
-      y: viewportSize.height / 2 - centerY * newZoom
+    let bounds = {
+        minX: Infinity,
+        minY: Infinity,
+        maxX: -Infinity,
+        maxY: -Infinity
     };
 
-    // Apply zoom and offset
-    setZoom(newZoom);
-    setOffset({
-      x: Math.min(0, Math.max(viewportSize.width - canvasWidth * newZoom, newOffset.x)),
-      y: Math.min(0, Math.max(viewportSize.height - canvasHeight * newZoom, newOffset.y))
-    });
-  };
+    if (mapCards?.data?.length) {
+        mapCards.data.forEach((card: any) => {
+            const [x, y] = card.position.map(Number);
+            const [width, height] = card.dimension.map(Number);
+            
+            bounds.minX = Math.min(bounds.minX, x);
+            bounds.minY = Math.min(bounds.minY, y);
+            bounds.maxX = Math.max(bounds.maxX, x + width);
+            bounds.maxY = Math.max(bounds.maxY, y + height);
+        });
+    }
 
+    if (images?.length) {
+        images.forEach((image: any) => {
+            const [x, y] = image.position.map(Number);
+            const [width, height] = image.dimension.map(Number);
+            
+            bounds.minX = Math.min(bounds.minX, x);
+            bounds.minY = Math.min(bounds.minY, y);
+            bounds.maxX = Math.max(bounds.maxX, x + width);
+            bounds.maxY = Math.max(bounds.maxY, y + height);
+        });
+    }
+
+    if (bounds.minX === Infinity || bounds.minY === Infinity) return;
+
+    const padding = 100;
+    bounds.minX -= padding;
+    bounds.minY -= padding;
+    bounds.maxX += padding;
+    bounds.maxY += padding;
+
+    const contentWidth = bounds.maxX - bounds.minX;
+    const contentHeight = bounds.maxY - bounds.minY;
+
+    const zoomX = viewportSize.width / contentWidth;
+    const zoomY = viewportSize.height / contentHeight;
+    
+    let newZoom = Math.min(zoomX, zoomY);
+    
+    newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
+
+    const contentCenterX = bounds.minX + (contentWidth / 2);
+    const contentCenterY = bounds.minY + (contentHeight / 2);
+
+    const newOffset = {
+        x: (viewportSize.width / 2) - (contentCenterX * newZoom),
+        y: (viewportSize.height / 2) - (contentCenterY * newZoom)
+    };
+
+    setZoom(newZoom);
+    setOffset(newOffset);
+};
   let { id: mapId } = useParams();
   mapId = String(mapId);
   const {
