@@ -16,7 +16,7 @@ const Login = () => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [showOtpInput, setShowOtpInput] = useState(false);
-  const [showNameModal, setShowNameModal] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const router = useRouter();
 
@@ -40,18 +40,24 @@ const Login = () => {
   };
 
   const handleOtpRequest = async () => {
-    if (!email) {
-      message.error('Please enter your email');
-      return;
-    }
-
-    if (!recaptchaToken) {
-      message.error('Please complete the reCAPTCHA');
+    if (!email || !recaptchaToken) {
+      message.error(
+        !email ? 'Please enter your email' : 'Please complete the reCAPTCHA'
+      );
       return;
     }
 
     setLoading(true);
     try {
+      // Check if user exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('user_id')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      setIsNewUser(!existingUser);
+
       const { error } = await supabase.auth.signInWithOtp({
         email,
         options: {
@@ -77,6 +83,11 @@ const Login = () => {
       return;
     }
 
+    if (isNewUser && !name.trim()) {
+      message.error('Please enter your name');
+      return;
+    }
+
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.verifyOtp({
@@ -86,123 +97,53 @@ const Login = () => {
       });
 
       if (error) throw error;
-      console.log('data', data);
-      // Check if user exists in your users table
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select()
-        .eq('user_id', data.user?.id)
-        .single();
 
-      if (!existingUser) {
-        setShowNameModal(true);
-      } else {
-        router.push('/dashboard');
+      if (isNewUser) {
+        // Create new user in the users table
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            name: name.trim(),
+            email: email.toLowerCase(),
+            created_at: new Date().toISOString(),
+            user_id: data.user?.id,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          throw new Error(`Failed to create user: ${insertError.message}`);
+        }
+
+        // Send welcome email
+        try {
+          const response = await fetch('/api/welcome', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: email.toLowerCase(),
+              name: name.trim(),
+            }),
+          });
+
+          if (!response.ok) {
+            console.error('Failed to send welcome email');
+          }
+        } catch (error) {
+          console.error('Failed to send welcome email:', error);
+        }
+
+        message.success('Welcome to Macroscope!');
       }
+
+      // Redirect to dashboard
+      router.push('/dashboard');
     } catch (error: any) {
       message.error(error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleNameSubmit = async () => {
-    if (!name.trim()) {
-      message.error('Please enter your name');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user?.id) {
-        throw new Error('Authentication error: User not found');
-      }
-
-      // First check if user already exists
-      const { data: existingUser, error: checkError } = await supabase
-        .from('users')
-        .select('user_id')
-        .eq('email', email.toLowerCase())
-        .single();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw new Error(`Database check error: ${checkError.message}`);
-      }
-
-      if (existingUser) {
-        message.info('User already exists');
-        router.push('/dashboard');
-        return;
-      }
-
-      // Create new user with the correct schema
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert({
-          name: name.trim(),
-          email: email.toLowerCase(),
-          created_at: new Date().toISOString(),
-          avatar_url: user.user_metadata.avatar_url || null,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (insertError) {
-        console.error('Insert Error:', insertError);
-        throw new Error(`Failed to create user: ${insertError.message}`);
-      }
-
-      // await sendWelcomeEmail(email.toLowerCase(), name.trim()).catch(error => {
-      //   console.error('Failed to send welcome email:', error);
-      // });
-      try {
-        const response = await fetch('/api/welcome', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email.toLowerCase(),
-            name: name.trim(),
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            `Failed to send welcome email: ${
-              errorData.error || 'Unknown error'
-            }`
-          );
-        }
-
-        console.log('Welcome email sent successfully');
-      } catch (error) {
-        console.error('Failed to send welcome email:', error);
-        // Continue execution even if email fails
-      }
-      message.success('Welcome to Macroscope!');
-      // setName('');
-      // setEmail('');
-      // setOtp('');
-      // setRecaptchaToken(null);
-      router.push('/dashboard');
-    } catch (error: any) {
-      console.error('Error in handleNameSubmit:', error);
-      message.error(error.message || 'Failed to create user');
-
-      if (error.message.includes('Authentication error')) {
-        router.push('/login');
-      }
-    } finally {
-      setLoading(false);
-      setShowNameModal(false);
     }
   };
 
@@ -218,99 +159,96 @@ const Login = () => {
 
       <div className="w-full max-w-[400px] space-y-6 flex-grow flex flex-col justify-center">
         <div className="space-y-4">
-          {showNameModal ? (
-            <>
+          <Button
+            onClick={handleGoogleLogin}
+            size="large"
+            block
+            className="flex items-center justify-center gap-2 h-[40px] border-gray-200"
+          >
+            <FaGoogle className="text-[16px]" />
+            <span>Continue with Google</span>
+          </Button>
+
+          <div className="flex items-center my-6">
+            <div className="flex-1 border-t border-gray-200"></div>
+            <span className="px-4 text-gray-500 text-sm">or</span>
+            <div className="flex-1 border-t border-gray-200"></div>
+          </div>
+
+          <div className="space-y-4">
+            {!showOtpInput && (
               <div>
-                <label className="block text-sm font-medium mb-2">
-                  Your name
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email address
                 </label>
                 <Input
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   size="large"
+                  disabled={showOtpInput}
+                  className="h-[40px]"
                 />
               </div>
-              <Button
-                onClick={handleNameSubmit}
-                loading={loading}
-                type="primary"
-                block
-                size="large"
-              >
-                Continue
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                onClick={handleGoogleLogin}
-                size="large"
-                block
-                className="flex items-center justify-center gap-2 h-[40px] border-gray-200"
-              >
-                <FaGoogle className="text-[16px]" />
-                <span>Continue with Google</span>
-              </Button>
+            )}
 
-              <div className="flex items-center my-6">
-                <div className="flex-1 border-t border-gray-200"></div>
-                <span className="px-4 text-gray-500 text-sm">or</span>
-                <div className="flex-1 border-t border-gray-200"></div>
-              </div>
+            {!showOtpInput && process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
+              <ReCAPTCHA
+                sitekey="6LfIlY4qAAAAAEtEim_pHapgHV-L7rZskn0yXEp_"
+                onChange={(token) => setRecaptchaToken(token)}
+                className="flex justify-center"
+              />
+            )}
 
-              <div className="space-y-4">
+            {showOtpInput && (
+              <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email address
+                    Enter OTP
                   </label>
                   <Input
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Enter OTP"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value)}
                     size="large"
-                    disabled={showOtpInput}
                     className="h-[40px]"
                   />
                 </div>
 
-                {!showOtpInput &&
-                  process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY && (
-                    <ReCAPTCHA
-                      sitekey="6LfIlY4qAAAAAEtEim_pHapgHV-L7rZskn0yXEp_"
-                      onChange={(token) => setRecaptchaToken(token)}
-                      className="flex justify-center"
-                    />
-                  )}
-
-                {showOtpInput && (
+                {isNewUser && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Enter OTP
+                      Your name
                     </label>
                     <Input
-                      placeholder="Enter OTP"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
                       size="large"
                       className="h-[40px]"
                     />
                   </div>
                 )}
+              </>
+            )}
 
-                <Button
-                  onClick={showOtpInput ? verifyOtp : handleOtpRequest}
-                  loading={loading}
-                  type="primary"
-                  block
-                  size="large"
-                  disabled={showOtpInput ? otp.length === 0 : !recaptchaToken}
-                >
-                  {showOtpInput ? 'Verify OTP' : 'Get OTP'}
-                </Button>
-              </div>
-            </>
-          )}
+            <Button
+              onClick={showOtpInput ? verifyOtp : handleOtpRequest}
+              loading={loading}
+              type="primary"
+              block
+              size="large"
+              disabled={
+                showOtpInput
+                  ? isNewUser
+                    ? otp.length === 0 || !name.trim()
+                    : otp.length === 0
+                  : !recaptchaToken
+              }
+            >
+              {showOtpInput ? 'Verify OTP' : 'Get OTP'}
+            </Button>
+          </div>
         </div>
       </div>
 

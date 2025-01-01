@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import React, { useCallback, useEffect, useState, useRef } from "react";
-import styled from "styled-components";
+import React, { useCallback, useEffect, useState, useRef } from 'react';
+import styled from 'styled-components';
 
 import {
   CompactSelection,
@@ -13,51 +13,51 @@ import {
   GridColumn,
   GridMouseEventArgs,
   Theme,
-} from "@glideapps/glide-data-grid";
-import "@glideapps/glide-data-grid/dist/index.css";
-import { allCells } from "@/components/test";
-import { useResizeDetector } from "react-resize-detector";
-import { useTableData } from "@/hooks/use-table-data";
-import { useTableColumns } from "@/hooks/use-table-columns";
-import ReactDOM from "react-dom";
-import { useParams } from "react-router-dom";
-import { addNewTag } from "@/hooks/addNewTag2";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import EditItemForm from "@/components/forms/database-form";
-import { debounce } from "lodash";
-import DatabaseForm from "@/components/forms/database-form";
-import { ImageUpload } from "@/components/database/image-upload";
+} from '@glideapps/glide-data-grid';
+import '@glideapps/glide-data-grid/dist/index.css';
+import { allCells } from '@/components/test';
+import { useResizeDetector } from 'react-resize-detector';
+import { useTableData } from '@/hooks/use-table-data';
+import { useTableColumns } from '@/hooks/use-table-columns';
+import ReactDOM from 'react-dom';
+import { useParams } from 'react-router-dom';
+import { addNewTag } from '@/hooks/addNewTag2';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
+import EditItemForm from '@/components/forms/database-form';
+import { debounce } from 'lodash';
+import DatabaseForm from '@/components/forms/database-form';
+import { ImageUpload } from '@/components/database/image-upload';
 // import { TiptapEditor } from '@/components/tiptap-editor';
 
-import { FaUndo, FaRedo, FaFileExport, FaSort } from "react-icons/fa";
-import { ListX, Redo, Trash2, Undo } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FaUndo, FaRedo, FaFileExport, FaSort } from 'react-icons/fa';
+import { ListX, Redo, Trash2, Undo } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-import { X, ArrowUpDown, ChevronLeft } from "lucide-react";
+import { X, ArrowUpDown, ChevronLeft } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
+} from '@/components/ui/popover';
 import {
   AlertDialog,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabaseClient";
-import CustomLayout from "@/layout/CustomLayout";
-import { addLogo } from "@/hooks/addLogo";
-import { TiptapEditor } from "../editor/tiptap-editor";
-import { ExportIcon } from "../icons";
-import { Loader2 } from "lucide-react"; // Import loading icon
-import { useDispatch, useSelector } from "react-redux";
-import { getMapData } from "@/hooks/getMapData";
-import { setCards } from "@/redux/mapCardsSlice";
+} from '@/components/ui/alert-dialog';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabaseClient';
+import CustomLayout from '@/layout/CustomLayout';
+import { addLogo } from '@/hooks/addLogo';
+import { TiptapEditor } from '../editor/tiptap-editor';
+import { ExportIcon } from '../icons';
+import { Loader2 } from 'lucide-react'; // Import loading icon
+import { useDispatch, useSelector } from 'react-redux';
+import { getMapData } from '@/hooks/getMapData';
+import { setCards } from '@/redux/mapCardsSlice';
 
-import { PlusCircle, FolderOpen } from "lucide-react";
+import { PlusCircle, FolderOpen } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -65,9 +65,9 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
@@ -81,29 +81,29 @@ const GridWrapper = styled.div`
 
 const getRandomColor = () => {
   const colors = [
-    "#FF6B6B",
-    "#4ECDC4",
-    "#45B7D1",
-    "#96CEB4",
-    "#FFEEAD",
-    "#D4A5A5",
-    "#9B59B6",
-    "#3498DB",
-    "#E67E22",
-    "#2ECC71",
-    "#F1C40F",
-    "#E74C3C",
-    "#1ABC9C",
-    "#9B59B6",
-    "#34495E",
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEEAD',
+    '#D4A5A5',
+    '#9B59B6',
+    '#3498DB',
+    '#E67E22',
+    '#2ECC71',
+    '#F1C40F',
+    '#E74C3C',
+    '#1ABC9C',
+    '#9B59B6',
+    '#34495E',
   ];
   return colors[Math.floor(Math.random() * colors.length)];
 };
 
 const getFavicon = async (url: string) => {
   try {
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      url = "https://" + url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
     }
 
     const urlObj = new URL(url);
@@ -122,14 +122,14 @@ const getFavicon = async (url: string) => {
     for (const faviconUrl of faviconUrls) {
       try {
         const response = await fetch(faviconUrl, {
-          method: "GET",
-          redirect: "follow", // Explicitly follow redirects
+          method: 'GET',
+          redirect: 'follow', // Explicitly follow redirects
         });
 
         if (response.ok || response.status === 304) {
           // Check if the response actually contains an image
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.startsWith("image/")) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.startsWith('image/')) {
             //save to db
             const link = await addLogo(faviconUrl);
             if (link) console.error(link);
@@ -144,7 +144,7 @@ const getFavicon = async (url: string) => {
     }
     return null;
   } catch (e) {
-    console.error("Error parsing URL:", e);
+    console.error('Error parsing URL:', e);
     return null;
   }
 };
@@ -203,8 +203,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   } = useTableData({ mapId });
 
   const [showGroupDialog, setShowGroupDialog] = useState(false);
-  const [newGroupName, setNewGroupName] = useState("");
-  const [newGroupColor, setNewGroupColorState] = useState<string>("");
+  const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupColor, setNewGroupColorState] = useState<string>('');
   const [parentCategories, setParentCategories] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
 
@@ -215,14 +215,14 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   );
   const [selectedRow, setSelectedRow] = useState<any | null>(null);
   const [lastClickedRow, setLastClickedRow] = useState<number | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<number[]>([]);
   const [currentSearchIndex, setCurrentSearchIndex] = useState(0);
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [sortConfig, setSortConfig] = useState<{
     column: string | null;
-    direction: "asc" | "desc" | null;
+    direction: 'asc' | 'desc' | null;
     originalOrder: number[] | null;
   }>({
     column: null,
@@ -234,7 +234,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   const [showSortWarning, setShowSortWarning] = useState(false);
   const [pendingSortConfig, setPendingSortConfig] = useState<{
     column: string | null;
-    direction: "asc" | "desc" | null | undefined;
+    direction: 'asc' | 'desc' | null | undefined;
   }>({
     column: null,
     direction: null,
@@ -245,7 +245,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   } | null>(null);
   const [activeSort, setActiveSort] = useState<{
     column: string | null;
-    direction: "asc" | "desc" | null;
+    direction: 'asc' | 'desc' | null;
   }>({
     column: null,
     direction: null,
@@ -262,21 +262,21 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
   const onItemHovered = useCallback((args: GridMouseEventArgs) => {
     const [_, row] = args.location;
-    setHoverRow(args.kind !== "cell" ? undefined : row);
+    setHoverRow(args.kind !== 'cell' ? undefined : row);
   }, []);
 
   const getRowThemeOverride = useCallback(
     (row: number): Partial<Theme> | undefined => {
       if (searchResults.includes(row)) {
         return {
-          bgCell: "#fff9c4",
-          bgCellMedium: "#fff59d",
+          bgCell: '#fff9c4',
+          bgCellMedium: '#fff59d',
         };
       }
       if (row === hoverRow) {
         return {
-          bgCell: "#f7f7f7",
-          bgCellMedium: "#f0f0f0",
+          bgCell: '#f7f7f7',
+          bgCellMedium: '#f0f0f0',
         };
       }
       return undefined;
@@ -285,10 +285,10 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   );
 
   useEffect(() => {
-    let portalRoot = document.getElementById("portal");
+    let portalRoot = document.getElementById('portal');
     if (!portalRoot) {
-      portalRoot = document.createElement("div");
-      portalRoot.id = "portal";
+      portalRoot = document.createElement('div');
+      portalRoot.id = 'portal';
       document.body.appendChild(portalRoot);
     }
 
@@ -302,7 +302,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + F for search
-      if ((e.ctrlKey || e.metaKey) && e.key === "f") {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
         const searchInput = document.querySelector(
           'input[type="search"]'
@@ -312,28 +312,28 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         }
       }
       // Escape to clear search
-      if (e.key === "Escape" && searchText) {
-        setSearchText("");
+      if (e.key === 'Escape' && searchText) {
+        setSearchText('');
         setSearchResults([]);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [searchText]);
 
   useEffect(() => {
     const fetchParentCategories = async () => {
       try {
         const { data, error } = await supabase
-          .from("parent_categories")
-          .select("*")
-          .eq("map_id", mapId);
+          .from('parent_categories')
+          .select('*')
+          .eq('map_id', mapId);
 
         if (error) throw error;
         setParentCategories(data || []);
       } catch (error) {
-        console.error("Error fetching parent categories:", error);
+        console.error('Error fetching parent categories:', error);
       }
     };
 
@@ -344,7 +344,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   const createParentCategory = async () => {
     try {
       const { data, error } = await supabase
-        .from("parent_categories")
+        .from('parent_categories')
         .insert({
           // Note: Changed from array to single object
           map_id: mapId,
@@ -353,19 +353,19 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           position: [50, 50],
           dimension: [400, 300],
         })
-        .select("*") // Changed from .select() to .select('*')
+        .select('*') // Changed from .select() to .select('*')
         .single();
 
       if (error) {
-        console.error("Supabase error:", error);
+        console.error('Supabase error:', error);
         throw error;
       }
 
       setParentCategories((prev) => [...prev, data]);
-      setNewGroupName("");
+      setNewGroupName('');
       setShowGroupDialog(false);
     } catch (error) {
-      console.error("Error creating parent category:", error);
+      console.error('Error creating parent category:', error);
       // Add user feedback here (e.g., toast notification)
     }
   };
@@ -373,7 +373,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   const assignToGroup = async (groupId: string) => {
     try {
       if (!groupId) {
-        console.error("No group ID provided");
+        console.error('No group ID provided');
         return;
       }
 
@@ -387,11 +387,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         if (!cardId) return;
 
         const { error } = await supabase
-          .from("cards")
+          .from('cards')
           .update({
             parent_category_id: groupId,
           })
-          .eq("card_id", cardId);
+          .eq('card_id', cardId);
 
         if (error) throw error;
       });
@@ -400,7 +400,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
       // Refresh data
       const { data: refreshedData, error } = await supabase
-        .from("tiles")
+        .from('tiles')
         .select(
           `
         *,
@@ -414,7 +414,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         )
       `
         )
-        .order("position");
+        .order('position');
 
       if (error) throw error;
       if (refreshedData) {
@@ -424,7 +424,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       // Clear selection
       setSelectedRows(new Set());
     } catch (error) {
-      console.error("Error assigning to group:", error);
+      console.error('Error assigning to group:', error);
     }
   };
 
@@ -442,8 +442,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         return {
           kind: GridCellKind.Text,
           allowOverlay: true,
-          data: "",
-          displayData: "",
+          data: '',
+          displayData: '',
           onClick: handleCellClick,
         };
       }
@@ -451,13 +451,13 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       const value = rowData[column.id];
 
       switch (column.type) {
-        case "multiselect":
+        case 'multiselect':
           return {
             kind: GridCellKind.Custom,
             allowOverlay: true,
-            copyData: value?.label ?? "",
+            copyData: value?.label ?? '',
             data: {
-              kind: "multi-select-cell",
+              kind: 'multi-select-cell',
               values: value ? [value.label] : [],
               options: column.options?.map((opt: any) => ({
                 value: opt.value,
@@ -471,7 +471,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             onClick: handleCellClick,
           };
 
-        case "boolean":
+        case 'boolean':
           return {
             kind: GridCellKind.Boolean,
             allowOverlay: true,
@@ -479,34 +479,34 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             onClick: handleCellClick,
           };
 
-        case "uri":
+        case 'uri':
           return {
             kind: GridCellKind.Uri,
             allowOverlay: true,
-            data: value ?? "",
+            data: value ?? '',
             onClick: handleCellClick,
           };
 
-        case "url":
+        case 'url':
           return {
             kind: GridCellKind.Uri,
             allowOverlay: true,
-            data: value || "",
+            data: value || '',
             onClick: handleCellClick,
           };
 
-        case "image":
+        case 'image':
           return {
             kind: GridCellKind.Image,
             allowOverlay: false,
             data: value ? [value] : [],
             displayData: value ? [value] : [],
             onClick: () => {
-              console.log("Image clicked:", value);
+              console.log('Image clicked:', value);
               if (value) {
                 setSelectedRow({
                   ...rowData,
-                  activeField: "logo",
+                  activeField: 'logo',
                   logo: value,
                 });
               } else {
@@ -515,37 +515,37 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             },
             allowAdd: false,
             readonly: true,
-            contentAlign: "center",
+            contentAlign: 'center',
             theme: {
               cellHeight: 36,
-              imagePlaceholder: "🖼️",
+              imagePlaceholder: '🖼️',
               imageHeight: 32,
               padding: 2,
             },
           };
 
-        case "date":
+        case 'date':
           return {
             kind: GridCellKind.Text,
             allowOverlay: true,
-            data: value ? new Date(value).toLocaleString() : "",
-            displayData: value ? new Date(value).toLocaleString() : "",
+            data: value ? new Date(value).toLocaleString() : '',
+            displayData: value ? new Date(value).toLocaleString() : '',
             onClick: handleCellClick,
           };
 
-        case "button":
+        case 'button':
           return {
             kind: GridCellKind.Custom,
             allowOverlay: true,
-            copyData: "",
+            copyData: '',
             readonly: true,
             data: {
-              kind: "button-cell",
-              backgroundColor: ["#f3f4f6", "#e5e7eb"],
-              color: ["#374151", "#1f2937"],
-              borderColor: "#d1d5db",
+              kind: 'button-cell',
+              backgroundColor: ['#f3f4f6', '#e5e7eb'],
+              color: ['#374151', '#1f2937'],
+              borderColor: '#d1d5db',
               borderRadius: 6,
-              title: "Edit",
+              title: 'Edit',
               onClick: () => {
                 setSelectedRow(rowData);
               },
@@ -553,16 +553,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             onClick: handleCellClick,
           };
 
-        case "parentCategory":
+        case 'parentCategory':
           const parentCategory = parentCategories.find(
             (cat) => cat.category_id === rowData.parent_category_id
           );
           return {
             kind: GridCellKind.Custom,
             allowOverlay: true,
-            copyData: parentCategory?.name ?? "",
+            copyData: parentCategory?.name ?? '',
             data: {
-              kind: "multi-select-cell",
+              kind: 'multi-select-cell',
               values: parentCategory ? [parentCategory.name] : [],
               options: column.options?.map((opt) => ({
                 value: opt.value,
@@ -576,16 +576,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             onClick: handleCellClick,
           };
 
-        case "article":
+        case 'article':
           return {
             kind: GridCellKind.Text,
             allowOverlay: true,
-            data: value?.markdown ?? "",
-            displayData: value?.markdown ?? "",
+            data: value?.markdown ?? '',
+            displayData: value?.markdown ?? '',
             onClick: () => {
               setSelectedRow({
                 ...rowData,
-                activeField: "description",
+                activeField: 'description',
                 description: value,
               });
             },
@@ -595,8 +595,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           return {
             kind: GridCellKind.Text,
             allowOverlay: true,
-            data: value?.toString() ?? "",
-            displayData: value?.toString() ?? "",
+            data: value?.toString() ?? '',
+            displayData: value?.toString() ?? '',
             onClick: handleCellClick,
           };
       }
@@ -619,7 +619,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           console.log(data);
         }
       } catch (error) {
-        console.error("Fetching error:", error);
+        console.error('Fetching error:', error);
       }
     };
 
@@ -629,11 +629,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   }, [mapId]);
 
   const getCanvasSize = () => {
-    console.log("hi");
+    console.log('hi');
     console.log(mapCards);
     console.log(images);
     if (!mapCards?.data?.length && (!images || !Array.isArray(images))) return;
-    console.log("hey");
+    console.log('hey');
 
     // Calculate the bounding box of all cards and images
     let maxX = 0;
@@ -680,14 +680,14 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
       let value = newValue.data;
 
-      if (column.id === "url") {
+      if (column.id === 'url') {
         try {
           let urlToUse = value;
           if (
-            !urlToUse.startsWith("http://") &&
-            !urlToUse.startsWith("https://")
+            !urlToUse.startsWith('http://') &&
+            !urlToUse.startsWith('https://')
           ) {
-            urlToUse = "https://" + urlToUse;
+            urlToUse = 'https://' + urlToUse;
             value = urlToUse;
           }
 
@@ -696,35 +696,35 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           const updateData = {
             [column.id]: value,
           };
-          console.log("Updating URL:", updateData);
+          console.log('Updating URL:', updateData);
           await updateRow(rowData.id, updateData);
           return;
         } catch (error) {
-          console.error("Invalid URL:", error);
+          console.error('Invalid URL:', error);
           return;
         }
-      } else if (column.id === "logo") {
+      } else if (column.id === 'logo') {
         try {
           const imageUrl = Array.isArray(value) ? value[0] : value;
           if (imageUrl) {
             const response = await fetch(imageUrl);
-            const contentType = response.headers.get("content-type");
-            if (!contentType || !contentType.startsWith("image/")) {
-              throw new Error("Invalid image URL");
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.startsWith('image/')) {
+              throw new Error('Invalid image URL');
             }
           }
 
           const updateData = {
-            logo: imageUrl || "",
+            logo: imageUrl || '',
           };
           await updateRow(rowData.id, updateData);
           return;
         } catch (error) {
-          console.error("Invalid image URL:", error);
+          console.error('Invalid image URL:', error);
           return;
         }
       } else if (
-        column.type === "multiselect" &&
+        column.type === 'multiselect' &&
         newValue.kind === GridCellKind.Custom
       ) {
         const selectedValue = newValue.data.values[0];
@@ -735,16 +735,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
         // Handle parent category selection
         // Inside onCellEdited function, update the parentCategory handling block:
-        if (column.id === "parentCategory") {
+        if (column.id === 'parentCategory') {
           try {
             if (existingOption) {
               // Update the card instead of the tile
               const { error: cardError } = await supabase
-                .from("cards")
+                .from('cards')
                 .update({
                   parent_category_id: existingOption.value,
                 })
-                .eq("card_id", rowData.card_id);
+                .eq('card_id', rowData.card_id);
 
               if (cardError) throw cardError;
 
@@ -765,9 +765,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             } else {
               // Clear parent category
               const { error: cardError } = await supabase
-                .from("cards")
+                .from('cards')
                 .update({ parent_category_id: null })
-                .eq("card_id", rowData.card_id);
+                .eq('card_id', rowData.card_id);
 
               if (cardError) throw cardError;
 
@@ -780,7 +780,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               );
             }
           } catch (error) {
-            console.error("Error updating parent category:", error);
+            console.error('Error updating parent category:', error);
             throw error;
           }
           return;
@@ -790,10 +790,10 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           try {
             // First, fetch the card that corresponds to this tag
             const { data: cardData, error: cardError } = await supabase
-              .from("cards")
-              .select("card_id")
-              .eq("category_id", existingOption.value)
-              .eq("map_id", mapId)
+              .from('cards')
+              .select('card_id')
+              .eq('category_id', existingOption.value)
+              .eq('map_id', mapId)
               .single();
 
             if (cardError) throw cardError;
@@ -824,7 +824,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               )
             );
           } catch (error) {
-            console.error("Error updating category:", error);
+            console.error('Error updating category:', error);
             throw error;
           }
         } else if (selectedValue && newValue.data.allowCreation) {
@@ -842,9 +842,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
             // Get the newly created card
             const { data: cardData, error: cardError } = await supabase
-              .from("cards")
-              .select("card_id, categories!inner(name, color)")
-              .eq("category_id", result.tag.category_id)
+              .from('cards')
+              .select('card_id, categories!inner(name, color)')
+              .eq('category_id', result.tag.category_id)
               .single();
 
             if (cardError) throw cardError;
@@ -874,7 +874,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               )
             );
           } catch (error) {
-            console.error("Error creating new tag:", error);
+            console.error('Error creating new tag:', error);
             throw error;
           }
         } else {
@@ -925,7 +925,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           row.category?.label,
         ]
           .filter(Boolean)
-          .join(" ")
+          .join(' ')
           .toLowerCase();
 
         if (searchable.includes(text.toLowerCase())) {
@@ -948,11 +948,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   );
 
   const navigateSearch = useCallback(
-    (direction: "next" | "prev") => {
+    (direction: 'next' | 'prev') => {
       if (searchResults.length === 0) return;
 
       let newIndex;
-      if (direction === "next") {
+      if (direction === 'next') {
         newIndex = (currentSearchIndex + 1) % searchResults.length;
       } else {
         newIndex =
@@ -964,7 +964,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       const rowIndex = searchResults[newIndex];
 
       // Scroll to the row
-      const gridElement = document.querySelector(".dvn-scroller");
+      const gridElement = document.querySelector('.dvn-scroller');
       if (gridElement) {
         const rowHeight = 35; // Adjust based on your row height
         gridElement.scrollTop = rowHeight * rowIndex;
@@ -974,10 +974,10 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   );
 
   const onGridSelectionChange = useCallback((selection: any) => {
-    console.log("Grid selection:", selection);
+    console.log('Grid selection:', selection);
     // Extract selected rows from the selection object
     const selectedRowsArray = selection.rows.items.flat();
-    console.log("Selected rows array:", selectedRowsArray);
+    console.log('Selected rows array:', selectedRowsArray);
 
     // Update selected rows state
     setSelectedRows(new Set(selectedRowsArray));
@@ -992,7 +992,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
   const handleDeleteRows = async () => {
     if (selectedRows.size === 0) {
-      alert("Please select rows to delete");
+      alert('Please select rows to delete');
       return;
     }
 
@@ -1036,7 +1036,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       // }
       window.location.reload();
     } catch (error) {
-      console.error("Error deleting rows:", error);
+      console.error('Error deleting rows:', error);
     } finally {
       setIsLoading(false);
     }
@@ -1045,64 +1045,64 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   const exportToCsv = useCallback(() => {
     // Convert data to CSV format
     const headers = columns
-      .filter((col) => col.type !== "button")
+      .filter((col) => col.type !== 'button')
       .map((col) => col.title)
-      .join(",");
+      .join(',');
 
     const rows = data
       .map((row) => {
         return columns
-          .filter((col) => col.type !== "button")
+          .filter((col) => col.type !== 'button')
           .map((col) => {
             const value = row[col.id];
 
             // Handle different types of values
             if (value === null || value === undefined) {
-              return "";
+              return '';
             }
 
-            if (col.type === "multiselect" && value?.label) {
+            if (col.type === 'multiselect' && value?.label) {
               return `"${value.label}"`;
             }
 
-            if (col.type === "article" && value?.markdown) {
+            if (col.type === 'article' && value?.markdown) {
               return `"${value.markdown.replace(/"/g, '""')}"`;
             }
 
-            if (typeof value === "object") {
+            if (typeof value === 'object') {
               return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
             }
 
             // Escape quotes and wrap in quotes if contains comma
             if (
-              typeof value === "string" &&
-              (value.includes(",") || value.includes('"'))
+              typeof value === 'string' &&
+              (value.includes(',') || value.includes('"'))
             ) {
               return `"${value.replace(/"/g, '""')}"`;
             }
 
             return value;
           })
-          .join(",");
+          .join(',');
       })
-      .join("\n");
+      .join('\n');
 
     const csv = `${headers}\n${rows}`;
 
     // Create and trigger download
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
-    link.setAttribute("href", url);
-    link.setAttribute("download", "database_export.csv");
-    link.style.visibility = "hidden";
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'database_export.csv');
+    link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   }, [columns, data]);
 
   const handleSort = useCallback(
-    (columnId: string | null, direction?: "asc" | "desc") => {
+    (columnId: string | null, direction?: 'asc' | 'desc') => {
       if (!columnId) {
         setSortConfig({
           column: null,
@@ -1132,9 +1132,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
       const newDirection =
         direction ||
-        (sortConfig.column === columnId && sortConfig.direction === "asc"
-          ? "desc"
-          : "asc");
+        (sortConfig.column === columnId && sortConfig.direction === 'asc'
+          ? 'desc'
+          : 'asc');
 
       setSortConfig((prevConfig) => ({
         column: columnId,
@@ -1154,14 +1154,14 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           const bValue = b[columnId];
 
           // Handle special cases
-          if (columnId === "category") {
-            return (a.category?.label ?? "").localeCompare(
-              b.category?.label ?? ""
+          if (columnId === 'category') {
+            return (a.category?.label ?? '').localeCompare(
+              b.category?.label ?? ''
             );
           }
-          if (columnId === "description") {
-            return (a.description?.markdown ?? "").localeCompare(
-              b.description?.markdown ?? ""
+          if (columnId === 'description') {
+            return (a.description?.markdown ?? '').localeCompare(
+              b.description?.markdown ?? ''
             );
           }
 
@@ -1173,7 +1173,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           return String(aValue).localeCompare(String(bValue));
         });
 
-        return newDirection === "desc" ? sortedData.reverse() : sortedData;
+        return newDirection === 'desc' ? sortedData.reverse() : sortedData;
       });
     },
     [sortConfig, data]
@@ -1206,7 +1206,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
   }
 
   const onHeaderMenuClick = (column: any) => {
-    console.log("Header menu clicked for column:", column);
+    console.log('Header menu clicked for column:', column);
   };
 
   function setNewGroupColor(color: string): void {}
@@ -1290,17 +1290,17 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   size="sm"
                   className={`h-8 ${
                     selectedRows.size === 0
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
+                      ? 'opacity-50 cursor-not-allowed'
+                      : ''
                   }`}
                   disabled={selectedRows.size === 0}
                 >
                   <FolderOpen className="w-4 h-4 mr-2" />
                   {selectedRows.size > 0
                     ? `Move ${selectedRows.size} card${
-                        selectedRows.size > 1 ? "s" : ""
+                        selectedRows.size > 1 ? 's' : ''
                       } to group`
-                    : "Move to group"}
+                    : 'Move to group'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-64 p-2">
@@ -1334,7 +1334,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                             (row) =>
                               row.parent_category_id === category.category_id
                           ).length
-                        }{" "}
+                        }{' '}
                         cards
                       </span>
                     </button>
@@ -1363,7 +1363,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   );
                   const uniqueCards = selectedCardIds.size;
                   return `${uniqueCards} unique card${
-                    uniqueCards > 1 ? "s" : ""
+                    uniqueCards > 1 ? 's' : ''
                   } selected`;
                 })()}
               </div>
@@ -1381,8 +1381,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2
           ${
             canUndo
-              ? "bg-transparent hover:bg-transparent text-gray-700"
-              : "bg-transparent text-gray-400 cursor-not-allowed"
+              ? 'bg-transparent hover:bg-transparent text-gray-700'
+              : 'bg-transparent text-gray-400 cursor-not-allowed'
           }`}
                 title="Undo (Ctrl+Z)"
               >
@@ -1395,8 +1395,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 className={`h-8 rounded-md transition-all duration-200 flex items-center gap-2 text-sm
           ${
             canRedo
-              ? "bg-transparent hover:bg-transparent text-gray-700"
-              : "bg-transparent text-gray-400 cursor-not-allowed"
+              ? 'bg-transparent hover:bg-transparent text-gray-700'
+              : 'bg-transparent text-gray-400 cursor-not-allowed'
           }`}
                 title="Redo (Ctrl+Y)"
               >
@@ -1410,8 +1410,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               className={`px-4 h-8 text-sm rounded transition-colors
         ${
           selectedRows.size === 0
-            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-            : "bg-red-600 text-white hover:bg-red-700"
+            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            : 'bg-red-600 text-white hover:bg-red-700'
         }`}
               disabled={selectedRows.size === 0 || isLoading}
             >
@@ -1419,8 +1419,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 <span className="flex items-center gap-2">Deleting...</span>
               ) : (
                 <>
-                  <Trash2 />{" "}
-                  {selectedRows.size > 0 ? `(${selectedRows.size})` : ""}
+                  <Trash2 />{' '}
+                  {selectedRows.size > 0 ? `(${selectedRows.size})` : ''}
                 </>
               )}
             </Button>
@@ -1439,13 +1439,175 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                         columns.find((col) => col.id === sortConfig.column)
                           ?.title
                       }`
-                    : ""}
+                    : ''}
                 </Button>
               </PopoverTrigger>
+
               <PopoverContent className="w-[240px] p-0 bg-white border border-gray-200 shadow-lg">
-                {/* Your existing sort popover content */}
+                <div className="flex items-center justify-between p-2 border-b border-gray-100">
+                  <span className="text-sm font-medium text-gray-900">
+                    Sort by
+                  </span>
+                  <button
+                    onClick={() => setSortPopoverOpen(false)}
+                    className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-gray-500"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                <div className="p-1.5">
+                  <select
+                    value={pendingSortConfig.column || ''}
+                    onChange={(e) =>
+                      setPendingSortConfig((prev) => ({
+                        ...prev,
+                        column: e.target.value || null,
+                        direction: e.target.value
+                          ? prev.direction || 'asc'
+                          : null,
+                      }))
+                    }
+                    className="w-full bg-white text-[13px] text-gray-700 border border-gray-200 rounded-md 
+                      px-2 py-1 focus:outline-none focus:ring-1 focus:ring-gray-200 focus:border-gray-300"
+                  >
+                    <option value="">Select a property</option>
+                    {columns
+                      .filter(
+                        (col) => col.type !== 'button' && col.type !== 'image'
+                      )
+                      .map((column) => (
+                        <option key={column.id} value={column.id}>
+                          {column.title}
+                        </option>
+                      ))}
+                  </select>
+
+                  {pendingSortConfig.column && (
+                    <div className="mt-1.5 flex gap-1">
+                      <button
+                        onClick={() =>
+                          setPendingSortConfig((prev) => ({
+                            ...prev,
+                            direction: 'asc',
+                          }))
+                        }
+                        className={cn(
+                          'flex-1 px-2 py-1 text-[13px] rounded border',
+                          pendingSortConfig.direction === 'asc'
+                            ? 'bg-gray-100 border-gray-200 text-gray-900 font-medium'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        )}
+                      >
+                        A → Z
+                      </button>
+                      <button
+                        onClick={() =>
+                          setPendingSortConfig((prev) => ({
+                            ...prev,
+                            direction: 'desc',
+                          }))
+                        }
+                        className={cn(
+                          'flex-1 px-2 py-1 text-[13px] rounded border',
+                          pendingSortConfig.direction === 'desc'
+                            ? 'bg-gray-100 border-gray-200 text-gray-900 font-medium'
+                            : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+                        )}
+                      >
+                        Z → A
+                      </button>
+                    </div>
+                  )}
+
+                  {(activeSort.column || pendingSortConfig.column) && (
+                    <button
+                      onClick={() => {
+                        handleSort(null);
+                        setPendingSortConfig({
+                          column: null,
+                          direction: null,
+                        });
+                      }}
+                      className="w-full mt-1.5 py-1 text-[13px] text-red-600 hover:bg-red-50 
+                        rounded border border-transparent hover:border-red-100 transition-colors"
+                    >
+                      Remove sort
+                    </button>
+                  )}
+                </div>
+
+                <div className="p-1.5 border-t border-gray-100">
+                  <Button
+                    onClick={() => {
+                      handleSort(
+                        pendingSortConfig.column!,
+                        pendingSortConfig.direction!
+                      );
+                      setSortPopoverOpen(false);
+                    }}
+                    className="w-full h-7 text-[13px] bg-black text-white rounded-md hover:bg-black/90"
+                  >
+                    Done
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
+            <AlertDialog
+              open={showSortWarning}
+              onOpenChange={setShowSortWarning}
+            >
+              <AlertDialogContent className="bg-white p-4 max-w-[360px] rounded-lg">
+                <div className="text-lg font-medium text-gray-900 mb-2">
+                  Do you want to remove the sorting?
+                </div>
+                <AlertDialogDescription className="text-sm text-gray-600 mb-4">
+                  Removing the sorting will set the current order of rows as the
+                  default.
+                </AlertDialogDescription>
+                <div className="flex justify-end gap-2">
+                  <AlertDialogAction
+                    onClick={() => {
+                      if (pendingReorder) {
+                        setSortConfig({
+                          column: null,
+                          direction: null,
+                          originalOrder: null,
+                        });
+                        reorderRow(pendingReorder.from, pendingReorder.to);
+                        setPendingReorder(null);
+                      } else {
+                        handleSort(
+                          pendingSortConfig.column!,
+                          pendingSortConfig.direction as 'asc' | 'desc'
+                        );
+                        setSortPopoverOpen(false);
+                      }
+                      setShowSortWarning(false);
+                    }}
+                    className="px-4 py-1.5 bg-white text-red-500 hover:bg-red-50 border border-red-500 rounded-md text-sm"
+                  >
+                    Remove Sorting
+                  </AlertDialogAction>
+                  <AlertDialogCancel
+                    onClick={() => {
+                      setShowSortWarning(false);
+                      setPendingReorder(null);
+                      if (pendingReorder) {
+                        setData([...data]);
+                      }
+                      setPendingSortConfig({
+                        column: null,
+                        direction: null,
+                      });
+                    }}
+                    className="px-4 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 rounded-md text-sm"
+                  >
+                    Go Back
+                  </AlertDialogCancel>
+                </div>
+              </AlertDialogContent>
+            </AlertDialog>
 
             {/* Add Item Button */}
             <Button
@@ -1476,13 +1638,13 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                     {currentSearchIndex + 1}/{searchResults.length}
                   </span>
                   <button
-                    onClick={() => navigateSearch("prev")}
+                    onClick={() => navigateSearch('prev')}
                     className="p-1 hover:bg-gray-100 rounded"
                   >
                     ↑
                   </button>
                   <button
-                    onClick={() => navigateSearch("next")}
+                    onClick={() => navigateSearch('next')}
                     className="p-1 hover:bg-gray-100 rounded"
                   >
                     ↓
@@ -1530,15 +1692,15 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   Color
                 </Label>
                 <div className="col-span-3 flex gap-2">
-                  {["#FF6B6B", "#4ECDC4", "#45B7D1", "#96CEB4", "#D4A5A5"].map(
+                  {['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#D4A5A5'].map(
                     (color) => (
                       <button
                         key={color}
                         onClick={() => setNewGroupColor(color)}
                         className={`w-6 h-6 rounded-full ${
                           newGroupColor === color
-                            ? "ring-2 ring-offset-2 ring-black"
-                            : ""
+                            ? 'ring-2 ring-offset-2 ring-black'
+                            : ''
                         }`}
                         style={{ backgroundColor: color }}
                       />
@@ -1551,8 +1713,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  setNewGroupName("");
-                  setNewGroupColor("");
+                  setNewGroupName('');
+                  setNewGroupColor('');
                   setShowGroupDialog(false);
                 }}
               >
@@ -1598,7 +1760,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               onRowMoved={onRowMoved}
               onColumnResize={onColumnResize}
               onCellClicked={async ([col, row]) => {
-                console.log("Cell clicked:", { col, row });
+                console.log('Cell clicked:', { col, row });
                 if (col === -1) {
                   // Row marker clicked
                   setSelectedRows((prev) => {
@@ -1608,7 +1770,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                     } else {
                       newSelection.add(row);
                     }
-                    console.log("Selected rows:", Array.from(newSelection));
+                    console.log('Selected rows:', Array.from(newSelection));
                     return newSelection;
                   });
                   setLastClickedRow(row);
@@ -1621,31 +1783,31 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   col >= columns.length ||
                   row >= data.length
                 ) {
-                  console.log("Click outside valid cell range");
+                  console.log('Click outside valid cell range');
                   return;
                 }
 
                 const column = columns[col];
                 // Check if column exists
                 if (!column) {
-                  console.log("No column found for index:", col);
+                  console.log('No column found for index:', col);
                   return;
                 }
 
                 const rowData = data[row];
                 // Check if row data exists
                 if (!rowData) {
-                  console.log("No row data found for index:", row);
+                  console.log('No row data found for index:', row);
                   return;
                 }
 
-                console.log("Column:", column);
-                console.log("Row data:", rowData);
+                console.log('Column:', column);
+                console.log('Row data:', rowData);
 
                 // Handle different column types
                 if (
-                  column.type === "multiselect" &&
-                  column.id === "parentCategory"
+                  column.type === 'multiselect' &&
+                  column.id === 'parentCategory'
                 ) {
                   try {
                     const cardId = rowData.card_id;
@@ -1656,9 +1818,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                     };
 
                     const { error } = await supabase
-                      .from("cards")
+                      .from('cards')
                       .update(updates)
-                      .eq("card_id", cardId);
+                      .eq('card_id', cardId);
 
                     if (error) throw error;
 
@@ -1674,23 +1836,23 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                       )
                     );
                   } catch (error) {
-                    console.error("Error updating parent category:", error);
+                    console.error('Error updating parent category:', error);
                   }
                   return;
                 }
 
-                if (column.type === "image") {
-                  console.log("Image cell clicked, logo value:", rowData?.logo);
+                if (column.type === 'image') {
+                  console.log('Image cell clicked, logo value:', rowData?.logo);
                   setSelectedRow({
                     ...rowData,
-                    activeField: "logo",
+                    activeField: 'logo',
                     logo: rowData.logo,
                   });
-                } else if (column.type === "article") {
-                  console.log("Description cell clicked");
+                } else if (column.type === 'article') {
+                  console.log('Description cell clicked');
                   setSelectedRow({
                     ...rowData,
-                    activeField: "description",
+                    activeField: 'description',
                     description: rowData.description,
                   });
                 }
@@ -1704,7 +1866,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       </div>
 
       {/* Dialogs and Forms */}
-      {selectedRow?.activeField === "logo" ? (
+      {selectedRow?.activeField === 'logo' ? (
         <Dialog open={!!selectedRow} onOpenChange={() => setSelectedRow(null)}>
           <DialogContent className="sm:max-w-[680px] max-h-[80vh] flex flex-col overflow-hidden bg-white">
             <h2 className="text-lg font-medium shrink-0">Add Image</h2>
@@ -1723,13 +1885,13 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             </div>
           </DialogContent>
         </Dialog>
-      ) : selectedRow?.activeField === "description" ? (
+      ) : selectedRow?.activeField === 'description' ? (
         <Dialog open={!!selectedRow} onOpenChange={() => setSelectedRow(null)}>
           <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col bg-white">
             <h2 className="text-lg font-medium mb-4">Edit Description</h2>
             <div className="flex-1 overflow-hidden">
               <TiptapEditor
-                initialContent={selectedRow?.description?.html || ""}
+                initialContent={selectedRow?.description?.html || ''}
                 onSave={async (content) => {
                   if (selectedRow) {
                     try {
@@ -1741,7 +1903,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                       });
                       setSelectedRow(null);
                     } catch (error) {
-                      console.error("Error saving description:", error);
+                      console.error('Error saving description:', error);
                     }
                   }
                 }}
@@ -1764,9 +1926,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 name: selectedRow.name,
                 url: selectedRow.url,
                 category: {
-                  value: selectedRow.category_id || "",
-                  label: selectedRow.category?.label || "",
-                  color: selectedRow.category?.color || "",
+                  value: selectedRow.category_id || '',
+                  label: selectedRow.category?.label || '',
+                  color: selectedRow.category?.color || '',
                 },
                 parentCategory: selectedRow.parent_category_id
                   ? {
@@ -1775,11 +1937,11 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                         parentCategories.find(
                           (cat) =>
                             cat.category_id === selectedRow.parent_category_id
-                        )?.name || "",
+                        )?.name || '',
                     }
                   : null,
-                description: selectedRow.description?.markdown || "",
-                descriptionHtml: selectedRow.description?.html || "",
+                description: selectedRow.description?.markdown || '',
+                descriptionHtml: selectedRow.description?.html || '',
                 logo: selectedRow.logo,
                 last_updated: selectedRow.last_updated,
               }}
@@ -1795,7 +1957,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                     window.location.reload();
                   }, 100);
                 } catch (error) {
-                  console.error("Error updating row:", error);
+                  console.error('Error updating row:', error);
                 }
               }}
               onCancel={() => setSelectedRow(null)}

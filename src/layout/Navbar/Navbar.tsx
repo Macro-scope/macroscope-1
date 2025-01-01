@@ -1,4 +1,4 @@
-"use client";
+'use client';
 import {
   Button,
   ConfigProvider,
@@ -8,33 +8,33 @@ import {
   MenuProps,
   Modal,
   Tag,
-} from "antd";
+} from 'antd';
 
-import { X } from "lucide-react";
-import { supabase } from "../../lib/supabaseClient";
-import { useState, useEffect } from "react";
-import { User } from "@supabase/supabase-js";
-import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "next/navigation";
-import { updateMapCards } from "../../hooks/updateMapCards";
-import { IoSettingsOutline } from "react-icons/io5";
-import { BiCopy, BiRefresh } from "react-icons/bi";
+import { X } from 'lucide-react';
+import { supabase } from '../../lib/supabaseClient';
+import { useState, useEffect } from 'react';
+import { User } from '@supabase/supabase-js';
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'next/navigation';
+import { updateMapCards } from '../../hooks/updateMapCards';
+import { IoSettingsOutline } from 'react-icons/io5';
+import { BiCopy, BiRefresh } from 'react-icons/bi';
 import {
   setPublishMapSettings,
   setSubtext,
   setSuggest,
   setTitle,
-} from "../../redux/publishedMapSlice";
-import { setPublishedNav } from "../../hooks/updatePublishNav";
-import { FaCheck, FaPlus } from "react-icons/fa6";
-import { renameMap } from "../../hooks/renameMap";
+} from '../../redux/publishedMapSlice';
+import { setPublishedNav } from '../../hooks/updatePublishNav';
+import { FaCheck, FaPlus } from 'react-icons/fa6';
+import { renameMap } from '../../hooks/renameMap';
 // import { IoMdCloudDone } from "react-icons/io";
 // import { AiOutlineCloudSync } from "react-icons/ai";
-import { MdOutlineCloudDone } from "react-icons/md";
-import { updateImages } from "../../hooks/updateImages";
-import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
-import PublishMapSettings from "@/components/PublishMapSettings/PublishMapSettings";
+import { MdOutlineCloudDone } from 'react-icons/md';
+import { updateImages } from '../../hooks/updateImages';
+import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import PublishMapSettings from '@/components/PublishMapSettings/PublishMapSettings';
 // import { BiCopy } from "react-icons/bi";
 
 const Navbar = () => {
@@ -45,13 +45,13 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/");
+    router.push('/');
     // setUser(null)
   };
 
-  const items: MenuProps["items"] = [
+  const items: MenuProps['items'] = [
     {
-      key: "1",
+      key: '1',
       label: (
         <a className="w-[400px]" href="/dashboard">
           Dashboard
@@ -59,7 +59,7 @@ const Navbar = () => {
       ),
     },
     {
-      key: "2",
+      key: '2',
       label: (
         <div className="w-full text-red-500" onClick={handleLogout}>
           Logout
@@ -80,9 +80,9 @@ const Navbar = () => {
 
     const setPublishSettings = async () => {
       const { data } = await supabase
-        .from("maps")
-        .select("navbar")
-        .eq("map_id", mapId)
+        .from('maps')
+        .select('navbar')
+        .eq('map_id', mapId)
         .single();
       dispatch(setPublishMapSettings(data?.navbar));
     };
@@ -99,9 +99,9 @@ const Navbar = () => {
   useEffect(() => {
     const getMapName = async () => {
       const { data } = await supabase
-        .from("maps")
-        .select("name")
-        .eq("map_id", mapId)
+        .from('maps')
+        .select('name')
+        .eq('map_id', mapId)
         .single();
 
       console.log(data?.name);
@@ -129,9 +129,9 @@ const Navbar = () => {
       setisSaving(false);
     }, 3000);
     await supabase
-      .from("maps")
+      .from('maps')
       .update({ last_updated: new Date() }) // Correctly pass the update as an object
-      .eq("map_id", mapId);
+      .eq('map_id', mapId);
     // toast.success("Map Saved");
   };
 
@@ -159,7 +159,7 @@ const Navbar = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [_websiteUrl, _setWebsiteUrl] = useState("");
+  const [_websiteUrl, _setWebsiteUrl] = useState('');
 
   const dispatch = useDispatch();
 
@@ -177,18 +177,18 @@ const Navbar = () => {
 
   const handleUnpublish = async () => {
     await supabase
-      .from("maps")
+      .from('maps')
       .update({ is_published: false })
-      .eq("map_id", mapId);
+      .eq('map_id', mapId);
 
     setIsModalOpen(false);
   };
 
   const handlePublish = async () => {
     await supabase
-      .from("maps")
+      .from('maps')
       .update({ is_published: true })
-      .eq("map_id", mapId);
+      .eq('map_id', mapId);
 
     setIsModalOpen(false);
     setPublishedNav(mapId!, publishedMapNav);
@@ -212,7 +212,7 @@ const Navbar = () => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    console.log("Here ------ ", session);
+    console.log('Here ------ ', session);
     return session?.user?.id || null;
   };
 
@@ -221,84 +221,92 @@ const Navbar = () => {
 
     if (userId) {
       const { data, error } = await supabase
-        .from("maps")
+        .from('maps')
         .insert([
           {
             user_id: userId,
             name: newProjectName,
           },
         ])
-        .select("map_id")
+        .select('map_id')
         .single();
 
-      console.log("There ==== ", data);
-
       if (error) {
-        console.error("Error inserting data:", error);
-      } else {
-        // Create a category instead of a tag
-        const { data: categoryData, error: categoryError } = await supabase
-          .from("categories")
-          .insert([{ name: "Other", map_id: data.map_id }])
-          .select("category_id, name") // Changed from category_id
-          .single();
+        console.error('Error inserting data:', error);
+        return;
+      }
 
-        if (categoryError) {
-          console.error("Error inserting category:", categoryError);
-          return;
-        }
+      // Generate a UUID for the category
+      const categoryId = crypto.randomUUID();
 
-        // Insert a new card with category_id
-        const { data: cardData, error: cardError } = await supabase
-          .from("cards")
-          .insert([
-            {
-              category_id: categoryData.category_id, // Changed from category_id
-              map_id: data.map_id,
-              name: categoryData.name,
-            },
-          ])
-          .select("card_id")
-          .single();
+      // Create a category with the generated UUID
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('categories')
+        .insert([
+          {
+            category_id: categoryId,
+            name: 'Other',
+            map_id: data.map_id,
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select('category_id, name')
+        .single();
 
-        if (cardError) {
-          console.error("Error inserting card:", cardError);
-          return;
-        }
+      if (categoryError) {
+        console.error('Error inserting category:', categoryError);
+        return;
+      }
 
-        const { data: tileData, error: tileError } = await supabase
-          .from("tiles")
-          .insert([
-            {
-              category_id: categoryData.category_id, // Changed from category_id
-              card_id: cardData.card_id,
-              name: "Macroscope",
-              url: "macroscope.so",
-            },
-          ])
-          .single();
+      // Insert a new card with category_id
+      const { data: cardData, error: cardError } = await supabase
+        .from('cards')
+        .insert([
+          {
+            category_id: categoryData.category_id,
+            map_id: data.map_id,
+            name: categoryData.name,
+          },
+        ])
+        .select('card_id')
+        .single();
 
-        if (tileError) {
-          console.error("Error inserting tile:", tileError);
-          return;
-        }
-        console.log("Map created successfully:", data);
+      if (cardError) {
+        console.error('Error inserting card:', cardError);
+        return;
+      }
+
+      const { data: tileData, error: tileError } = await supabase
+        .from('tiles')
+        .insert([
+          {
+            category_id: categoryData.category_id,
+            card_id: cardData.card_id,
+            name: 'Macroscope',
+            url: 'macroscope.so',
+          },
+        ])
+        .single();
+
+      if (tileError) {
+        console.error('Error inserting tile:', tileError);
+        return;
       }
 
       setIsModalOpen(false);
       router.push(`/editor/${data?.map_id}`);
     } else {
-      console.error("No user is currently logged in");
+      console.error('No user is currently logged in');
     }
   };
 
-  const [newProjectName, setNewProjectName] = useState("Untitled");
+  const [newProjectName, setNewProjectName] = useState('Untitled');
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const showMapModal = () => {
     setIsMapModalOpen(true);
   };
   const handleCancelMap = () => {
-    setNewProjectName("untitled");
+    setNewProjectName('untitled');
     setIsMapModalOpen(false);
   };
   // const openProject = async (wid: string) => {
@@ -322,18 +330,18 @@ const Navbar = () => {
 
   const [isCopied, setIsCopied] = useState(false);
 
-  const [customDomain, setCustomDomain] = useState("");
+  const [customDomain, setCustomDomain] = useState('');
 
   async function addDomain(domain: string, projectId: string) {
-    const response = await fetch("/api/add-domain", {
-      method: "POST",
+    const response = await fetch('/api/add-domain', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ domain, projectId }),
     });
     if (!response.ok) {
-      throw new Error("Failed to add domain");
+      throw new Error('Failed to add domain');
     }
     return response.json();
   }
@@ -344,7 +352,7 @@ const Navbar = () => {
     try {
       const user = await supabase.auth.getUser();
       if (!user.data.user) {
-        throw new Error("User not authenticated");
+        throw new Error('User not authenticated');
       }
 
       // Add domain to Vercel project
@@ -352,9 +360,9 @@ const Navbar = () => {
 
       // Save domain and route mapping to your database
       const { error } = await supabase
-        .from("maps")
+        .from('maps')
         .update({ domain: customDomain })
-        .eq("map_id", mapId);
+        .eq('map_id', mapId);
 
       if (error) throw error;
 
@@ -362,7 +370,7 @@ const Navbar = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      console.log("finally");
+      console.log('finally');
     }
   };
 
@@ -394,9 +402,9 @@ const Navbar = () => {
             required
           />
         </Modal>
-        
+
         {isModalOpen && (
-         <div className="fixed top-[47px] right-0 h-[calc(100vh-50px)] bg-white shadow-lg z-40 flex">
+          <div className="fixed top-[47px] right-0 h-[calc(100vh-50px)] bg-white shadow-lg z-40 flex">
             <div className="w-[420px] flex flex-col">
               <div className="flex items-center justify-between p-4 border-b">
                 <span className="font-medium text-md">Publish Settings</span>
@@ -423,13 +431,13 @@ const Navbar = () => {
         >
           <div className="flex gap-2">
             <Input
-              value={`app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`}
+              value={`app.macroscope.so/map/${mapName?.replace(/\s+/g, '-')}`}
               readOnly
             />
             <button
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`
+                  `app.macroscope.so/map/${mapName?.replace(/\s+/g, '-')}`
                 );
                 setIsCopied(true);
               }}
@@ -439,7 +447,7 @@ const Navbar = () => {
           </div>
         </Modal>
         <div className="bg-white p-2 flex justify-between items-center border-b py-2 pl-5">
-          {currentPath === "/dashboard" ? (
+          {currentPath === '/dashboard' ? (
             <div></div>
           ) : (
             <div>
@@ -468,8 +476,8 @@ const Navbar = () => {
             </div>
           )}
           <div className="flex justify-center items-center gap-2">
-            {currentPath === "/dashboard" ||
-            currentPath === "/dashboard/subscriptions" ? (
+            {currentPath === '/dashboard' ||
+            currentPath === '/dashboard/subscriptions' ? (
               <>
                 <button
                   onClick={showMapModal}
@@ -485,7 +493,7 @@ const Navbar = () => {
                   onClick={updateCards}
                   className="mx-2 font-semibold text-gray-400 hover:underline"
                 >
-                  {isSaving || saveStatus === "saving" ? (
+                  {isSaving || saveStatus === 'saving' ? (
                     <div className="flex items-center gap-1">
                       <BiRefresh className="text-[20px] animate-spin" />
                     </div>
@@ -500,7 +508,7 @@ const Navbar = () => {
                     onClick={() => {
                       window.open(
                         `https://app.macroscope.so/preview/${mapId}`,
-                        "_blank"
+                        '_blank'
                       );
                     }}
                     title="Preview Map"
@@ -537,7 +545,7 @@ const Navbar = () => {
                   <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-lg uppercase">
                     {currUser?.user_metadata.full_name?.[0] ||
                       currUser?.email?.[0] ||
-                      "?"}
+                      '?'}
                   </div>
                 )}
               </Dropdown>

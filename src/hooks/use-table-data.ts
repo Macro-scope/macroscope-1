@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../lib/supabaseClient";
-import { useDispatch } from "react-redux";
-import { setSaveStatus } from "@/redux/save-statusSlice";
-import { addLogo } from "./addLogo";
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { useDispatch } from 'react-redux';
+import { setSaveStatus } from '@/redux/save-statusSlice';
+import { addLogo } from './addLogo';
 
 interface HistoryState {
   data: any[];
@@ -11,8 +11,8 @@ interface HistoryState {
 
 const getFaviconFromUrl = async (url: string) => {
   try {
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-      url = "https://" + url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://' + url;
     }
 
     const urlObj = new URL(url);
@@ -30,8 +30,8 @@ const getFaviconFromUrl = async (url: string) => {
       try {
         const response = await fetch(faviconUrl);
         if (response.ok || response.status === 304) {
-          const contentType = response.headers.get("content-type");
-          if (contentType && contentType.startsWith("image/")) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.startsWith('image/')) {
             const logoUrl = await addLogo(faviconUrl);
             return logoUrl;
           }
@@ -42,7 +42,7 @@ const getFaviconFromUrl = async (url: string) => {
     }
     return null;
   } catch (e) {
-    console.error("Error parsing URL:", e);
+    console.error('Error parsing URL:', e);
     return null;
   }
 };
@@ -79,11 +79,11 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
       const currentState = history[currentHistoryIndex];
 
       try {
-        dispatch(setSaveStatus("saving"));
+        dispatch(setSaveStatus('saving'));
 
         // Validate history states
         if (!previousState?.data || !currentState?.data) {
-          throw new Error("Invalid history state");
+          throw new Error('Invalid history state');
         }
 
         // Find items that were added (exist in current but not in previous)
@@ -100,9 +100,9 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           if (!item.id) continue; // Skip if no ID
 
           const { error: deleteError } = await supabase
-            .from("tiles")
+            .from('tiles')
             .delete()
-            .eq("tile_id", item.id);
+            .eq('tile_id', item.id);
 
           if (deleteError) {
             console.error(`Error deleting tile ${item.id}:`, deleteError);
@@ -110,17 +110,16 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           }
         }
 
-        // Filter out invalid items and prepare updates
-        const updates = previousState.data
+        // Separate updates for tiles and cards
+        const tileUpdates = previousState.data
           .filter((item) => item?.id) // Only include items with valid IDs
           .map((item: any) => ({
             tile_id: item.id,
-            name: item.name || "",
-            url: item.url || "",
-            logo: item.logo || "",
+            name: item.name || '',
+            url: item.url || '',
+            logo: item.logo || '',
             category_id: item.category_id,
             card_id: item.card_id,
-            parent_category_id: item.parent_category_id,
             hidden: item.hidden || false,
             position: item.position || 0,
             description: item.description?.html || null,
@@ -128,18 +127,43 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             updated_at: new Date().toISOString(),
           }));
 
-        if (updates.length > 0) {
-          // Process updates in smaller batches to prevent large payload issues
+        // Prepare card updates for parent_category_id
+        const cardUpdates = previousState.data
+          .filter(
+            (item) => item?.card_id && item?.parent_category_id !== undefined
+          )
+          .map((item: any) => ({
+            card_id: item.card_id,
+            parent_category_id: item.parent_category_id,
+          }));
+
+        if (tileUpdates.length > 0) {
+          // Process tile updates in smaller batches
           const BATCH_SIZE = 50;
-          for (let i = 0; i < updates.length; i += BATCH_SIZE) {
-            const batch = updates.slice(i, i + BATCH_SIZE);
-            const { error } = await supabase.from("tiles").upsert(batch, {
-              onConflict: "tile_id",
+          for (let i = 0; i < tileUpdates.length; i += BATCH_SIZE) {
+            const batch = tileUpdates.slice(i, i + BATCH_SIZE);
+            const { error } = await supabase.from('tiles').upsert(batch, {
+              onConflict: 'tile_id',
               ignoreDuplicates: false,
             });
 
             if (error) {
-              console.error("Error updating tiles:", error);
+              console.error('Error updating tiles:', error);
+              throw error;
+            }
+          }
+        }
+
+        // Update cards if there are any parent_category_id changes
+        if (cardUpdates.length > 0) {
+          for (const update of cardUpdates) {
+            const { error } = await supabase
+              .from('cards')
+              .update({ parent_category_id: update.parent_category_id })
+              .eq('card_id', update.card_id);
+
+            if (error) {
+              console.error('Error updating card:', error);
               throw error;
             }
           }
@@ -149,10 +173,11 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         setData(previousState.data);
         setCurrentHistoryIndex(currentHistoryIndex - 1);
 
-        dispatch(setSaveStatus("saved"));
-        setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+        dispatch(setSaveStatus('saved'));
+        setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
       } catch (error) {
-        console.error("Error during undo:", error);
+        console.error('Error during undo:', error);
+        dispatch(setSaveStatus('idle'));
       }
     }
   }, [currentHistoryIndex, history, dispatch]);
@@ -164,7 +189,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
       const currentState = history[currentHistoryIndex];
 
       try {
-        dispatch(setSaveStatus("saving"));
+        dispatch(setSaveStatus('saving'));
 
         // Find items that were deleted (exist in next but not in current)
         const addedItems = nextState.data.filter(
@@ -189,7 +214,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             description_markdown: item.description?.markdown,
           };
 
-          const { error } = await supabase.from("tiles").insert([newItem]);
+          const { error } = await supabase.from('tiles').insert([newItem]);
 
           if (error) throw error;
         }
@@ -209,8 +234,8 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         }));
 
         if (updates.length > 0) {
-          const { error } = await supabase.from("tiles").upsert(updates, {
-            onConflict: "tile_id",
+          const { error } = await supabase.from('tiles').upsert(updates, {
+            onConflict: 'tile_id',
             ignoreDuplicates: false,
           });
 
@@ -221,11 +246,11 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         setData(nextState.data);
         setCurrentHistoryIndex(currentHistoryIndex + 1);
 
-        dispatch(setSaveStatus("saved"));
-        setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+        dispatch(setSaveStatus('saved'));
+        setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
       } catch (error) {
-        console.error("Error during redo:", error);
-        dispatch(setSaveStatus("idle"));
+        console.error('Error during redo:', error);
+        dispatch(setSaveStatus('idle'));
       }
     }
   }, [currentHistoryIndex, history, dispatch]);
@@ -233,20 +258,20 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   // Add keyboard shortcuts in Database.tsx
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
         e.preventDefault();
         undo();
       } else if (
-        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "z")
+        ((e.ctrlKey || e.metaKey) && e.key === 'y') ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'z')
       ) {
         e.preventDefault();
         redo();
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [undo, redo]);
 
   useEffect(() => {
@@ -255,7 +280,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         setLoading(true);
         // First fetch cards for the given map
         const { data: cardsData, error: cardsError } = await supabase
-          .from("cards")
+          .from('cards')
           .select(
             `
           *,
@@ -265,13 +290,13 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           )
         `
           )
-          .eq("map_id", mapId);
+          .eq('map_id', mapId);
 
         if (cardsError) throw cardsError;
 
         // Then fetch tiles with their card relationships
         const { data: tilesData, error: tilesError } = await supabase
-          .from("tiles")
+          .from('tiles')
           .select(
             `
           *,
@@ -291,19 +316,19 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         `
           )
           .in(
-            "card_id",
+            'card_id',
             cardsData.map((card) => card.card_id)
           )
-          .order("position");
+          .order('position');
 
         if (tilesError) throw tilesError;
 
         // Transform the data
         const transformedData = tilesData.map((tile) => ({
           id: tile.tile_id,
-          name: tile.name || "",
-          url: tile.url || "",
-          logo: tile.logo || "",
+          name: tile.name || '',
+          url: tile.url || '',
+          logo: tile.logo || '',
           category: {
             value: tile.card_id,
             label: tile.cards.categories.name,
@@ -319,7 +344,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           description: tile.description
             ? {
                 html: tile.description,
-                markdown: tile.description_markdown || "",
+                markdown: tile.description_markdown || '',
               }
             : null,
           hidden: tile.hidden || false,
@@ -332,7 +357,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
 
         setData(transformedData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
+        setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
@@ -344,49 +369,80 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   const addRow = useCallback(
     async (position?: number) => {
       try {
-        dispatch(setSaveStatus("saving"));
-        // Get the first card for the map
-        const { data: cardsData, error: cardError } = await supabase
-          .from("cards")
-          .select("*, categories!inner(category_id, name, color)")
-          .eq("map_id", mapId)
-          .limit(1);
+        dispatch(setSaveStatus('saving'));
 
-        let cardData;
+        // First, check if "Other" category exists for this map
+        const { data: existingCategory, error: categoryCheckError } =
+          await supabase
+            .from('categories')
+            .select('category_id')
+            .eq('map_id', mapId)
+            .eq('name', 'Other')
+            .single();
 
-        // If no cards exist, create
-        if (!cardsData || cardsData.length === 0) {
-          // Create a new category
+        if (categoryCheckError && categoryCheckError.code !== 'PGRST116') {
+          // PGRST116 is "not found" error
+          throw categoryCheckError;
+        }
+
+        let categoryId;
+        if (!existingCategory) {
+          // Create new "Other" category if it doesn't exist
           const { data: newCategory, error: categoryError } = await supabase
-            .from("categories")
+            .from('categories')
             .insert({
+              category_id: crypto.randomUUID(), // Still need to generate UUID as it's required
               map_id: mapId,
-              name: "Other",
-              color: "#808080",
+              name: 'Other',
+              color: '#808080',
+              created_at: new Date().toISOString(),
             })
             .select()
             .single();
 
           if (categoryError) throw categoryError;
+          categoryId = newCategory.category_id;
+        } else {
+          categoryId = existingCategory.category_id;
+        }
 
-          // Create a new card with the new category
+        // Get or create card for this category
+        const { data: existingCard, error: cardCheckError } = await supabase
+          .from('cards')
+          .select('*')
+          .eq('map_id', mapId)
+          .eq('category_id', categoryId)
+          .single();
+
+        if (cardCheckError && cardCheckError.code !== 'PGRST116') {
+          throw cardCheckError;
+        }
+
+        let cardData;
+        if (!existingCard) {
+          // Create new card if it doesn't exist
           const { data: newCard, error: cardCreateError } = await supabase
-            .from("cards")
+            .from('cards')
             .insert({
               map_id: mapId,
-              category_id: newCategory.category_id,
-              name: "Other",
+              category_id: categoryId,
+              name: 'Other',
+              position: ['100', '100'],
+              dimension: ['200', '300'],
             })
-            .select("*, categories!inner(category_id, name, color)")
+            .select('*, categories!inner(category_id, name, color)')
             .single();
 
           if (cardCreateError) throw cardCreateError;
           cardData = newCard;
+        } else {
+          cardData = existingCard;
         }
-        // Continue with the rest of the function using cardData
+
+        // Continue with position handling
         if (position !== undefined) {
           const { error: updateError } = await supabase.rpc(
-            "increment_positions",
+            'increment_positions',
             {
               p_position: position,
               p_map_id: mapId,
@@ -396,33 +452,32 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           if (updateError) throw updateError;
         }
 
-        // Get the maximum position for this map
+        // Rest of your existing code for position and new row creation
         const { data: maxPosData, error: maxPosError } = await supabase
-          .from("tiles")
-          .select("position")
-          .eq("card_id", cardData.card_id)
-          .order("position", { ascending: false })
+          .from('tiles')
+          .select('position')
+          .eq('card_id', cardData.card_id)
+          .order('position', { ascending: false })
           .limit(1);
 
         if (maxPosError) throw maxPosError;
 
-        // Calculate the new position
         const newPosition =
           position ??
           (maxPosData && maxPosData[0] ? maxPosData[0].position + 1 : 0);
 
         const newRowData = {
-          name: "New Tile",
-          url: "",
-          logo: "",
-          category_id: cardData.category_id,
+          name: 'New Tile',
+          url: '',
+          logo: '',
+          category_id: categoryId,
           card_id: cardData.card_id,
           hidden: false,
           position: newPosition,
         };
 
         const { data: insertedData, error } = await supabase
-          .from("tiles")
+          .from('tiles')
           .insert([newRowData])
           .select(
             `
@@ -470,11 +525,11 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             return newData;
           }
         });
-        dispatch(setSaveStatus("saved"));
-        setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+        dispatch(setSaveStatus('saved'));
+        setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
       } catch (err) {
-        dispatch(setSaveStatus("idle"));
-        console.error("Error adding row:", err);
+        dispatch(setSaveStatus('idle'));
+        console.error('Error adding row:', err);
         throw err;
       }
     },
@@ -482,15 +537,15 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   );
 
   const updateRow = async (id: string, updatedData: any) => {
-    console.log("updateRow called with:", { id, updatedData });
+    console.log('updateRow called with:', { id, updatedData });
     try {
-      dispatch(setSaveStatus("saving"));
+      dispatch(setSaveStatus('saving'));
 
-      if ("url" in updatedData && updatedData.url !== "") {
-        console.log("URL update detected:", updatedData.url);
+      if ('url' in updatedData && updatedData.url !== '') {
+        console.log('URL update detected:', updatedData.url);
         const logoUrl = await getFaviconFromUrl(updatedData.url);
         if (logoUrl) {
-          console.log("New logo URL:", logoUrl);
+          console.log('New logo URL:', logoUrl);
           updatedData.logo = logoUrl;
         }
       }
@@ -512,9 +567,9 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
       };
 
       const { error } = await supabase
-        .from("tiles")
+        .from('tiles')
         .update(dataToUpdate)
-        .eq("tile_id", id);
+        .eq('tile_id', id);
 
       if (error) throw error;
 
@@ -530,29 +585,29 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         )
       );
 
-      dispatch(setSaveStatus("saved"));
-      setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+      dispatch(setSaveStatus('saved'));
+      setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
     } catch (error) {
-      console.error("Error in updateRow:", error);
-      dispatch(setSaveStatus("idle"));
+      console.error('Error in updateRow:', error);
+      dispatch(setSaveStatus('idle'));
       throw error;
     }
   };
 
   const deleteRow = async (id: string) => {
     try {
-      dispatch(setSaveStatus("saving"));
-      const { error } = await supabase.from("tiles").delete().eq("tile_id", id);
+      dispatch(setSaveStatus('saving'));
+      const { error } = await supabase.from('tiles').delete().eq('tile_id', id);
 
       if (error) throw error;
 
       // Update local state
       setData((prevData) => prevData.filter((row) => row.id !== id));
-      dispatch(setSaveStatus("saved"));
-      setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+      dispatch(setSaveStatus('saved'));
+      setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
     } catch (err) {
-      console.error("Error deleting row:", err);
-      dispatch(setSaveStatus("idle"));
+      console.error('Error deleting row:', err);
+      dispatch(setSaveStatus('idle'));
       throw err;
     }
   };
@@ -560,7 +615,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   const reorderRow = useCallback(
     async (from: number, to: number) => {
       try {
-        dispatch(setSaveStatus("saving"));
+        dispatch(setSaveStatus('saving'));
         // Create new array with reordered items
         const newData = [...data];
         const [movedItem] = newData.splice(from, 1);
@@ -571,7 +626,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
 
         // Get all tiles for this map in current order
         const { data: tilesData, error: tilesError } = await supabase
-          .from("tiles")
+          .from('tiles')
           .select(
             `
           tile_id,
@@ -585,10 +640,10 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         `
           )
           .in(
-            "card_id",
+            'card_id',
             data.map((item) => item.card_id)
           )
-          .order("position");
+          .order('position');
 
         if (tilesError) throw tilesError;
 
@@ -618,20 +673,20 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         }
 
         // Update all positions while preserving other fields
-        const { error } = await supabase.from("tiles").upsert(updates, {
-          onConflict: "tile_id",
+        const { error } = await supabase.from('tiles').upsert(updates, {
+          onConflict: 'tile_id',
           ignoreDuplicates: false,
         });
 
         if (error) throw error;
-        dispatch(setSaveStatus("saved"));
-        setTimeout(() => dispatch(setSaveStatus("idle")), 2000);
+        dispatch(setSaveStatus('saved'));
+        setTimeout(() => dispatch(setSaveStatus('idle')), 2000);
       } catch (err) {
-        dispatch(setSaveStatus("idle"));
-        console.error("Error reordering rows:", err);
+        dispatch(setSaveStatus('idle'));
+        console.error('Error reordering rows:', err);
         // Revert to original order if there's an error
         const { data: originalData, error: fetchError } = await supabase
-          .from("tiles")
+          .from('tiles')
           .select(
             `
         *,
@@ -644,20 +699,20 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         )
       `
           )
-          .eq("cards.map_id", mapId)
-          .order("position");
+          .eq('cards.map_id', mapId)
+          .order('position');
 
         if (fetchError) {
-          console.error("Error fetching original data:", fetchError);
+          console.error('Error fetching original data:', fetchError);
           return;
         }
 
         if (originalData) {
           const transformedData = originalData.map((tile) => ({
             id: tile.tile_id,
-            name: tile.name || "",
-            url: tile.url || "",
-            logo: tile.logo || "",
+            name: tile.name || '',
+            url: tile.url || '',
+            logo: tile.logo || '',
             category: {
               value: tile.card_id,
               label: tile.cards.categories.name,
