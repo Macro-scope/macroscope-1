@@ -1,21 +1,21 @@
-"use client";
-import { useRef, useState, useEffect } from "react";
-import { Rnd } from "react-rnd";
-import { useDispatch, useSelector } from "react-redux";
-import { CiMaximize2 } from "react-icons/ci";
-import { LuMinus, LuPlus } from "react-icons/lu";
-import { PiCursorLight, PiHandLight } from "react-icons/pi";
-import { useParams } from "next/navigation";
-import { supabase } from "@/lib/supabaseClient";
-import MapNavbar from "@/components/PublishedNavbar/MapNavbar";
-import ResizableNode from "@/MapCanvas/CategoryCard";
-import { getMapData } from "@/hooks/getMapData";
-import { setCards } from "@/redux/mapCardsSlice";
-import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
-import { setGlobalSettings } from "@/redux/globalSettingsSlice";
-import Image from "next/image";
-import Watermark from "@/components/Watermark";
-import { User } from "@supabase/supabase-js";
+'use client';
+import { useRef, useState, useEffect } from 'react';
+import { Rnd } from 'react-rnd';
+import { useDispatch, useSelector } from 'react-redux';
+import { CiMaximize2 } from 'react-icons/ci';
+import { LuMinus, LuPlus } from 'react-icons/lu';
+import { PiCursorLight, PiHandLight } from 'react-icons/pi';
+import { useParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseClient';
+import MapNavbar from '@/components/PublishedNavbar/MapNavbar';
+import ResizableNode from '@/MapCanvas/CategoryCard';
+import { getMapData } from '@/hooks/getMapData';
+import { setCards } from '@/redux/mapCardsSlice';
+import { getGlobalMapStyles } from '@/hooks/getGlobalMapStyles';
+import { setGlobalSettings } from '@/redux/globalSettingsSlice';
+import Image from 'next/image';
+import Watermark from '@/components/Watermark';
+import { User } from '@supabase/supabase-js';
 
 const PADDING = 10; // Padding around the content
 const MIN_ZOOM = 0.5;
@@ -59,9 +59,9 @@ export default function PublishedMap() {
   const [handtool, setHandtool] = useState(true);
 
   useEffect(() => {
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = 'auto';
     };
   }, []);
 
@@ -72,7 +72,7 @@ export default function PublishedMap() {
   // name = String(name);
   // const [mapId, setMapId] = useState<string>();
   const [isPublished, setIsPublished] = useState<boolean | null>(null);
-  const [currUser, setCurrUser] = useState<String>();
+  const [currUser, setCurrUser] = useState<string>();
 
   useEffect(() => {
     const getUserInfo = async () => {
@@ -80,7 +80,7 @@ export default function PublishedMap() {
         const {
           data: { user },
         } = await supabase.auth.getUser();
-        console.log("----------------------", user.id);
+        console.log('----------------------', user.id);
         setCurrUser(user?.id);
       } catch (error) {
         console.log(error);
@@ -102,17 +102,17 @@ export default function PublishedMap() {
         // }
 
         const { data: map } = await supabase
-          .from("maps")
+          .from('maps')
           .select()
-          .eq("map_id", mapId)
+          .eq('map_id', mapId)
           .single();
-        console.log("Heloo ===>>>>>>", map);
+        console.log('Heloo ===>>>>>>', map);
 
         setIsPublished(map?.is_published);
         console.log(currUser);
         setIsOwner(map?.user_id === currUser);
       } catch (error) {
-        console.error("Error fetching map data:", error);
+        console.error('Error fetching map data:', error);
         setIsPublished(false);
       }
     };
@@ -139,7 +139,7 @@ export default function PublishedMap() {
           updateCanvasSize(data.cards);
         }
       } catch (error) {
-        console.error("Fetching error:", error);
+        console.error('Fetching error:', error);
       }
     };
 
@@ -155,9 +155,9 @@ export default function PublishedMap() {
   }, [mapId, dispatch]);
 
   const updateCanvasSize = (cards: any[]) => {
-    console.log("Iam here");
+    console.log('Iam here');
     if (cards.length === 0) return;
-    console.log("Iam here");
+    console.log('Iam here');
 
     // Calculate the bounding box of all cards
     let maxX = 0;
@@ -180,7 +180,7 @@ export default function PublishedMap() {
     maxY += padding;
 
     // Get the element to capture (with updated size)
-    const element = document.getElementById("viewMap"); // Select the div
+    const element = document.getElementById('viewMap'); // Select the div
     if (!element) return;
 
     // Set the element's size to the calculated dimensions
@@ -209,19 +209,19 @@ export default function PublishedMap() {
       setViewportSize({ width: window.innerWidth, height: window.innerHeight });
     };
     updateViewportSize();
-    window.addEventListener("resize", updateViewportSize);
-    return () => window.removeEventListener("resize", updateViewportSize);
+    window.addEventListener('resize', updateViewportSize);
+    return () => window.removeEventListener('resize', updateViewportSize);
   }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.strokeStyle = "#e0e0e0";
+    ctx.strokeStyle = '#e0e0e0';
     ctx.lineWidth = 1;
   }, [offset]);
 
@@ -385,7 +385,7 @@ export default function PublishedMap() {
           console.log(data);
         }
       } catch (error) {
-        console.error("Fetching error:", error);
+        console.error('Fetching error:', error);
       }
     };
 
@@ -396,7 +396,7 @@ export default function PublishedMap() {
 
     if (mapId) {
       getCards(mapId);
-      console.log("hi");
+      console.log('hi');
       setGlobalStyles(mapId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -404,7 +404,7 @@ export default function PublishedMap() {
 
   useEffect(() => {
     setCurrCards(mapCards.data);
-    console.log("Woahhh ===== ", currCards);
+    console.log('Woahhh ===== ', currCards);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapCards]);
 
@@ -419,7 +419,7 @@ export default function PublishedMap() {
       setCurrCards((prevCards: any) => {
         if (!Array.isArray(prevCards)) return prevCards;
         // Ensure deep cloning
-        console.log("ok here");
+        console.log('ok here');
         const updatedCards = prevCards.map((card: any) => {
           if (card.card_id === targetCardId) {
             return {
@@ -437,7 +437,7 @@ export default function PublishedMap() {
     };
 
     updateCardSettings(localCardId);
-    console.log("Here ---- ", currCards);
+    console.log('Here ---- ', currCards);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localSettings]);
 
@@ -528,12 +528,12 @@ export default function PublishedMap() {
       setIsDraggingVertical(false);
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, [isDraggingHorizontal, isDraggingVertical]);
 
@@ -558,7 +558,7 @@ export default function PublishedMap() {
               transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
               width: canvasWidth,
               height: canvasHeight,
-              transformOrigin: "0 0",
+              transformOrigin: '0 0',
             }}
           >
             <canvas
@@ -665,7 +665,7 @@ export default function PublishedMap() {
 
           <a
             className="flex justify-center items-center absolute bottom-3 right-3 h-8"
-            style={{ zIndex: "2000" }}
+            style={{ zIndex: '2000' }}
             href="https://macroscope.so"
             target="_blank"
           >

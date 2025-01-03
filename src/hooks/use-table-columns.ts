@@ -37,9 +37,10 @@ export const useTableColumns = (mapId?: string) => {
   const [parentCategoryOptions, setParentCategoryOptions] = useState<
     { value: string; label: string; color?: string }[]
   >([]);
-  const [tagOptions, setTagOptions] = useState<
+  const [cardOptions, setCardOptions] = useState<
     { value: string; label: string; color?: string }[]
   >([]);
+  const [tagOptions, setTagOptions] = useState<any[]>([]);
   const fetchParentCategories = useCallback(async () => {
     if (!mapId) return;
 
@@ -61,7 +62,7 @@ export const useTableColumns = (mapId?: string) => {
 
     setParentCategoryOptions(formattedCategories);
   }, [mapId]);
-  const fetchTags = useCallback(async () => {
+  const fetchCards = useCallback(async () => {
     if (!mapId) return;
 
     const { data, error } = await supabase
@@ -86,7 +87,7 @@ export const useTableColumns = (mapId?: string) => {
       return;
     }
 
-    const formattedTags = data.map((card) => ({
+    const formattedCards = data.map((card) => ({
       value: card.card_id,
       label: card.name,
       color:
@@ -95,12 +96,50 @@ export const useTableColumns = (mapId?: string) => {
         '#ffffff',
     }));
 
-    setTagOptions(formattedTags);
+    setCardOptions(formattedCards);
   }, [mapId]);
 
   useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
+    fetchCards();
+  }, [fetchCards]);
+
+  const fetchAllTags = useCallback(async () => {
+    if (!mapId) return; // Ensure mapId is provided
+
+    // First, fetch card_ids associated with the given mapId
+    const { data: cardsData, error: cardsError } = await supabase
+      .from('cards')
+      .select('card_id')
+      .eq('map_id', mapId);
+
+    if (cardsError) {
+      console.error('Error fetching cards:', cardsError);
+      return;
+    }
+    const cardIds = cardsData.map((card) => card.card_id); // Extract card_ids
+
+    if (cardIds.length === 0) return; // No cards found for the given mapId
+
+    // Now fetch tags from tiles based on the retrieved card_ids
+    const { data: tilesData, error: tilesError } = await supabase
+      .from('tiles')
+      .select('tags')
+      .in('card_id', cardIds); // Filter by card_ids
+
+    if (tilesError) {
+      console.error('Error fetching tags:', tilesError);
+      return;
+    }
+
+    const allTags = tilesData
+      .map((tile) => tile.tags)
+      .flat()
+      .filter(Boolean); // Flatten and remove any null/undefined tags
+    setTagOptions(allTags); // Assuming you want to set the tags to state
+  }, [mapId]);
+  useEffect(() => {
+    fetchAllTags();
+  }, [fetchAllTags, mapId]);
   const getBaseColumns = useCallback(
     (): CustomGridColumn[] => [
       {
@@ -126,7 +165,7 @@ export const useTableColumns = (mapId?: string) => {
         type: 'multiselect',
         icon: GridColumnIcon.HeaderString,
         width: 150,
-        options: tagOptions,
+        options: cardOptions,
         hasMenu: true,
         menuIcon: GridColumnIcon.HeaderBoolean,
         onClick: true,
@@ -168,7 +207,7 @@ export const useTableColumns = (mapId?: string) => {
         type: 'tags',
         icon: GridColumnIcon.HeaderString,
         width: 150,
-
+        options: tagOptions,
         onClick: true,
       },
       {
