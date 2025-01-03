@@ -21,7 +21,9 @@ const Hero = () => {
       router.push('/login');
     }
   };
-
+  useEffect(() => {
+    handleCreateMap();
+  }, [router]);
   return (
     <section className="pt-24 pb-7 ">
       <div className="container px-8 mx-auto text-center max-w-7xl">

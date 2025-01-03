@@ -178,13 +178,7 @@ export const useTableColumns = (mapId?: string) => {
       //   width: 150,
       //   options: parentCategoryOptions,
       // },
-      {
-        id: 'hidden',
-        title: 'Hidden',
-        type: 'boolean',
-        icon: GridColumnIcon.HeaderBoolean,
-        width: 100,
-      },
+
       {
         id: 'description',
         title: 'Description',
@@ -211,11 +205,11 @@ export const useTableColumns = (mapId?: string) => {
         onClick: true,
       },
       {
-        id: 'last_updated',
-        title: 'Last Updated',
-        type: 'date',
-        icon: GridColumnIcon.HeaderDate,
-        width: 150,
+        id: 'hidden',
+        title: 'Hidden',
+        type: 'boolean',
+        icon: GridColumnIcon.HeaderBoolean,
+        width: 100,
       },
       {
         id: 'actions',
@@ -223,6 +217,13 @@ export const useTableColumns = (mapId?: string) => {
         type: 'button',
         icon: GridColumnIcon.HeaderEmoji,
         width: 100,
+      },
+      {
+        id: 'last_updated',
+        title: 'Last Updated',
+        type: 'date',
+        icon: GridColumnIcon.HeaderDate,
+        width: 150,
       },
     ],
     [categoryOptions, parentCategoryOptions]
