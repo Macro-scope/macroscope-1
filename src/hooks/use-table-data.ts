@@ -334,24 +334,12 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             label: tile.cards.categories.name,
             color: tile.cards.categories.color,
           },
-          parentCategory: tile.parent_categories
-            ? {
-                value: tile.parent_categories.category_id,
-                label: tile.parent_categories.name,
-                color: tile.parent_categories.color,
-              }
-            : null,
-          description: tile.description
-            ? {
-                html: tile.description,
-                markdown: tile.description_markdown || '',
-              }
-            : null,
+          // Parse the JSONB tags field
+          tags: Array.isArray(tile.tags) ? tile.tags : [], // Ensure it's an array
           hidden: tile.hidden || false,
           last_updated: tile.updated_at || tile.created_at,
           card_id: tile.card_id,
           category_id: tile.category_id,
-          parent_category_id: tile.parent_category_id,
           position: tile.position,
         }));
 
@@ -537,29 +525,20 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
   );
 
   const updateRow = async (id: string, updatedData: any) => {
-    console.log('updateRow called with:', { id, updatedData });
     try {
       dispatch(setSaveStatus('saving'));
 
-      if ('url' in updatedData && updatedData.url !== '') {
-        console.log('URL update detected:', updatedData.url);
-        const logoUrl = await getFaviconFromUrl(updatedData.url);
-        if (logoUrl) {
-          console.log('New logo URL:', logoUrl);
-          updatedData.logo = logoUrl;
-        }
-      }
-
-      // Format the data for the database by extracting only valid fields
+      // Format the data for the database
       const dataToUpdate = {
         name: updatedData.name,
         url: updatedData.url,
         logo: updatedData.logo,
         category_id: updatedData.category_id,
         card_id: updatedData.card_id,
-        parent_category_id: updatedData.parent_category_id,
         hidden: updatedData.hidden,
         position: updatedData.position,
+        // Add tags to the update
+        ...(Array.isArray(updatedData.tags) && { tags: updatedData.tags }),
         ...(updatedData.description && {
           description: updatedData.description.html,
           description_markdown: updatedData.description.markdown,

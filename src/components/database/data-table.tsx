@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  useRef,
+  useMemo,
+} from 'react';
 import styled from 'styled-components';
 
 import {
@@ -68,7 +74,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
+import CategoryMenu from './category-menu';
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
   width: 100%;
@@ -239,6 +245,10 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     column: null,
     direction: null,
   });
+  const [categoryPopoverPosition, setCategoryPopoverPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   const [pendingReorder, setPendingReorder] = useState<{
     from: number;
     to: number;
@@ -250,7 +260,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     column: null,
     direction: null,
   });
-
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(
+    new Set()
+  );
   const onColumnResize = useCallback((column: GridColumn, newSize: number) => {
     setColumnSizes((prev) => ({ ...prev, [column.id as string]: newSize }));
   }, []);
@@ -259,7 +271,21 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     width: (columnSizes as Record<string, number>)[col.id] ?? col.width,
   }));
   const [hoverRow, setHoverRow] = useState<number | undefined>(undefined);
+  const getFilteredData = useCallback(() => {
+    if (selectedCategories.size === 0) {
+      return data; // Show all data if no categories are selected
+    }
 
+    return data.filter((item) => selectedCategories.has(item.tag_id));
+  }, [data, selectedCategories]);
+
+  // Use the filtered data in your render method
+  const filteredData = React.useMemo(() => {
+    if (selectedCategories.size === 0) {
+      return data;
+    }
+    return data.filter((row) => selectedCategories.has(row.card_id));
+  }, [data, selectedCategories]);
   const onItemHovered = useCallback((args: GridMouseEventArgs) => {
     const [_, row] = args.location;
     setHoverRow(args.kind !== 'cell' ? undefined : row);
@@ -591,6 +617,22 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             },
           };
 
+        case 'tags':
+          return {
+            kind: GridCellKind.Custom,
+            allowOverlay: true,
+            copyData: Array.isArray(value) ? value.join(', ') : '',
+            data: {
+              kind: 'multi-select-cell',
+              values: Array.isArray(value) ? value : [],
+              options: column.options || [],
+              allowDuplicates: false,
+              allowCreation: true,
+              isMulti: true,
+            },
+            onClick: handleCellClick,
+          };
+
         default:
           return {
             kind: GridCellKind.Text,
@@ -723,6 +765,46 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           console.error('Invalid image URL:', error);
           return;
         }
+      } else if (column.type === 'tags') {
+        try {
+          console.log(rowData);
+          // Make sure we have a valid tile_id
+          if (!rowData.id) {
+            console.error('No tile_id found:', rowData);
+            return;
+          }
+
+          // Extract the values from the MultiSelect cell data
+          const updatedTags = newValue.data.values;
+          console.log('Updating tags for tile:', rowData.id, updatedTags); // Debug log
+
+          // Update the tile in Supabase
+          const { data, error } = await supabase
+            .from('tiles')
+            .update({
+              tags: updatedTags,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('tile_id', rowData.id)
+            .select();
+
+          if (error) {
+            console.error('Error updating tags:', error);
+            throw error;
+          }
+
+          // Update local state to reflect the changes
+          setData((currentData) =>
+            currentData.map((row) =>
+              row.id === rowData.id ? { ...row, tags: updatedTags } : row
+            )
+          );
+
+          console.log('Tags updated successfully:', data); // Debug log
+        } catch (error) {
+          console.error('Failed to update tags:', error, rowData);
+        }
+        return;
       } else if (
         column.type === 'multiselect' &&
         newValue.kind === GridCellKind.Custom
@@ -788,11 +870,12 @@ const DataTable = ({ mapId }: { mapId: string }) => {
         // Handle regular category selection
         if (existingOption) {
           try {
-            // First, fetch the card that corresponds to this tag
+            console.log(existingOption, 'sss');
+            // Fetch the card directly using card_id
             const { data: cardData, error: cardError } = await supabase
               .from('cards')
-              .select('card_id')
-              .eq('category_id', existingOption.value)
+              .select('card_id, category_id') // Also select category_id
+              .eq('card_id', existingOption.value) // Use card_id instead of category_id
               .eq('map_id', mapId)
               .single();
 
@@ -801,7 +884,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             // Update with the correct card_id and category_id
             const updateData = {
               card_id: cardData.card_id,
-              category_id: existingOption.value,
+              category_id: cardData.category_id,
             };
 
             await updateRow(rowData.id, updateData);
@@ -818,7 +901,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                         color: existingOption.color,
                       },
                       card_id: cardData.card_id,
-                      category_id: existingOption.value,
+                      category_id: cardData.category_id,
                     }
                   : item
               )
@@ -1205,8 +1288,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
     );
   }
 
-  const onHeaderMenuClick = (column: any) => {
-    console.log('Header menu clicked for column:', column);
+  const onHeaderMenuClick = (column: number, event: any) => {
+    console.log('Header menu clicked for column:', column, event);
+    if (column === 3) {
+      // Assuming 3 is the category column index
+      // The event itself contains the position information
+      setCategoryPopoverPosition({
+        x: event.x + event.width / 2,
+        y: event.y + event.height,
+      });
+    }
   };
 
   function setNewGroupColor(color: string): void {}
@@ -1274,6 +1365,17 @@ const DataTable = ({ mapId }: { mapId: string }) => {
       </AlertDialogContent>
     </AlertDialog>
   );
+  const handleToggleCategory = (tagId: string) => {
+    setSelectedCategories((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(tagId)) {
+        newSet.delete(tagId);
+      } else {
+        newSet.add(tagId);
+      }
+      return newSet;
+    });
+  };
 
   return (
     <div className="h-screen w-full bg-white">
@@ -1372,6 +1474,16 @@ const DataTable = ({ mapId }: { mapId: string }) => {
 
           {/* Right side - Existing toolbar items */}
           <div className="flex items-center gap-2">
+            <CategoryMenu
+              mapId={mapId}
+              onSelectCategory={(category) => {
+                console.log('Selected category:', category);
+              }}
+              selectedCategories={selectedCategories}
+              onToggleCategory={handleToggleCategory}
+              position={categoryPopoverPosition}
+              onClose={() => setCategoryPopoverPosition(null)}
+            />
             {/* Undo/Redo */}
             <div className="flex items-center gap-1">
               <Button
@@ -1736,7 +1848,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               width={width ?? 0}
               height={height ?? 0}
               onHeaderMenuClick={onHeaderMenuClick}
-              rows={data.length}
+              rows={filteredData.length}
               fillHandle={true}
               keybindings={{
                 downFill: true,
