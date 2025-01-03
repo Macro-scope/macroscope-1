@@ -1,12 +1,19 @@
+'use client';
+import DataTable from '@/components/database/data-table';
+import CustomLayout from '@/layout/CustomLayout';
+import { supabase } from '@/lib/supabaseClient';
 
-import DataTable from "@/components/database/data-table";
-import CustomLayout from "@/layout/CustomLayout";
+import { redirect, useRouter } from 'next/navigation';
 
-const DatabasePage = async ({ params }: { params: { id: string } }) => {
-  return <CustomLayout>
-    <DataTable mapId={params.id} />
-  </CustomLayout>
+import { useEffect } from 'react';
+const DatabasePage = ({ params }: { params: { id: string } }) => {
+  // const supabase = createServerComponentClient({ cookies });
+
+  return (
+    <CustomLayout>
+      <DataTable mapId={params.id} />
+    </CustomLayout>
+  );
 };
 
 export default DatabasePage;
-

@@ -1,17 +1,19 @@
-"use client"
-import CustomLayout from "../../layout/CustomLayout";
-import { useEffect, useState } from "react";
-import { supabase } from "../../lib/supabaseClient";
-import { setUserInDatabase } from "../../hooks/setUserInDatabase";
-import { getUserDetails } from "../../hooks/getUserDetails";
-import { getUserMaps } from "../../hooks/getUserMaps";
-import MapsCard from "@/components/MapsCard";
-import { useDispatch } from "react-redux";
-import { setUser } from "@/redux/userSlice";
+'use client';
+import CustomLayout from '../../layout/CustomLayout';
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { setUserInDatabase } from '../../hooks/setUserInDatabase';
+import { getUserDetails } from '../../hooks/getUserDetails';
+import { getUserMaps } from '../../hooks/getUserMaps';
+import MapsCard from '@/components/MapsCard';
+import { useDispatch } from 'react-redux';
+import { setUser } from '@/redux/userSlice';
+import { useRouter } from 'next/navigation';
 
 const Dashboard = () => {
   const [maps, setMaps] = useState<any[] | undefined>();
   const [_users, setUsers] = useState<any>();
+  const router = useRouter();
 
   const getUserId = async () => {
     const {
@@ -23,30 +25,36 @@ const Dashboard = () => {
   const dispatch = useDispatch();
 
   const fetchDetails = async () => {
-    const user_id = (await getUserId()) || "";
+    const user_id = (await getUserId()) || '';
     const userData = await getUserDetails(user_id);
     const mapsData = await getUserMaps(user_id);
 
     setUsers(userData);
-    console.log(userData)
-    dispatch(setUser(userData))
+    console.log(userData);
+    dispatch(setUser(userData));
     setMaps(mapsData);
     console.log(mapsData);
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUserInDatabase(session.user);
-      }
-    });
+    const checkAuth = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-    fetchDetails();
+      if (!session) {
+        router.push('/login');
+        return;
+      }
+
+      setUserInDatabase(session.user);
+      fetchDetails();
+    };
+
+    checkAuth();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
 
-  
   return (
     <CustomLayout>
       <div className="overflow-scroll h-full w-full">
