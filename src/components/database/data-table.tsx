@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 import styled from 'styled-components';
+import ReactMarkdown from 'react-markdown';
 
 import {
   CompactSelection,
@@ -495,6 +496,14 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               isMulti: false,
             },
             onClick: handleCellClick,
+          };
+        case 'markdown':
+          return {
+            kind: GridCellKind.Markdown,
+            data: rowData.short_description_markdown || '# Test',
+            allowOverlay: true,
+            readonly: false,
+            className: 'gdg-cell-markdown',
           };
 
         case 'boolean':
@@ -2059,15 +2068,38 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               }}
               onSave={async (updatedData: any) => {
                 try {
-                  if (updatedData.category_id) {
-                    // ... existing tag handling code ...
-                  } else {
-                    await updateRow(selectedRow.id, updatedData);
-                  }
+                  // Preserve existing data and merge with updates
+                  const dataToUpdate = {
+                    // Keep existing data
+                    name: updatedData.name ?? selectedRow.name,
+                    url: updatedData.url ?? selectedRow.url,
+                    logo: updatedData.logo ?? selectedRow.logo,
+                    card_id: updatedData.category?.value ?? selectedRow.card_id,
+                    description:
+                      updatedData.description?.html ??
+                      selectedRow.description?.html,
+                    description_markdown:
+                      updatedData.description?.markdown ??
+                      selectedRow.description?.markdown,
+                  };
+
+                  await updateRow(selectedRow.id, dataToUpdate);
+
+                  // Update local state while preserving existing data
+                  setData((prevData) =>
+                    prevData.map((item) =>
+                      item.id === selectedRow.id
+                        ? {
+                            ...item, // Keep all existing item data
+                            ...dataToUpdate, // Merge with updates
+                            category: updatedData.category || item.category, // Preserve category if not updated
+                            last_updated: new Date().toISOString(),
+                          }
+                        : item
+                    )
+                  );
+
                   setSelectedRow(null);
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 100);
                 } catch (error) {
                   console.error('Error updating row:', error);
                 }

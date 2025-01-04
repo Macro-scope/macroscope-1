@@ -329,6 +329,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name: tile.name || '',
           url: tile.url || '',
           logo: tile.logo || '',
+          short_description_markdown: tile.short_description_markdown || '',
           category: {
             value: tile.card_id,
             label: tile.cards.categories.name,
@@ -537,6 +538,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
         card_id: updatedData.card_id,
         hidden: updatedData.hidden,
         position: updatedData.position,
+        short_description_markdown: updatedData.short_description_markdown,
         // Add tags to the update
         ...(Array.isArray(updatedData.tags) && { tags: updatedData.tags }),
         ...(updatedData.description && {

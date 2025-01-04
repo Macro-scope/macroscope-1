@@ -188,8 +188,8 @@ export const useTableColumns = (mapId?: string) => {
         onClick: true,
       },
       {
-        id: 'markdown',
-        title: 'Description2',
+        id: 'short_description_markdown',
+        title: 'Short Description',
         type: 'markdown',
         icon: GridColumnIcon.HeaderMarkdown,
         width: 200,

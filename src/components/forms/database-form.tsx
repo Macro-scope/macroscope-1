@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from "react";
-import { X, Upload, Link2, Camera, Trash2 } from "lucide-react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import React, { useState, useCallback, useEffect } from 'react';
+import { X, Upload, Link2, Camera, Trash2 } from 'lucide-react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,24 +10,24 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import Select from "react-select/creatable";
-import { supabase } from "@/lib/supabaseClient";
-import { TiptapEditor } from "../editor/tiptap-editor";
-import { ImageUpload } from "../database/image-upload";
-import { useTableData } from "@/hooks/use-table-data";
-import { useTableColumns } from "@/hooks/use-table-columns";
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import Select from 'react-select/creatable';
+import { supabase } from '@/lib/supabaseClient';
+import { TiptapEditor } from '../editor/tiptap-editor';
+import { ImageUpload } from '../database/image-upload';
+import { useTableData } from '@/hooks/use-table-data';
+import { useTableColumns } from '@/hooks/use-table-columns';
 
 interface FormData {
   name: string;
@@ -76,91 +76,87 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: data.name || "",
-    url: data.url || "",
-    logo: data.logo || "",
-    category: data.category || { value: "", label: "", color: "" },
-    description: data.description || "",
+    name: data.name || '',
+    url: data.url || '',
+    logo: data.logo || '',
+    category: data.category || { value: '', label: '', color: '' },
+    description: data.description || '',
     last_updated: data.last_updated || new Date().toISOString(),
     parentCategory: data.parentCategory || null,
   });
 
   const { updateRow } = useTableData({ mapId });
 
-  const fetchCategories = useCallback(async () => {
+  const fetchCards = useCallback(async () => {
     try {
       setIsLoading(true);
-      const { data: categories, error } = await supabase
-        .from("categories")
-        .select("*")
-        .eq("map_id", mapId);
+      const { data: cards, error } = await supabase
+        .from('cards')
+        .select(
+          `
+          card_id,
+          name,
+          settings
+        `
+        )
+        .eq('map_id', mapId);
 
       if (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error fetching cards:', error);
         return;
       }
 
-      const formattedCategories = categories.map((category) => ({
-        value: category.category_id,
-        label: category.name,
-        color: category.color || "#000000",
+      const formattedCards = cards.map((card) => ({
+        value: card.card_id,
+        label: card.name,
+        color: card.settings?.tile?.fillColor || '#ffffff',
       }));
 
-      setCategoryOptions(formattedCategories);
+      setCategoryOptions(formattedCards);
     } catch (error) {
-      console.error("Error in fetchCategories:", error);
+      console.error('Error in fetchCards:', error);
     } finally {
       setIsLoading(false);
     }
   }, [mapId]);
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories, mapId]);
+    fetchCards();
+  }, [fetchCards, mapId]);
 
-  const handleCreateNewCategory = async (categoryName: string) => {
+  const handleCreateNewCategory = async (cardName: string) => {
     try {
       setIsLoading(true);
-      const { data: newCategory, error: categoryError } = await supabase
-        .from("categories") 
+      const { data: newCard, error: cardError } = await supabase
+        .from('cards')
         .insert({
           map_id: mapId,
-          name: categoryName,
-          color: "#000000",
+          name: cardName,
+          settings: {
+            tile: { fillColor: '#ffffff', borderColor: '#000000' },
+            group: { fillColor: '#ffffff', borderColor: '#000000' },
+          },
         })
         .select()
         .single();
 
-      if (categoryError) throw categoryError;
-
-      // Create a new card for the category
-      const { data: newCard, error: cardError } = await supabase
-        .from("cards")
-        .insert({
-          map_id: mapId,
-          category_id: newCategory.category_id, // Changed from tag_id
-          name: categoryName,
-        })
-        .select("*, categories!inner(category_id, name, color)") 
-        .single();
-
       if (cardError) throw cardError;
 
-      const newCategoryOption = {
-        value: newCategory.category_id,
-        label: categoryName,
-        color: "#000000",
+      const newCardOption = {
+        value: newCard.card_id,
+        label: cardName,
+        color: newCard.settings?.tile?.fillColor || '#ffffff',
       };
 
       setFormData((prev) => ({
         ...prev,
-        category: newCategoryOption,
+        category: newCardOption,
       }));
 
-      await fetchCategories();
+      await fetchCards();
       return newCard;
     } catch (error) {
-      console.error("Error creating new category:", error);
+      console.error('Error creating new card:', error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -186,7 +182,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     if (formData.category.value !== data.category.value) {
       updates.category = formData.category;
     }
-
+    console.log('updates', updates, formData.category);
     await onSave(updates);
   };
 
@@ -207,7 +203,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
       }));
       setIsDescriptionDialogOpen(false);
     } catch (error) {
-      console.error("Error saving description:", error);
+      console.error('Error saving description:', error);
     }
   };
 
@@ -260,8 +256,8 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      setFormData((prev) => ({ ...prev, logo: "" }));
-                      onSave({ logo: "" });
+                      setFormData((prev) => ({ ...prev, logo: '' }));
+                      onSave({ logo: '' });
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -320,8 +316,8 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
               isClearable
               placeholder={
                 isLoading
-                  ? "Loading categories..."
-                  : "Search or create category..."
+                  ? 'Loading categories...'
+                  : 'Search or create category...'
               }
               value={formData.category.value ? formData.category : null}
               options={categoryOptions} // Changed from tagOptions
@@ -329,12 +325,12 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                 if (!newValue) {
                   setFormData((prev) => ({
                     ...prev,
-                    category: { value: "", label: "", color: "" },
+                    category: { value: '', label: '', color: '' },
                   }));
                   return;
                 }
                 if (newValue.__isNew__) {
-                  handleCreateNewCategory(newValue.label);  // Changed from handleCreateNewTag
+                  handleCreateNewCategory(newValue.label); // Changed from handleCreateNewTag
                 } else {
                   setFormData((prev) => ({
                     ...prev,
@@ -342,11 +338,10 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                   }));
                 }
               }}
-
               classNames={{
-                control: () => "border rounded-md !min-h-[40px]",
-                menu: () => "mt-1 bg-white border rounded-md shadow-lg",
-                option: () => "px-3 py-2 hover:bg-gray-50",
+                control: () => 'border rounded-md !min-h-[40px]',
+                menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
+                option: () => 'px-3 py-2 hover:bg-gray-50',
               }}
             />
           </div>
@@ -378,7 +373,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
           </div>
 
           <div className="text-sm text-gray-500">
-            Last Modified:{" "}
+            Last Modified:{' '}
             <span className="font-medium">
               {new Date(data.last_updated).toLocaleString()}
             </span>
@@ -426,7 +421,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
             <DialogTitle>Edit Description</DialogTitle>
           </DialogHeader>
           <TiptapEditor
-            initialContent={data.descriptionHtml || ""}
+            initialContent={data.descriptionHtml || ''}
             onSave={handleDescriptionSave}
             onCancel={() => setIsDescriptionDialogOpen(false)}
           />
@@ -452,7 +447,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                handleSubmit(new Event("submit") as any);
+                handleSubmit(new Event('submit') as any);
                 setShowDiscardDialog(false);
               }}
             >
