@@ -7,13 +7,14 @@ import WebsiteSettings from "./WebsiteSettings";
 import EmbedSettings from "./EmbedSettings";
 import ExportImageSettings from "./ExportImageSettings";
 import SettingsTab from "./SettingsTab";
+import { RootState } from "@/redux/store";
 
 type Props = {
   isPrevopen: (value: boolean) => void;
 };
 
 const PublishMapSettings = (props: Props) => {
-  const { publishedMapNav } = useSelector((state: any) => ({
+  const { publishedMapNav } = useSelector((state: RootState) => ({
     publishedMapNav: state.publishedMapNav,
   }));
 

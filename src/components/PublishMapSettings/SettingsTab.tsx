@@ -36,7 +36,7 @@ const SettingsTab = () => {
   }
 
   return (
-    <div className="flex flex-col space-y-6 p-4">
+    <div className="flex flex-col space-y-6 p-4 pb-20">
       {/* Title Section */}
       <div className="space-y-2">
         <Label htmlFor="title" className="block font-medium text-sm">
@@ -142,6 +142,12 @@ const SettingsTab = () => {
           placeholder="Enter suggestion form link"
           className="w-full"
         />
+      </div>
+      <div className='fixed bottom-0 bg-white w-full py-2'>
+        <Button>
+          Save Changes
+        </Button>
+
       </div>
 
       {/* Description Editor Dialog */}
