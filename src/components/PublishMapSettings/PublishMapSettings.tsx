@@ -11,6 +11,7 @@ import { RootState } from "@/redux/store";
 
 type Props = {
   isPrevopen: (value: boolean) => void;
+  mapId:string
 };
 
 const PublishMapSettings = (props: Props) => {
@@ -29,7 +30,7 @@ const PublishMapSettings = (props: Props) => {
     {
       key: "1",
       label: <span className="font-medium text-sm">Settings</span>,
-      children: <SettingsTab />,
+      children: <SettingsTab mapId={props.mapId} />,
     },
     {
       key: "2",

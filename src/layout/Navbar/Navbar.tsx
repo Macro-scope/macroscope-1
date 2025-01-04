@@ -17,25 +17,17 @@ import { User } from '@supabase/supabase-js';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'next/navigation';
 import { updateMapCards } from '../../hooks/updateMapCards';
-import { IoSettingsOutline } from 'react-icons/io5';
 import { BiCopy, BiRefresh } from 'react-icons/bi';
 import {
   setPublishMapSettings,
-  setSubtext,
-  setSuggest,
-  setTitle,
 } from '../../redux/publishedMapSlice';
 import { setPublishedNav } from '../../hooks/updatePublishNav';
 import { FaCheck, FaPlus } from 'react-icons/fa6';
 import { renameMap } from '../../hooks/renameMap';
-// import { IoMdCloudDone } from "react-icons/io";
-// import { AiOutlineCloudSync } from "react-icons/ai";
 import { MdOutlineCloudDone } from 'react-icons/md';
 import { updateImages } from '../../hooks/updateImages';
 import { usePathname, useRouter } from 'next/navigation';
-import Image from 'next/image';
 import PublishMapSettings from '@/components/PublishMapSettings/PublishMapSettings';
-// import { BiCopy } from "react-icons/bi";
 
 const Navbar = () => {
   // Get the current location object
@@ -236,6 +228,12 @@ const Navbar = () => {
         return;
       }
 
+      const {data:d,error:e}=await supabase.from("publish_settings").insert({
+        map_id:data.map_id,
+        title:newProjectName,
+        description:newProjectName
+      })
+
       // Generate a UUID for the category
       const categoryId = crypto.randomUUID();
 
@@ -417,7 +415,7 @@ const Navbar = () => {
                   <X className="h-4 w-4" />
                 </Button>
               </div>
-              <PublishMapSettings isPrevopen={setIsModalOpen} />
+              <PublishMapSettings mapId={mapId} isPrevopen={setIsModalOpen} />
             </div>
           </div>
         )}

@@ -1,42 +1,143 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Trash2, Upload } from 'lucide-react'
 import Image from 'next/image'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { TiptapEditor } from "../editor/tiptap-editor"
+import { supabase } from '@/lib/supabaseClient'
+import { useToast } from "@/hooks/use-toast"
+import { addLogo } from '@/hooks/addLogo'
 
-const SettingsTab = () => {
-  const [logo, setLogo] = React.useState<string | null>(null)
-  const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false)
-  const [description, setDescription] = useState("")
+const SettingsTab = ({ mapId }: { mapId: string }) => {
+  const { toast } = useToast()
 
-  const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const [settings, setSettings] = useState({
+    title: '',
+    description: '',
+    navbar_logo: null as string | null,
+    suggestion_form_link: ''
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  // Fetch initial settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('publish_settings')
+          .select('*')
+          .eq('map_id', mapId)
+          .single()
+
+        if (error) throw error
+
+        if (data) {
+          setSettings({
+            title: data.title || '',
+            description: data.description || '',
+            navbar_logo: data.navbar_logo || null,
+            suggestion_form_link: data.suggestion_form_link || ''
+          })
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error)
+        toast({
+          title: "Error",
+          description: "Failed to load settings",
+          variant: "destructive"
+        })
+      } finally {
+        setIsInitialLoading(false)
+      }
+    }
+
+    if (mapId) {
+      fetchSettings()
+    }
+  }, [mapId, toast])
+
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file) {
+    if (!file) return
+
+    setIsUploading(true)
+    try {
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setLogo(reader.result as string)
+      reader.onloadend = async () => {
+        const imageUrl = reader.result as string
+        const publicUrl = await addLogo(imageUrl)
+        if (publicUrl) {
+          setSettings(prev => ({ ...prev, navbar_logo: publicUrl }))
+        }
       }
       reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Error uploading logo:', error)
+      toast({
+        title: "Error",
+        description: "Failed to upload logo",
+        variant: "destructive"
+      })
+    } finally {
+      setIsUploading(false)
     }
   }
 
-  const handleDescriptionSave = (content: { html: string; markdown: string }) => {
-    setDescription(content.markdown)
-    setIsDescriptionDialogOpen(false)
+  const handleSaveChanges = async () => {
+    setIsSaving(true)
+    try {
+      const { error } = await supabase
+        .from('publish_settings')
+        .update({
+          title: settings.title,
+          description: settings.description,
+          navbar_logo: settings.navbar_logo,
+          suggestion_form_link: settings.suggestion_form_link
+        })
+        .eq('map_id', mapId)
+
+      if (error) throw error
+
+      toast({
+        title: "Success",
+        description: "Settings saved successfully"
+      })
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive"
+      })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  if (isInitialLoading) {
+    return (
+      <div className="flex items-center justify-center h-full p-4">
+        <div className="animate-pulse space-y-4 w-full">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-full"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-24 bg-gray-200 rounded w-full"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-20 bg-gray-200 rounded w-full"></div>
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-10 bg-gray-200 rounded w-full"></div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col space-y-6 p-4 pb-20">
+    <div className="flex flex-col space-y-6 p-4">
       {/* Title Section */}
       <div className="space-y-2">
         <Label htmlFor="title" className="block font-medium text-sm">
@@ -44,6 +145,8 @@ const SettingsTab = () => {
         </Label>
         <Input
           id="title"
+          value={settings.title}
+          onChange={(e) => setSettings(prev => ({ ...prev, title: e.target.value }))}
           placeholder="Map Name"
           className="w-full"
         />
@@ -51,23 +154,15 @@ const SettingsTab = () => {
 
       {/* Description Section */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label className="block font-medium text-sm">
-            Description
-          </Label>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsDescriptionDialogOpen(true)}
-          >
-            Edit
-          </Button>
-        </div>
+        <Label htmlFor="description" className="block font-medium text-sm">
+          Description
+        </Label>
         <textarea
-          value={description}
-          readOnly
-          placeholder="Name | Email | Website"
-          className="w-full h-24 rounded-md border p-2 resize-none text-sm bg-white"
+          id="description"
+          value={settings.description}
+          onChange={(e) => setSettings(prev => ({ ...prev, description: e.target.value }))}
+          placeholder="Enter description"
+          className="w-full h-24 rounded-md border p-2 resize-none text-sm"
         />
       </div>
 
@@ -81,14 +176,14 @@ const SettingsTab = () => {
         </p>
         
         <div className="flex flex-col gap-2">
-          <div className="w-full bg-gray-50 h-20 rounded border border-gray-200 flex items-center justify-center">
-            {logo ? (
+          <div className="w-full overflow-hidden bg-gray-50 h-20 rounded border border-gray-200 flex items-center justify-center">
+            {settings.navbar_logo ? (
               <Image
-                src={logo}
+                src={settings.navbar_logo}
                 alt="Navbar Logo"
                 width={250}
                 height={80}
-                className="object-contain"
+                className="object-fit"
               />
             ) : (
               <Image
@@ -108,22 +203,25 @@ const SettingsTab = () => {
                 accept="image/*"
                 onChange={handleLogoUpload}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                disabled={isUploading}
               />
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="flex items-center gap-2 border-gray-200"
+                disabled={isUploading}
               >
                 <Upload className="h-4 w-4" />
-                Upload
+                {isUploading ? 'Uploading...' : 'Upload'}
               </Button>
             </div>
-            {logo && (
+            {settings.navbar_logo && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setLogo(null)}
+                onClick={() => setSettings(prev => ({ ...prev, navbar_logo: null }))}
                 className="text-gray-500 hover:text-gray-600"
+                disabled={isUploading}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -139,33 +237,21 @@ const SettingsTab = () => {
         </Label>
         <Input
           id="suggestion-link"
+          value={settings.suggestion_form_link}
+          onChange={(e) => setSettings(prev => ({ ...prev, suggestion_form_link: e.target.value }))}
           placeholder="Enter suggestion form link"
           className="w-full"
         />
       </div>
-      <div className='fixed bottom-0 bg-white w-full py-2'>
-        <Button>
-          Save Changes
+
+      <div className="bg-white w-full py-2">
+        <Button 
+          onClick={handleSaveChanges}
+          disabled={isSaving}
+        >
+          {isSaving ? 'Saving...' : 'Save Changes'}
         </Button>
-
       </div>
-
-      {/* Description Editor Dialog */}
-      <Dialog
-        open={isDescriptionDialogOpen}
-        onOpenChange={setIsDescriptionDialogOpen}
-      >
-        <DialogContent className="sm:max-w-[900px] h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Edit Description</DialogTitle>
-          </DialogHeader>
-          <TiptapEditor
-            initialContent={description}
-            onSave={handleDescriptionSave}
-            onCancel={() => setIsDescriptionDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
