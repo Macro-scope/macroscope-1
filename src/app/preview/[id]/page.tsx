@@ -13,6 +13,7 @@ import { setCards } from '@/redux/mapCardsSlice';
 import { getGlobalMapStyles } from '@/hooks/getGlobalMapStyles';
 import { setGlobalSettings } from '@/redux/globalSettingsSlice';
 import { Loader2 } from 'lucide-react';
+import { Card } from '@/types/data';
 
 const PADDING = 10; // Padding around the content
 const MIN_ZOOM = 0.5;
@@ -200,9 +201,7 @@ export default function PublishedMap() {
     }>
   >([]);
 
-  const handleDeleteImage = (imageId: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== imageId));
-  };
+
 
   useEffect(() => {
     const updateViewportSize = () => {
@@ -374,7 +373,7 @@ export default function PublishedMap() {
     })
   );
 
-  const [currCards, setCurrCards] = useState([]);
+  const [currCards, setCurrCards] = useState<Card[]>([]);
 
   useEffect(() => {
     const getCards = async (mapId: string) => {
@@ -420,7 +419,7 @@ export default function PublishedMap() {
         if (!Array.isArray(prevCards)) return prevCards;
         // Ensure deep cloning
         console.log('ok here');
-        const updatedCards = prevCards.map((card: any) => {
+        const updatedCards = prevCards.map((card: Card) => {
           if (card.card_id === targetCardId) {
             return {
               ...card,
@@ -549,7 +548,11 @@ export default function PublishedMap() {
 
   return (
     <div>
-      <MapNavbar />
+     {currCards && (
+        <MapNavbar
+        />
+      )}
+
       {/* <Watermark /> */}
       {loading ? ( // Show loader while checking ownership
         <Loader />

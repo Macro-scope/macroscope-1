@@ -228,7 +228,7 @@ const Navbar = () => {
         return;
       }
 
-      const {data:d,error:e}=await supabase.from("publish_settings").insert({
+      await supabase.from("publish_settings").insert({
         map_id:data.map_id,
         title:newProjectName,
         description:newProjectName
