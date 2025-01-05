@@ -76,6 +76,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import CategoryMenu from './category-menu';
+import { PlateEditor } from '../editor/plate-editor';
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
   width: 100%;
@@ -504,6 +505,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
             allowOverlay: true,
             readonly: false,
             className: 'gdg-cell-markdown',
+            onClick: handleCellClick,
           };
 
         case 'boolean':
@@ -2011,7 +2013,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col bg-white">
             <h2 className="text-lg font-medium mb-4">Edit Description</h2>
             <div className="flex-1 overflow-hidden">
-              <TiptapEditor
+              {/* <TiptapEditor
                 initialContent={selectedRow?.description?.html || ''}
                 onSave={async (content) => {
                   if (selectedRow) {
@@ -2029,6 +2031,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   }
                 }}
                 onCancel={() => setSelectedRow(null)}
+              /> */}
+              <PlateEditor
+                initialValue={selectedRow?.description?.html || ''}
               />
             </div>
           </DialogContent>
@@ -2051,6 +2056,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   label: selectedRow.category?.label || '',
                   color: selectedRow.category?.color || '',
                 },
+                shortDescription: selectedRow.short_description_markdown || '',
                 parentCategory: selectedRow.parent_category_id
                   ? {
                       value: selectedRow.parent_category_id,

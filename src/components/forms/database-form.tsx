@@ -28,6 +28,7 @@ import { TiptapEditor } from '../editor/tiptap-editor';
 import { ImageUpload } from '../database/image-upload';
 import { useTableData } from '@/hooks/use-table-data';
 import { useTableColumns } from '@/hooks/use-table-columns';
+import RichTextEditor from '../editor/text-editor';
 
 interface FormData {
   name: string;
@@ -47,6 +48,7 @@ interface FormData {
 
   description: string;
   last_updated: string;
+  shortDescription?: string;
 }
 
 interface EditItemFormData extends FormData {
@@ -83,8 +85,9 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     description: data.description || '',
     last_updated: data.last_updated || new Date().toISOString(),
     parentCategory: data.parentCategory || null,
+    shortDescription: data.shortDescription || '',
   });
-
+  console.log('formData', formData);
   const { updateRow } = useTableData({ mapId });
 
   const fetchCards = useCallback(async () => {
@@ -372,6 +375,10 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
             </div>
           </div>
 
+          <RichTextEditor
+            onChange={() => {}}
+            value={formData.shortDescription}
+          />
           <div className="text-sm text-gray-500">
             Last Modified:{' '}
             <span className="font-medium">
