@@ -30,6 +30,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.4",
+    "@radix-ui/react-toast": "^1.2.4",
     "@radix-ui/react-toggle": "^1.1.1",
     "@radix-ui/react-toolbar": "^1.1.1",
     "@radix-ui/react-tooltip": "^1.1.6",
@@ -107,7 +108,7 @@
     "cmdk": "^1.0.0",
 
     "date-fns": "^4.1.0",
-
+    "cmdk": "^1.0.0",
     "dotenv": "^16.4.5",
     "downloadjs": "^1.4.7",
     "html-to-image": "^1.11.11",

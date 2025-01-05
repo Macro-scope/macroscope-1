@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { getMapData } from "@/hooks/getMapData";
 import { supabase } from "@/lib/supabaseClient";
 import { useParams } from "next/navigation";
@@ -12,7 +12,13 @@ export type NavData = {
   navbar_logo: string | null;
 };
 
-const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSelectedTags?: React.Dispatch<React.SetStateAction<string[]>>}) => {
+const MapNavbar = ({
+  setSelectedTags,
+  selectedTags,
+}: {
+  selectedTags: string[];
+  setSelectedTags?: React.Dispatch<React.SetStateAction<string[]>>;
+}) => {
   const { id: mapId } = useParams();
   const [nav, setNav] = useState<NavData>();
   const [tags, setTags] = useState<string[]>([]);
@@ -23,7 +29,10 @@ const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSele
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -70,20 +79,18 @@ const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSele
     fetchNav();
   }, [mapId]);
 
-  const filteredTags = tags.filter(tag =>
+  const filteredTags = tags.filter((tag) =>
     tag.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const toggleTag = (tag: string) => {
-    setSelectedTags(prev =>
-      prev.includes(tag)
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
   const removeTag = (tagToRemove: string) => {
-    setSelectedTags(prev => prev.filter(tag => tag !== tagToRemove));
+    setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
   };
 
   return (
@@ -95,7 +102,7 @@ const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSele
           className="h-10 w-10 rounded-full"
         />
       </a>
-      
+
       <div className="flex flex-col justify-center items-center">
         <h1 className="text-xl font-semibold">{nav?.title}</h1>
         <p className="text-sm">{nav?.description}</p>
@@ -125,7 +132,9 @@ const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSele
           >
             <div className="flex items-center gap-2 overflow-x-hidden">
               <span className="whitespace-nowrap">
-                {selectedTags.length > 0 ? `${selectedTags.length} selected` : "Filter by tags"}
+                {selectedTags.length > 0
+                  ? `${selectedTags.length} selected`
+                  : "Filter by tags"}
               </span>
               {selectedTags.length > 0 && (
                 <div className="flex gap-1">
@@ -165,10 +174,12 @@ const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSele
                   className="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
-              
+
               <div className="max-h-[200px] overflow-y-auto">
                 {filteredTags.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-500">No tags found</div>
+                  <div className="px-3 py-2 text-sm text-gray-500">
+                    No tags found
+                  </div>
                 ) : (
                   filteredTags.map((tag) => (
                     <div
