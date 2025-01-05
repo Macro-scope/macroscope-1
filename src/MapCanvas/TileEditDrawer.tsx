@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabaseClient";
-import { useSelector } from "react-redux";
-import { X } from "lucide-react";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { 
+import React, { useEffect, useState } from 'react';
+import { supabase } from '@/lib/supabaseClient';
+import { useSelector } from 'react-redux';
+import { X } from 'lucide-react';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -16,16 +16,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 type Props = {
   tileId: string;
@@ -37,10 +37,10 @@ const TileEditDrawer = (props: Props) => {
   const [categories, setCategories] = useState([]);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    url: "",
-    category: "",
-    description: ""
+    name: '',
+    url: '',
+    category: '',
+    description: '',
   });
 
   const { mapCards } = useSelector((state: any) => ({
@@ -59,17 +59,17 @@ const TileEditDrawer = (props: Props) => {
   useEffect(() => {
     const getTileInfo = async (tileId: string) => {
       const { data } = await supabase
-        .from("tiles")
+        .from('tiles')
         .select()
-        .eq("tile_id", tileId)
+        .eq('tile_id', tileId)
         .single();
 
       setTile(data);
       setFormData({
-        name: data?.name || "",
-        url: data?.url || "",
-        category: data?.card_id || "",
-        description: data?.description || ""
+        name: data?.name || '',
+        url: data?.url || '',
+        category: data?.card_id || '',
+        description: data?.description || '',
       });
     };
 
@@ -85,21 +85,21 @@ const TileEditDrawer = (props: Props) => {
     const isToday = date.toDateString() === today.toDateString();
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
-    if (isToday) return "Today";
-    if (isYesterday) return "Yesterday";
+    if (isToday) return 'Today';
+    if (isYesterday) return 'Yesterday';
     return new Date(timestamp).toLocaleString();
   };
 
   const saveTileSettings = async () => {
     const { error } = await supabase
-      .from("tiles")
+      .from('tiles')
       .update({
         name: formData.name,
         url: formData.url,
         card_id: formData.category,
-        description: formData.description
+        description: formData.description,
       })
-      .eq("tile_id", props.tileId);
+      .eq('tile_id', props.tileId);
 
     if (error) {
       console.error(error);
@@ -152,13 +152,15 @@ const TileEditDrawer = (props: Props) => {
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm">Basic Info</h3>
             </div>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-muted-foreground">Name</span>
                 <Input
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-48 h-8"
                 />
               </div>
@@ -167,7 +169,9 @@ const TileEditDrawer = (props: Props) => {
                 <span className="text-sm text-muted-foreground">URL</span>
                 <Input
                   value={formData.url}
-                  onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, url: e.target.value })
+                  }
                   className="w-48 h-8"
                 />
               </div>
@@ -181,12 +185,16 @@ const TileEditDrawer = (props: Props) => {
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm">Category</h3>
             </div>
-            
+
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Select Category</span>
-              <Select 
+              <span className="text-sm text-muted-foreground">
+                Select Category
+              </span>
+              <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, category: value })
+                }
               >
                 <SelectTrigger className="w-48 h-8">
                   <SelectValue placeholder="Select category" />
@@ -208,11 +216,15 @@ const TileEditDrawer = (props: Props) => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-sm">Description</h3>
-              <Button variant="outline" size="sm">Edit</Button>
+              <Button variant="outline" size="sm">
+                Edit
+              </Button>
             </div>
             <Textarea
               value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
               className="min-h-[100px]"
             />
             <div className="text-sm text-muted-foreground">
@@ -225,9 +237,9 @@ const TileEditDrawer = (props: Props) => {
           <Button className="w-full" onClick={saveTileSettings}>
             Save Changes
           </Button>
-          <Button 
-            variant="outline" 
-            className="w-full" 
+          <Button
+            variant="outline"
+            className="w-full"
             onClick={() => setShowDiscardDialog(true)}
           >
             Discard

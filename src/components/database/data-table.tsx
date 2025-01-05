@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 import styled from 'styled-components';
+import ReactMarkdown from 'react-markdown';
 
 import {
   CompactSelection,
@@ -75,6 +76,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import CategoryMenu from './category-menu';
+// import { PlateEditor } from '../editor/plate-editor';
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
   width: 100%;
@@ -494,6 +496,15 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               allowCreation: true,
               isMulti: false,
             },
+            onClick: handleCellClick,
+          };
+        case 'markdown':
+          return {
+            kind: GridCellKind.Markdown,
+            data: rowData.short_description_markdown || '# Test',
+            allowOverlay: true,
+            readonly: false,
+            className: 'gdg-cell-markdown',
             onClick: handleCellClick,
           };
 
@@ -2002,7 +2013,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
           <DialogContent className="sm:max-w-[900px] h-[90vh] flex flex-col bg-white">
             <h2 className="text-lg font-medium mb-4">Edit Description</h2>
             <div className="flex-1 overflow-hidden">
-              <TiptapEditor
+              {/* <TiptapEditor
                 initialContent={selectedRow?.description?.html || ''}
                 onSave={async (content) => {
                   if (selectedRow) {
@@ -2020,7 +2031,10 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   }
                 }}
                 onCancel={() => setSelectedRow(null)}
-              />
+              /> */}
+              {/* <PlateEditor
+                initialValue={selectedRow?.description?.html || ''}
+              /> */}
             </div>
           </DialogContent>
         </Dialog>
@@ -2042,6 +2056,8 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   label: selectedRow.category?.label || '',
                   color: selectedRow.category?.color || '',
                 },
+                shortDescription: selectedRow.short_description_markdown || '',
+                shortDescriptionHtml: selectedRow.short_description_html || '',
                 parentCategory: selectedRow.parent_category_id
                   ? {
                       value: selectedRow.parent_category_id,
@@ -2059,15 +2075,44 @@ const DataTable = ({ mapId }: { mapId: string }) => {
               }}
               onSave={async (updatedData: any) => {
                 try {
-                  if (updatedData.category_id) {
-                    // ... existing tag handling code ...
-                  } else {
-                    await updateRow(selectedRow.id, updatedData);
-                  }
+                  // Preserve existing data and merge with updates
+                  const dataToUpdate = {
+                    // Keep existing data
+                    name: updatedData.name ?? selectedRow.name,
+                    url: updatedData.url ?? selectedRow.url,
+                    logo: updatedData.logo ?? selectedRow.logo,
+                    card_id: updatedData.category?.value ?? selectedRow.card_id,
+                    description:
+                      updatedData.description?.html ??
+                      selectedRow.description?.html,
+                    description_markdown:
+                      updatedData.description?.markdown ??
+                      selectedRow.description?.markdown,
+                    short_description_html:
+                      updatedData.shortDescriptionHtml ??
+                      selectedRow.short_description_html,
+                    short_description:
+                      updatedData.shortDescription ??
+                      selectedRow.short_description_markdown,
+                  };
+
+                  await updateRow(selectedRow.id, dataToUpdate);
+
+                  // Update local state while preserving existing data
+                  setData((prevData) =>
+                    prevData.map((item) =>
+                      item.id === selectedRow.id
+                        ? {
+                            ...item, // Keep all existing item data
+                            ...dataToUpdate, // Merge with updates
+                            category: updatedData.category || item.category, // Preserve category if not updated
+                            last_updated: new Date().toISOString(),
+                          }
+                        : item
+                    )
+                  );
+
                   setSelectedRow(null);
-                  setTimeout(() => {
-                    window.location.reload();
-                  }, 100);
                 } catch (error) {
                   console.error('Error updating row:', error);
                 }

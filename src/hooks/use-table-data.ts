@@ -329,10 +329,13 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           name: tile.name || '',
           url: tile.url || '',
           logo: tile.logo || '',
+          short_description_markdown: tile.short_description_markdown || '',
           category: {
             value: tile.card_id,
             label: tile.cards.categories.name,
-            color: tile.cards.categories.color,
+            color:
+              tile.cards.settings?.tile?.fillColor ||
+              tile.cards.categories.color,
           },
           // Parse the JSONB tags field
           tags: Array.isArray(tile.tags) ? tile.tags : [], // Ensure it's an array
@@ -341,6 +344,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
           card_id: tile.card_id,
           category_id: tile.category_id,
           position: tile.position,
+          short_description_html: tile.short_description_html,
         }));
 
         setData(transformedData);
@@ -530,19 +534,29 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
 
       // Format the data for the database
       const dataToUpdate = {
-        name: updatedData.name,
-        url: updatedData.url,
-        logo: updatedData.logo,
-        category_id: updatedData.category_id,
-        card_id: updatedData.card_id,
-        hidden: updatedData.hidden,
-        position: updatedData.position,
-        // Add tags to the update
-        ...(Array.isArray(updatedData.tags) && { tags: updatedData.tags }),
-        ...(updatedData.description && {
-          description: updatedData.description.html,
-          description_markdown: updatedData.description.markdown,
+        ...(updatedData.name !== undefined && { name: updatedData.name }),
+        ...(updatedData.url !== undefined && { url: updatedData.url }),
+        ...(updatedData.logo !== undefined && { logo: updatedData.logo }),
+        ...(updatedData.category_id !== undefined && {
+          category_id: updatedData.category_id,
         }),
+        ...(updatedData.card_id !== undefined && {
+          card_id: updatedData.card_id,
+        }),
+        ...(updatedData.hidden !== undefined && { hidden: updatedData.hidden }),
+        ...(updatedData.position !== undefined && {
+          position: updatedData.position,
+        }),
+        ...(updatedData.description !== undefined && {
+          description: updatedData.description,
+          description_markdown: updatedData.description_markdown,
+        }),
+        // Add short description fields
+        ...(updatedData.short_description_html !== undefined && {
+          short_description_markdown: updatedData.short_description,
+          short_description_html: updatedData.short_description_html,
+        }),
+        updated_at: new Date().toISOString(),
       };
 
       const { error } = await supabase
@@ -559,6 +573,7 @@ export const useTableData = ({ mapId }: { mapId: string }) => {
             ? {
                 ...row,
                 ...updatedData,
+                last_updated: new Date().toISOString(),
               }
             : row
         )
