@@ -49,11 +49,14 @@ interface FormData {
   description: string;
   last_updated: string;
   shortDescription?: string;
+  shortDescriptionHtml?: string;
 }
 
 interface EditItemFormData extends FormData {
   descriptionHtml: string;
   tile_id: string;
+  shortDescription?: string;
+  shortDescriptionHtml?: string;
 }
 
 interface DatabaseFormProps {
@@ -86,6 +89,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     last_updated: data.last_updated || new Date().toISOString(),
     parentCategory: data.parentCategory || null,
     shortDescription: data.shortDescription || '',
+    shortDescriptionHtml: data.shortDescriptionHtml || '',
   });
   console.log('formData', formData);
   const { updateRow } = useTableData({ mapId });
@@ -185,7 +189,12 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     if (formData.category.value !== data.category.value) {
       updates.category = formData.category;
     }
-    console.log('updates', updates, formData.category);
+    if (formData.shortDescription !== data.shortDescription) {
+      updates.shortDescription = formData.shortDescription;
+      updates.shortDescriptionHtml = formData.shortDescriptionHtml;
+    }
+
+    console.log('updates', updates);
     await onSave(updates);
   };
 
@@ -374,11 +383,22 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
               </Button>
             </div>
           </div>
-
-          <RichTextEditor
-            onChange={() => {}}
-            value={formData.shortDescription}
-          />
+          <Separator className="border-1" />
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Short Description</h3>
+            </div>
+            <RichTextEditor
+              onChange={(content: { html: string; markdown: string }) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  shortDescription: content.markdown,
+                  shortDescriptionHtml: content.html,
+                }));
+              }}
+              value={formData.shortDescriptionHtml}
+            />
+          </div>
           <div className="text-sm text-gray-500">
             Last Modified:{' '}
             <span className="font-medium">

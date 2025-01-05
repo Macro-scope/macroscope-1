@@ -76,7 +76,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import CategoryMenu from './category-menu';
-import { PlateEditor } from '../editor/plate-editor';
+// import { PlateEditor } from '../editor/plate-editor';
 const GridWrapper = styled.div`
   height: calc(100vh - 130px);
   width: 100%;
@@ -2032,9 +2032,9 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                 }}
                 onCancel={() => setSelectedRow(null)}
               /> */}
-              <PlateEditor
+              {/* <PlateEditor
                 initialValue={selectedRow?.description?.html || ''}
-              />
+              /> */}
             </div>
           </DialogContent>
         </Dialog>
@@ -2057,6 +2057,7 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                   color: selectedRow.category?.color || '',
                 },
                 shortDescription: selectedRow.short_description_markdown || '',
+                shortDescriptionHtml: selectedRow.short_description_html || '',
                 parentCategory: selectedRow.parent_category_id
                   ? {
                       value: selectedRow.parent_category_id,
@@ -2087,6 +2088,12 @@ const DataTable = ({ mapId }: { mapId: string }) => {
                     description_markdown:
                       updatedData.description?.markdown ??
                       selectedRow.description?.markdown,
+                    short_description_html:
+                      updatedData.shortDescriptionHtml ??
+                      selectedRow.short_description_html,
+                    short_description:
+                      updatedData.shortDescription ??
+                      selectedRow.short_description_markdown,
                   };
 
                   await updateRow(selectedRow.id, dataToUpdate);
