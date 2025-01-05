@@ -214,7 +214,7 @@ export const TableElement = withHOC(
           {...props}
         >
           <table
-            ref={ref}
+            ref={ref as React.RefObject<HTMLTableElement>}
             className={cn(
               'my-4 ml-px mr-0 table h-px w-[calc(100%-6px)] table-fixed border-collapse',
               isSelectingCell && '[&_*::selection]:!bg-transparent'
