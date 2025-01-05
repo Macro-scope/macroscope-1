@@ -1,24 +1,32 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-interface ColorSettings {
+
+export interface ColorSettings {
     borderColor: string;
     fillColor: string;
 }
-
-interface MapSettings {
+export interface GroupSettings {
+    name: string;
+    description: string;
+    borderColor: string;
+    fillColor: string;
+}
+export interface MapSettings {
     cardId: string;
-    group: ColorSettings;
+    group: GroupSettings;
     tile: ColorSettings;
 }
 
 const initialState = {
     group: {
-        borderColor: '#000000',
-        fillColor: '#000000'
+        borderColor:null,
+        fillColor: null,
+        name:null,
+        description:null
     },
     tile: {
-        borderColor: '#000000',
-        fillColor: '#000000'
+        borderColor: null,
+        fillColor: null
     }
 }
 
@@ -38,7 +46,7 @@ export const localSettingsSlice = createSlice({
         setGroupFillColor: (state, action: PayloadAction<string>) => {
             state.group.fillColor = action.payload;
         },
-        setGroupColors: (state, action: PayloadAction<ColorSettings>) => {
+        setGroupColors: (state, action: PayloadAction<GroupSettings>) => {
             state.group = action.payload;
         },
         // Tile settings

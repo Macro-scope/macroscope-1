@@ -612,6 +612,7 @@ export default function PublishedMap() {
                       cardId={card.card_id}
                       isViewer={true}
                       isDoubleClick={false}
+                      description={card.description}
                       // handleDynamicSizeChange={handleDynamicSizeChange}
                     />
                   </Rnd>

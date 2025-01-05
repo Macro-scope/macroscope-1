@@ -28,6 +28,7 @@ import { MdOutlineCloudDone } from 'react-icons/md';
 import { updateImages } from '../../hooks/updateImages';
 import { usePathname, useRouter } from 'next/navigation';
 import PublishMapSettings from '@/components/PublishMapSettings/PublishMapSettings';
+import { Link } from 'react-router-dom';
 
 const Navbar = () => {
   // Get the current location object
@@ -449,7 +450,15 @@ const Navbar = () => {
             <div></div>
           ) : (
             <div>
+               
+                
+
               {isEditing ? (
+                <div className="flex items-center gap-2">
+                  
+
+                  <img onClick={()=>{router.push("/dashboard")}} src="/logosmallblack.svg" alt="logo" className="h-7 cursor-pointer" />
+
                 <input
                   type="text"
                   value={mapName}
@@ -458,8 +467,10 @@ const Navbar = () => {
                   autoFocus
                   className="font-medium text-xl border-b-2 border-gray-300 focus:outline-none"
                 />
+                </div>
               ) : (
                 <div className="flex items-center gap-2">
+                  <img  onClick={()=>{  router.push("/dashboard")}} src="/logosmallblack.svg" alt="logo" className="h-7 cursor-pointer" />
                   <div
                     className="text-lg font-semibold cursor-pointer "
                     onClick={handleTextClick}

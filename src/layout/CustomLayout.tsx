@@ -67,8 +67,8 @@ const CustomLayout = ({
       {currentPath === '/dashboard' ||
       currentPath === '/dashboard/subscriptions' ? (
         <DashSidebar />
-      ) : (
-        <SideNavbar />
+      ) : (<></>
+        // <SideNavbar />
       )}
       <div className="flex flex-col w-full">
         <Navbar />

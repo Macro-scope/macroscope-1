@@ -854,6 +854,7 @@ export default function PannableCanvas() {
                 tagName={card.name}
                 cardId={card.card_id}
                 isDoubleClick={false}
+                description={card.description}
               />
             </Rnd>
           ) : null

@@ -14,7 +14,7 @@ import { getMapData } from '@/hooks/getMapData';
 import { setCards } from '@/redux/mapCardsSlice';
 import debounce from 'lodash/debounce';
 import TileImage from './TileImage';
-import { Settings2, Maximize2 } from 'lucide-react';
+import { Settings2, Maximize2,List,Book } from 'lucide-react';
 import Image from 'next/image';
 import CategoryDescription from '@/components/ui/description';
 import {
@@ -45,7 +45,13 @@ const ResizableNode = (props) => {
     dispatch(setMapSettings('local'));
     dispatch(setLocalCard(props.cardId));
     const cardSettings = await populateCardLocalSettings(props.cardId);
-    dispatch(setLocalSettings(cardSettings));
+
+    dispatch(setLocalSettings({group: {
+      name: cardSettings?.name,
+      description: cardSettings?.description,
+      borderColor: cardSettings?.settings?.group?.borderColor,
+      fillColor: cardSettings?.settings?.group?.fillColor,
+    }, tile: cardSettings?.settings?.tile,cardId:props.cardId}));
   };
 
   const showTileSettings = async (tileId: string, name: string) => {
@@ -210,7 +216,7 @@ const ResizableNode = (props) => {
       fetchTilesData();
     }
   }, [props.tiles]);
-
+  console.log(props)
   return (
     <>
       <Drawer
@@ -256,6 +262,18 @@ const ResizableNode = (props) => {
               className="absolute text-slate-500 z-50 right-0 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             >
               <Settings2 className="text-xl" size={16} />
+            </button>
+            <button
+              onClick={openLocalSettings}
+              className="absolute text-slate-500 z-50 right-5 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <List className="text-xl" size={16} />
+            </button>
+            <button
+              onClick={openLocalSettings}
+              className="absolute text-slate-500 z-50 right-10 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <Book className="text-xl" size={16} />
             </button>
             <div className="absolute text-slate-500 z-50 right-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Image
