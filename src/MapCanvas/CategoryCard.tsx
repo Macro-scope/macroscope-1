@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { Drawer } from "antd";
-import TileInfoDrawer from "./TileInfoDrawer";
-import { useParams } from "next/navigation";
-import { setHandTool, setMapSettings } from "@/redux/mapSettingsSlice";
-import { setLocalCard, setLocalSettings } from "@/redux/localSettingsSlice";
-import { setTileData } from "@/redux/tileSettingsSlice";
-import { populateCardLocalSettings } from "@/hooks/populateCardLocalSettings";
-import { supabase } from "@/lib/supabaseClient";
-import { getMapData } from "@/hooks/getMapData";
-import { setCards } from "@/redux/mapCardsSlice";
-import debounce from "lodash/debounce";
-import TileImage from "./TileImage";
-import { Settings2, Maximize2 } from "lucide-react";
-import Image from "next/image";
-import CategoryDescription from "@/components/ui/description";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Drawer } from 'antd';
+import TileInfoDrawer from './TileInfoDrawer';
+import { useParams } from 'next/navigation';
+import { setHandTool, setMapSettings } from '@/redux/mapSettingsSlice';
+import { setLocalCard, setLocalSettings } from '@/redux/localSettingsSlice';
+import { setTileData } from '@/redux/tileSettingsSlice';
+import { populateCardLocalSettings } from '@/hooks/populateCardLocalSettings';
+import { supabase } from '@/lib/supabaseClient';
+import { getMapData } from '@/hooks/getMapData';
+import { setCards } from '@/redux/mapCardsSlice';
+import debounce from 'lodash/debounce';
+import TileImage from './TileImage';
+import { Settings2, Maximize2 } from 'lucide-react';
+import Image from 'next/image';
+import CategoryDescription from '@/components/ui/description';
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@/components/ui/hover-card";
+} from '@/components/ui/hover-card';
 
 const ResizableNode = (props) => {
   const { title, group, tileStyle } = useSelector((state: any) => ({
@@ -38,11 +38,11 @@ const ResizableNode = (props) => {
   // Add state for preview mode drawer
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [selectedPreviewTileId, setSelectedPreviewTileId] = useState(null);
-  const [selectedTileName, setSelectedTileName] = useState("");
+  const [selectedTileName, setSelectedTileName] = useState('');
   const [enrichedTiles, setEnrichedTiles] = useState([]);
 
   const openLocalSettings = async () => {
-    dispatch(setMapSettings("local"));
+    dispatch(setMapSettings('local'));
     dispatch(setLocalCard(props.cardId));
     const cardSettings = await populateCardLocalSettings(props.cardId);
     dispatch(setLocalSettings(cardSettings));
@@ -50,35 +50,37 @@ const ResizableNode = (props) => {
 
   const showTileSettings = async (tileId: string, name: string) => {
     try {
-      const signupButton = document.getElementById("signup-button");
+      const signupButton = document.getElementById('signup-button');
       if (signupButton) {
-        signupButton.setAttribute("data-umami-event", name);
+        signupButton.setAttribute('data-umami-event', name);
         signupButton.click();
       }
-  
+
       const { data, error } = await supabase
-        .from("tiles")
-        .select(`
+        .from('tiles')
+        .select(
+          `
           *,
           categories:category_id (
             category_id,
             name,
             color
           )
-        `)
-        .eq("tile_id", tileId)
+        `
+        )
+        .eq('tile_id', tileId)
         .single();
-  
+
       if (error) throw error;
-  
+
       const tileData = {
         tile_id: data.tile_id,
         name: data.name,
         url: data.url,
         category: {
           value: data.categories?.category_id,
-          label: data.categories?.name || "",
-          color: data.categories?.color || "",
+          label: data.categories?.name || '',
+          color: data.categories?.color || '',
         },
         parentCategory: {
           value: data.parent_category_id,
@@ -90,11 +92,11 @@ const ResizableNode = (props) => {
         tags: data.tags || [],
         last_updated: data.updated_at,
       };
-  
+
       dispatch(setTileData(tileData));
-      dispatch(setMapSettings("tile"));
+      dispatch(setMapSettings('tile'));
     } catch (error) {
-      console.error("Error fetching tile data:", error);
+      console.error('Error fetching tile data:', error);
     }
   };
 
@@ -111,7 +113,7 @@ const ResizableNode = (props) => {
       setSelectedPreviewTileId(tileId);
       setSelectedTileName(name);
       setPreviewDrawerOpen(true);
-      dispatch(setMapSettings("none"));
+      dispatch(setMapSettings('none'));
       return;
     }
 
@@ -123,9 +125,9 @@ const ResizableNode = (props) => {
 
   const updateCardSize = async (width: number, height: number) => {
     await supabase
-      .from("cards")
+      .from('cards')
       .update({ dimension: [width, height] })
-      .eq("card_id", props.cardId)
+      .eq('card_id', props.cardId)
       .select();
 
     if (mapId) {
@@ -135,14 +137,14 @@ const ResizableNode = (props) => {
           dispatch(setCards(data.cards));
         }
       } catch (error) {
-        console.error("Fetching error:", error);
+        console.error('Fetching error:', error);
       }
     }
   };
 
   const debouncedResizeStop = useCallback(
     debounce((size: { width: number; height: number }) => {
-      if (typeof size.width === "number" && typeof size.height === "number") {
+      if (typeof size.width === 'number' && typeof size.height === 'number') {
         if (size.width !== 0 && size.height !== 0) {
           updateCardSize(size.width, size.height);
         }
@@ -181,27 +183,29 @@ const ResizableNode = (props) => {
         const tilePromises = props.tiles.map(async (tile) => {
           const { data, error } = await supabase
             .from('tiles')
-            .select(`
+            .select(
+              `
               *,
               categories:category_id (
                 name,
                 color
               )
-            `)
+            `
+            )
             .eq('tile_id', tile.tile_id)
             .single();
-  
+
           if (error) throw error;
           return { ...tile, ...data };
         });
-  
+
         const enrichedTilesData = await Promise.all(tilePromises);
         setEnrichedTiles(enrichedTilesData);
       } catch (error) {
         console.error('Error fetching tiles data:', error);
       }
     };
-  
+
     if (props.tiles?.length > 0) {
       fetchTilesData();
     }
@@ -221,7 +225,7 @@ const ResizableNode = (props) => {
         className="preview-drawer"
         styles={{
           body: { padding: 0 },
-          header: { display: "none" },
+          header: { display: 'none' },
         }}
       >
         {selectedPreviewTileId && (
@@ -242,7 +246,7 @@ const ResizableNode = (props) => {
         style={{
           borderRadius: `${group.corner}`,
           zIndex: 1000,
-          height: "100%",
+          height: '100%',
         }}
       >
         {!props.isViewer && (
@@ -272,16 +276,16 @@ const ResizableNode = (props) => {
             border: `${group.borderWeight} solid ${props.settings.group.borderColor}`,
             background: `${props.settings.group.fillColor}`,
             borderRadius: `${group.corner}`,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
             <CategoryDescription
               description={
                 props.description ||
-                "This category contains resources related to AI platforms and tools."
+                'This category contains resources related to AI platforms and tools.'
               }
               maxLines={2}
               className="text-sm text-gray-600"
@@ -290,35 +294,35 @@ const ResizableNode = (props) => {
 
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
-              title.alignment === "center"
-                ? "left-[50%] transform -translate-x-1/2"
-                : title.alignment === "right"
-                ? "right-2"
-                : "left-2"
+              title.alignment === 'center'
+                ? 'left-[50%] transform -translate-x-1/2'
+                : title.alignment === 'right'
+                ? 'right-2'
+                : 'left-2'
             }`}
             style={{
               color: `${
-                title.fontColor === "default"
+                title.fontColor === 'default'
                   ? props.settings.group.borderColor
                   : title.fontColor
               }`,
               borderRadius: `${title.corner}`,
               background: `${
-                title.border === "fill"
+                title.border === 'fill'
                   ? props.settings.group.borderColor
                   : props.settings.group.fillColor
               }`,
               border: `${title.borderWeight} solid ${props.settings.group.borderColor}`,
-              fontFamily: title.font || "Inter",
-              fontSize: title.fontSize || "16px",
-              fontWeight: title.bold ? "bold" : "normal",
-              fontStyle: title.italic ? "italic" : "normal",
-              textDecoration: title.underline ? "underline" : "none",
-              minWidth: "120px",
+              fontFamily: title.font || 'Inter',
+              fontSize: title.fontSize || '16px',
+              fontWeight: title.bold ? 'bold' : 'normal',
+              fontStyle: title.italic ? 'italic' : 'normal',
+              textDecoration: title.underline ? 'underline' : 'none',
+              minWidth: '120px',
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
-            <p className="">{props.tagName  || "Default"}</p>
+              <p className="">{props.tagName || 'Default'}</p>
             </div>
           </div>
 
@@ -400,14 +404,14 @@ const ResizableNode = (props) => {
                                 </span>
                               )}
                               <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
-                                {tile.categories?.name || "Category"}
+                                {tile.categories?.name || 'Category'}
                               </span>
                             </div>
 
                             {/* Description */}
                             <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                               {tile.description_markdown ||
-                                "Description text goes here..."}
+                                'Description text goes here...'}
                             </p>
 
                             {/* Meta Tags */}

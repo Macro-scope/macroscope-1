@@ -1,35 +1,39 @@
-"use client"
+'use client';
 
 import React, { useRef } from 'react';
-import { useDispatch, useSelector } from "react-redux";
-import { useParams } from "next/navigation";
-import { setHandTool, setMapSettings } from "../../redux/mapSettingsSlice";
-import { setImages } from "../../redux/imagesSlice";
-import { supabase } from "../../lib/supabaseClient";
-import { addImage } from "../../hooks/addImage";
-import { getImages } from "../../hooks/getImages";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Card } from "@/components/ui/card";
-import { 
-  MousePointer, 
-  Image as ImageIcon, 
-  Settings,
-  Plus
-} from "lucide-react";
+import { useDispatch, useSelector } from 'react-redux';
+import { useParams } from 'next/navigation';
+import { setHandTool, setMapSettings } from '../../redux/mapSettingsSlice';
+import { setImages } from '../../redux/imagesSlice';
+import { supabase } from '../../lib/supabaseClient';
+import { addImage } from '../../hooks/addImage';
+import { getImages } from '../../hooks/getImages';
+import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Card } from '@/components/ui/card';
+import { MousePointer, Image as ImageIcon, Settings, Plus } from 'lucide-react';
+import AddForm from '@/app/editor/[id]/_component/add-form';
 
 const iconStyle = {
   width: '20px',
   height: '20px',
   minWidth: '20px',
   minHeight: '20px',
-  display: 'block'
+  display: 'block',
 };
 
 const ToolsMenu = () => {
-  const { handTool } = useSelector((state: { handTool: { value: boolean } }) => ({
-    handTool: state.handTool.value,
-  }));
+  const [isAddSheetOpen, setIsAddSheetOpen] = React.useState(false);
+  const { handTool } = useSelector(
+    (state: { handTool: { value: boolean } }) => ({
+      handTool: state.handTool.value,
+    })
+  );
   const dispatch = useDispatch();
   const { id: mapId } = useParams();
   const fileInputRef = useRef(null);
@@ -41,16 +45,16 @@ const ToolsMenu = () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) throw new Error('Not authenticated');
 
     try {
       const timestamp = Date.now();
       const fileName = `Image-${timestamp}-${file.name}`;
 
       const { error } = await supabase.storage
-        .from("map-images")
+        .from('map-images')
         .upload(fileName, file, {
-          cacheControl: "3600",
+          cacheControl: '3600',
           upsert: false,
         });
 
@@ -58,103 +62,110 @@ const ToolsMenu = () => {
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("map-images").getPublicUrl(fileName);
+      } = supabase.storage.from('map-images').getPublicUrl(fileName);
 
       await addImage(String(mapId), publicUrl);
       const images = await getImages(String(mapId));
       dispatch(setImages(images));
     } catch (error) {
-      console.error("Error handling image:", error);
-      alert("Failed to upload image");
+      console.error('Error handling image:', error);
+      alert('Failed to upload image');
     }
 
-    event.target.value = "";
+    event.target.value = '';
   };
 
   return (
-    <Card className="absolute mt-[15%] ml-2 z-10 p-2 shadow-lg" style={{ cursor: handTool ? 'grab' : 'default' }}>
-      <TooltipProvider>
-        <div className="flex flex-col gap-2">
+    <>
+      <Card
+        className="absolute mt-[15%] ml-2 z-10 p-2 shadow-lg"
+        style={{ cursor: handTool ? 'grab' : 'default' }}
+      >
+        <TooltipProvider>
+          <div className="flex flex-col gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => setIsAddSheetOpen(true)}
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 transition-all hover:scale-105"
+                >
+                  <Plus style={iconStyle} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-base px-4 py-2">
+                <p>Add</p>
+              </TooltipContent>
+            </Tooltip>
 
-        <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 transition-all hover:scale-105"
-              >
-                <Plus style={iconStyle} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-base px-4 py-2">
-              <p>Add</p>
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant={!handTool ? 'secondary' : 'ghost'}
+                  size="icon"
+                  onClick={() => dispatch(setHandTool(!handTool))}
+                  className="h-10 w-10 transition-all hover:scale-105"
+                >
+                  <MousePointer
+                    style={iconStyle}
+                    strokeWidth={!handTool ? 2 : 1.5}
+                  />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-base px-4 py-2">
+                <p>{!handTool ? 'Select Tool' : 'Hand Tool'}</p>
+              </TooltipContent>
+            </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant={!handTool ? "secondary" : "ghost"}
-                size="icon"
-                onClick={() => dispatch(setHandTool(!handTool))}
-                className="h-10 w-10 transition-all hover:scale-105"
-              >
-                <MousePointer 
-                  style={iconStyle}
-                  strokeWidth={!handTool ? 2 : 1.5}
-                />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-base px-4 py-2">
-              <p>{!handTool ? "Select Tool" : "Hand Tool"}</p>
-            </TooltipContent>
-          </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-10 w-10 transition-all hover:scale-105"
+                >
+                  <ImageIcon style={iconStyle} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-base px-4 py-2">
+                <p>Add Image</p>
+              </TooltipContent>
+            </Tooltip>
 
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => dispatch(setMapSettings('global'))}
+                  className="h-10 w-10 transition-all hover:scale-105"
+                >
+                  <Settings style={iconStyle} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-base px-4 py-2">
+                <p>Settings</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
 
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => fileInputRef.current?.click()}
-                className="h-10 w-10 transition-all hover:scale-105"
-              >
-                <ImageIcon style={iconStyle} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-base px-4 py-2">
-              <p>Add Image</p>
-            </TooltipContent>
-          </Tooltip>
-
-         
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => dispatch(setMapSettings("global"))}
-                className="h-10 w-10 transition-all hover:scale-105"
-              >
-                <Settings style={iconStyle} />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="text-base px-4 py-2">
-              <p>Settings</p>
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-      
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        className="hidden"
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </Card>
+      <AddForm
+        mapId={String(mapId)}
+        open={isAddSheetOpen}
+        onOpenChange={setIsAddSheetOpen}
       />
-    </Card>
+    </>
   );
 };
 
