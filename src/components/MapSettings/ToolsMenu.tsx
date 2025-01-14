@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useRef } from "react";
@@ -9,6 +10,7 @@ import { supabase } from "../../lib/supabaseClient";
 import { addImage } from "../../hooks/addImage";
 import { getImages } from "../../hooks/getImages";
 import { Button } from "@/components/ui/button";
+
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +27,7 @@ const iconStyle = {
   minWidth: "20px",
   minHeight: "20px",
   display: "block",
+
 };
 
 const ToolsMenu = () => {
@@ -45,16 +48,16 @@ const ToolsMenu = () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) throw new Error('Not authenticated');
 
     try {
       const timestamp = Date.now();
       const fileName = `Image-${timestamp}-${file.name}`;
 
       const { error } = await supabase.storage
-        .from("map-images")
+        .from('map-images')
         .upload(fileName, file, {
-          cacheControl: "3600",
+          cacheControl: '3600',
           upsert: false,
         });
 
@@ -62,24 +65,26 @@ const ToolsMenu = () => {
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("map-images").getPublicUrl(fileName);
+      } = supabase.storage.from('map-images').getPublicUrl(fileName);
 
       await addImage(String(mapId), publicUrl);
       const images = await getImages(String(mapId));
       dispatch(setImages(images));
     } catch (error) {
-      console.error("Error handling image:", error);
-      alert("Failed to upload image");
+      console.error('Error handling image:', error);
+      alert('Failed to upload image');
     }
 
-    event.target.value = "";
+    event.target.value = '';
   };
 
   return (
     <>
       <Card
         className="absolute mt-[15%] ml-2 z-10 p-2 shadow-lg"
+
         style={{ cursor: handTool ? "grab" : "default" }}
+
       >
         <TooltipProvider>
           <div className="flex flex-col gap-2">
@@ -102,7 +107,11 @@ const ToolsMenu = () => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
+
                   variant={!handTool ? "secondary" : "ghost"}
+
+                  variant={!handTool ? 'secondary' : 'ghost'}
+
                   size="icon"
                   onClick={() => dispatch(setHandTool(!handTool))}
                   className="h-10 w-10 transition-all hover:scale-105"
@@ -114,7 +123,9 @@ const ToolsMenu = () => {
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right" className="text-base px-4 py-2">
+
                 <p>{!handTool ? "Select Tool" : "Hand Tool"}</p>
+
               </TooltipContent>
             </Tooltip>
 

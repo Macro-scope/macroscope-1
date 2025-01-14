@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -17,12 +18,15 @@ import TileImage from "./TileImage";
 import { Settings2, Maximize2, List, Book } from "lucide-react";
 import Image from "next/image";
 import CategoryDescription from "@/components/ui/description";
+
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
+
 } from "@/components/ui/hover-card";
 import { Tile } from "@/types/data";
+
 
 const ResizableNode = (props) => {
   const { title, group, tileStyle } = useSelector((state: any) => ({
@@ -39,11 +43,13 @@ const ResizableNode = (props) => {
   // Add state for preview mode drawer
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [selectedPreviewTileId, setSelectedPreviewTileId] = useState(null);
+
   const [selectedTileName, setSelectedTileName] = useState("");
   const [enrichedTiles, setEnrichedTiles] = useState<Tile[]>([]);
 
+
   const openLocalSettings = async () => {
-    dispatch(setMapSettings("local"));
+    dispatch(setMapSettings('local'));
     dispatch(setLocalCard(props.cardId));
     const cardSettings = await populateCardLocalSettings(props.cardId);
 
@@ -70,14 +76,15 @@ const ResizableNode = (props) => {
   };
   const showTileSettings = async (tileId: string, name: string) => {
     try {
-      const signupButton = document.getElementById("signup-button");
+      const signupButton = document.getElementById('signup-button');
       if (signupButton) {
-        signupButton.setAttribute("data-umami-event", name);
+        signupButton.setAttribute('data-umami-event', name);
         signupButton.click();
       }
 
       const { data, error } = await supabase
         .from("tiles")
+
         .select(
           `
           *,
@@ -89,6 +96,7 @@ const ResizableNode = (props) => {
         `
         )
         .eq("tile_id", tileId)
+
         .single();
 
       if (error) throw error;
@@ -99,8 +107,8 @@ const ResizableNode = (props) => {
         url: data.url,
         category: {
           value: data.categories?.category_id,
-          label: data.categories?.name || "",
-          color: data.categories?.color || "",
+          label: data.categories?.name || '',
+          color: data.categories?.color || '',
         },
         parentCategory: {
           value: data.parent_category_id,
@@ -114,9 +122,9 @@ const ResizableNode = (props) => {
       };
 
       dispatch(setTileData(tileData));
-      dispatch(setMapSettings("tile"));
+      dispatch(setMapSettings('tile'));
     } catch (error) {
-      console.error("Error fetching tile data:", error);
+      console.error('Error fetching tile data:', error);
     }
   };
 
@@ -133,7 +141,7 @@ const ResizableNode = (props) => {
       setSelectedPreviewTileId(tileId);
       setSelectedTileName(name);
       setPreviewDrawerOpen(true);
-      dispatch(setMapSettings("none"));
+      dispatch(setMapSettings('none'));
       return;
     }
 
@@ -151,6 +159,7 @@ const ResizableNode = (props) => {
     [props.handleDynamicSizeChange, props.cardId]
   );
 
+
   const memoizedUpdateCardSize = useCallback(
     async (width: number, height: number) => {
       await supabase
@@ -158,6 +167,7 @@ const ResizableNode = (props) => {
         .update({ dimension: [width, height] })
         .eq("card_id", props.cardId)
         .select();
+
 
       if (mapId) {
         try {
@@ -176,7 +186,7 @@ const ResizableNode = (props) => {
   // Memoize the debounced resize callback
   const debouncedResizeStop = useCallback(
     debounce((size: { width: number; height: number }) => {
-      if (typeof size.width === "number" && typeof size.height === "number") {
+      if (typeof size.width === 'number' && typeof size.height === 'number') {
         if (size.width !== 0 && size.height !== 0) {
           memoizedUpdateCardSize(size.width, size.height);
         }
@@ -256,7 +266,7 @@ const ResizableNode = (props) => {
         className="preview-drawer"
         styles={{
           body: { padding: 0 },
-          header: { display: "none" },
+          header: { display: 'none' },
         }}
       >
         {selectedPreviewTileId && (
@@ -277,7 +287,7 @@ const ResizableNode = (props) => {
         style={{
           borderRadius: `${group.corner}`,
           zIndex: 1000,
-          height: "100%",
+          height: '100%',
         }}
       >
         {!props.isViewer && (
@@ -319,16 +329,16 @@ const ResizableNode = (props) => {
             border: `${group.borderWeight} solid ${props.settings.group.borderColor}`,
             background: `${props.settings.group.fillColor}`,
             borderRadius: `${group.corner}`,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
             <CategoryDescription
               description={
                 props.description ||
-                "This category contains resources related to AI platforms and tools."
+                'This category contains resources related to AI platforms and tools.'
               }
               maxLines={2}
               className="text-sm text-gray-600"
@@ -337,35 +347,37 @@ const ResizableNode = (props) => {
 
           <div
             className={`font-semibold absolute -top-5 text-center text-lg px-2 w-fit ${
-              title.alignment === "center"
-                ? "left-[50%] transform -translate-x-1/2"
-                : title.alignment === "right"
-                ? "right-2"
-                : "left-2"
+              title.alignment === 'center'
+                ? 'left-[50%] transform -translate-x-1/2'
+                : title.alignment === 'right'
+                ? 'right-2'
+                : 'left-2'
             }`}
             style={{
               color: `${
-                title.fontColor === "default"
+                title.fontColor === 'default'
                   ? props.settings.group.borderColor
                   : title.fontColor
               }`,
               borderRadius: `${title.corner}`,
               background: `${
-                title.border === "fill"
+                title.border === 'fill'
                   ? props.settings.group.borderColor
                   : props.settings.group.fillColor
               }`,
               border: `${title.borderWeight} solid ${props.settings.group.borderColor}`,
-              fontFamily: title.font || "Inter",
-              fontSize: title.fontSize || "16px",
-              fontWeight: title.bold ? "bold" : "normal",
-              fontStyle: title.italic ? "italic" : "normal",
-              textDecoration: title.underline ? "underline" : "none",
-              minWidth: "120px",
+              fontFamily: title.font || 'Inter',
+              fontSize: title.fontSize || '16px',
+              fontWeight: title.bold ? 'bold' : 'normal',
+              fontStyle: title.italic ? 'italic' : 'normal',
+              textDecoration: title.underline ? 'underline' : 'none',
+              minWidth: '120px',
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
+
               <p className="">{props.tagName || "Default"}</p>
+
             </div>
           </div>
 
@@ -409,7 +421,84 @@ const ResizableNode = (props) => {
                           <p className="m-0 min-h-full">{tile.name}</p>
                         </div>
                       </HoverCardTrigger>
+
                       {/* ... (keep HoverCardContent the same) */}
+
+                      <HoverCardContent
+                        align="start"
+                        className="w-[300px] p-0 rounded-lg shadow-lg border border-gray-200"
+                      >
+                        <div className="relative">
+                          <div className="p-4">
+                            {/* Image at top */}
+                            <div className="w-16 h-16 rounded-full bg-gray-100 overflow-hidden  mb-3">
+                              <img
+                                src={
+                                  tile.logo ||
+                                  `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
+                                }
+                                alt={tile.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+
+                            {/* Title with expand button */}
+                            <div className=" mb-2">
+                              <div className="flex">
+                                <h3 className="text-lg font-semibold w-full pr-8">
+                                  {tile.name}
+                                </h3>
+                                <button
+                                  onClick={(e) =>
+                                    handleTileClick(tile.tile_id, tile.name, e)
+                                  }
+                                  className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-md transition-colors"
+                                >
+                                  <Maximize2 className="w-5 h-5 text-gray-500" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Category */}
+                            <div className="flex  gap-2 mb-3">
+                              {tile.parent_category && (
+                                <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                                  {tile.parent_category}
+                                </span>
+                              )}
+                              <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                                {tile.categories?.name || 'Category'}
+                              </span>
+                            </div>
+
+                            {/* Description */}
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                              {tile.description_markdown ||
+                                'Description text goes here...'}
+                            </p>
+
+                            {/* Meta Tags */}
+                            <div className="border-gray-100 pt-1 mt-3">
+                              <div className="flex flex-wrap gap-1.5">
+                                {tile.tags && tile.tags.length > 0 ? (
+                                  tile.tags.map((tag, index) => (
+                                    <span
+                                      key={index}
+                                      className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-500">
+                                    No tags available
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </HoverCardContent>
                     </HoverCard>
                   ) : (
                     <div
