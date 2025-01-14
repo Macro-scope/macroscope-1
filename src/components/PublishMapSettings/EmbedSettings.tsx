@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { BiCopy } from "react-icons/bi";
-import { FaCheck } from "react-icons/fa6";
-import { TbPlugConnectedX, TbShare3 } from "react-icons/tb"
-import { CheckCircle, AlertCircle, AlertTriangle } from "lucide-react";
+
+
+
+
+import { Copy,Check, WifiOff,Send  } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -101,7 +102,7 @@ const EmbedSettings = () => {
             disabled={isLoading || publishStatus === 'published'}
             className="bg-black hover:bg-gray-800 text-white gap-2"
           >
-            <TbShare3 className="h-4 w-4" />
+            <Send className="h-4 w-4" />
             {isLoading ? "Publishing..." : "Publish"}
           </Button>
         </div>
@@ -143,7 +144,7 @@ const EmbedSettings = () => {
                     onClick={handleCopyCode}
                     className="h-8 w-8 bg-white"
                   >
-                    {isCopied ? <FaCheck size={16} /> : <BiCopy size={16} />}
+                    {isCopied ? <Check size={16} /> : <Copy size={16} />}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -164,7 +165,7 @@ const EmbedSettings = () => {
             onClick={() => setShowUnpublishDialog(true)}
             className="text-red-500 hover:text-red-600 hover:bg-red-50"
           >
-            <TbPlugConnectedX className="mr-2 h-4 w-4" />
+            <WifiOff className="mr-2 h-4 w-4" />
             Unpublish
           </Button>
         </div>

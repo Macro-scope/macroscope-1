@@ -12,12 +12,12 @@ export type NavData = {
   navbar_logo: string | null;
 };
 
-const MapNavbar = () => {
+const MapNavbar = ({setSelectedTags,selectedTags}:{selectedTags:string[],setSelectedTags?: React.Dispatch<React.SetStateAction<string[]>>}) => {
   const { id: mapId } = useParams();
   const [nav, setNav] = useState<NavData>();
   const [tags, setTags] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   const [searchQuery, setSearchQuery] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 

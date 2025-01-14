@@ -1,30 +1,27 @@
 'use client';
 import {
   Button,
-  ConfigProvider,
-  Drawer,
   Dropdown,
   Input,
   MenuProps,
   Modal,
-  Tag,
 } from 'antd';
 
-import { X } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'next/navigation';
 import { updateMapCards } from '../../hooks/updateMapCards';
-import { BiCopy, BiRefresh } from 'react-icons/bi';
+
+import {Copy,RefreshCcw,Check,Plus,Cloud,X} from "lucide-react"
 import {
   setPublishMapSettings,
 } from '../../redux/publishedMapSlice';
 import { setPublishedNav } from '../../hooks/updatePublishNav';
-import { FaCheck, FaPlus } from 'react-icons/fa6';
+
 import { renameMap } from '../../hooks/renameMap';
-import { MdOutlineCloudDone } from 'react-icons/md';
+
 import { updateImages } from '../../hooks/updateImages';
 import { usePathname, useRouter } from 'next/navigation';
 import PublishMapSettings from '@/components/PublishMapSettings/PublishMapSettings';
@@ -441,7 +438,7 @@ const Navbar = () => {
                 setIsCopied(true);
               }}
             >
-              {isCopied ? <FaCheck size={20} /> : <BiCopy size={20} />}
+              {isCopied ? <Check size={20} /> : <Copy size={20} />}
             </button>
           </div>
         </Modal>
@@ -492,7 +489,7 @@ const Navbar = () => {
                   onClick={showMapModal}
                   className="bg-black flex justify-center items-center gap-2 text-white h-[30px] px-2 rounded-full text-sm"
                 >
-                  <FaPlus />
+                  <Plus />
                   <p className="pr-2">Create New</p>
                 </button>
               </>
@@ -504,11 +501,11 @@ const Navbar = () => {
                 >
                   {isSaving || saveStatus === 'saving' ? (
                     <div className="flex items-center gap-1">
-                      <BiRefresh className="text-[20px] animate-spin" />
+                      <RefreshCcw className="text-[20px] animate-spin" />
                     </div>
                   ) : (
                     <div className="flex items-center gap-1">
-                      <MdOutlineCloudDone className="text-[20px]" />
+                      <Cloud className="text-[20px]" />
                     </div>
                   )}
                 </button>

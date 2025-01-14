@@ -1,8 +1,10 @@
 "use client";
 
+import AddTile from "@/components/MapSettings/AddTile";
 import GlobalSettings from "@/components/MapSettings/GlobalSettings";
 import LocalSettings from "@/components/MapSettings/LocalSettings";
 import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
+import Reordering from "@/components/MapSettings/Reordering";
 import TileSettings from "@/components/MapSettings/TileSettings";
 import ToolsMenu from "@/components/MapSettings/ToolsMenu";
 import CustomLayout from "@/layout/CustomLayout";
@@ -16,7 +18,7 @@ import { useSelector } from "react-redux";
 const EditorMain = () => {
   const { mapSettings, tileData } = useSelector((state: any) => ({
     mapSettings: state.mapSettings.value,
-    tileData: state.tileSettings?.data // Add this to your Redux state
+    tileData: state.tileSettings?.data, // Add this to your Redux state
   }));
 
   const { id } = useParams();
@@ -45,11 +47,13 @@ const EditorMain = () => {
       local: <LocalSettings />,
       global: <GlobalSettings />,
       parentCategoryLocal: <ParentCategoryLocalSettings />,
-      tile: <TileSettings mapId={mapId} tileData={tileData} />
+      tile: <TileSettings mapId={mapId} tileData={tileData} />,
+      reorder: <Reordering mapId={mapId} />,
+      addTile: <AddTile mapId={mapId} tileData={tileData} />,
     };
 
     const SettingComponent = settingComponents[mapSettings];
-    
+
     if (!SettingComponent) return null;
 
     return (

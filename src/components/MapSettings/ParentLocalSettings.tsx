@@ -163,7 +163,7 @@ const ParentCategoryLocalSettings = () => {
           </div> */}
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 flex flex-col gap-2 bg-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 flex  gap-2 bg-white">
           <Button className="w-full" onClick={handleSaveSettings}>
             Save Changes
           </Button>

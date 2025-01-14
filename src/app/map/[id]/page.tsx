@@ -2,9 +2,8 @@
 import { useRef, useState, useEffect } from 'react';
 import { Rnd } from 'react-rnd';
 import { useDispatch, useSelector } from 'react-redux';
-import { CiMaximize2 } from 'react-icons/ci';
-import { LuMinus, LuPlus } from 'react-icons/lu';
-import { PiCursorLight, PiHandLight } from 'react-icons/pi';
+
+
 import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseClient';
 import MapNavbar from '@/components/PublishedNavbar/MapNavbar';
@@ -13,9 +12,7 @@ import { getMapData } from '@/hooks/getMapData';
 import { setCards } from '@/redux/mapCardsSlice';
 import { getGlobalMapStyles } from '@/hooks/getGlobalMapStyles';
 import { setGlobalSettings } from '@/redux/globalSettingsSlice';
-import Image from 'next/image';
-import Watermark from '@/components/Watermark';
-import { User } from '@supabase/supabase-js';
+import {Maximize,Minus,Plus} from "lucide-react"
 
 const PADDING = 10; // Padding around the content
 const MIN_ZOOM = 0.5;
@@ -644,7 +641,7 @@ export default function PublishedMap() {
               className="hover:bg-gray-200 p-2"
               title="Fit to Content"
             >
-              <CiMaximize2 className="w-5 h-5" />
+              <Maximize className="w-5 h-5" />
             </button>
             <button
               onClick={handleZoomOut}
@@ -652,14 +649,14 @@ export default function PublishedMap() {
               title="Zoom Out"
             >
               {/* <BsZoomOut className="w-5 h-5" /> */}
-              <LuMinus />
+              <Minus />
             </button>
             <button
               onClick={handleZoomIn}
               className="p-2 hover:bg-gray-200"
               title="Zoom In"
             >
-              <LuPlus />
+              <Plus />
               {/* <BsZoomIn className="w-5 h-5" /> */}
             </button>
           </div>

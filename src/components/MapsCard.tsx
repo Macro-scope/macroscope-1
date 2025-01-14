@@ -1,8 +1,8 @@
-import { LuMoreVertical } from "react-icons/lu";
-import { GoLinkExternal } from "react-icons/go";
+
+import {MoreVertical, ExternalLink,Pencil} from "lucide-react"
 import { Button, Dropdown, Input, MenuProps, Modal } from "antd";
 import { useState } from "react";
-import { BsPencil } from "react-icons/bs";
+
 import { deleteMap } from "@/hooks/deleteMap";
 import { renameMap } from "@/hooks/renameMap";
 import { useRouter } from "next/navigation";
@@ -155,10 +155,10 @@ const MapsCard = (props: Props) => {
             onClick={() => openProject(map.map_id)}
             className="px-2 py-1 text-sm text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 flex items-center"
           >
-            <BsPencil className="w-3 h-3 mr-1" />
+            <Pencil className="w-3 h-3 mr-1" />
             Edit
           </button>
-          <GoLinkExternal className="w-[18px] h-[18px] text-gray-600" />
+          <ExternalLink className="w-[18px] h-[18px] text-gray-600" />
         </div>
         <Dropdown
           trigger={["click"]}
@@ -167,7 +167,7 @@ const MapsCard = (props: Props) => {
           arrow
         >
           <button className="p-1 text-gray-400 hover:bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
-            <LuMoreVertical className="w-5 h-5" />
+            <MoreVertical className="w-5 h-5" />
           </button>
         </Dropdown>
       </div>

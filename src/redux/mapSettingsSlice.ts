@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
 // Update MapSettingsType to include 'tile'
-type MapSettingsType = 'none' | 'local' | 'global' | 'parentCategoryLocal' | 'tile';
+type MapSettingsType = 'none' | 'local' | 'global' | 'parentCategoryLocal' | 'tile' | "reorder" | "addTile";
 
 export const mapSettingsSlice = createSlice({
     name: 'map-settings',

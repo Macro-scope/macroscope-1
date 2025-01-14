@@ -4,11 +4,9 @@ import { Button, Input, Tabs, message, Modal, Form } from 'antd';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaGoogle } from 'react-icons/fa6';
-import { LoginLogo } from '@/components/icons';
-import ReCAPTCHA from 'react-google-recaptcha';
-import { sendWelcomeEmail } from '../../lib/zeptomail';
 
-const { TabPane } = Tabs;
+import ReCAPTCHA from 'react-google-recaptcha';
+
 
 const Login = () => {
   const [email, setEmail] = useState('');
