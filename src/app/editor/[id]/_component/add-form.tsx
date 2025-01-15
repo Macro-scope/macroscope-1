@@ -256,6 +256,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
             <div className="flex items-center gap-2">
               <h3 className="font-medium text-sm">Image</h3>
             </div>
+            {/* s */}
             <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group">
               {formData.logo ? (
                 <img
