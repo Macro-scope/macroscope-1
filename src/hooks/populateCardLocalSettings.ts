@@ -12,7 +12,7 @@ export const populateCardLocalSettings = async (cardId: string) => {
 
         if (data){
             console.log(data)
-            return data.settings;
+            return data;
         } 
     } catch (error) {
         console.error('Error fetching data:', error);

@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,37 +23,60 @@ import {
 } from "@/components/ui/dialog";
 import Select from "react-select/creatable";
 import { supabase } from "@/lib/supabaseClient";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMapSettings } from "@/redux/mapSettingsSlice";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getMapData } from "@/hooks/getMapData";
 import { TiptapEditor } from "../editor/tiptap-editor";
 import { ImageUpload } from "../database/image-upload";
+import { toast } from "sonner";
+import { Tile } from "@/types/data";
+import { RootState } from "@/redux/store";
 import { Input } from "../ui/input";
 
 interface TileSettingsProps {
   mapId: string;
-  tileData: any;
+  tileData: Tile;
 }
 
-const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
+const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
+  const cardId = useSelector((state: RootState) => state.localCardId);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [formErrors, setFormErrors] = useState({
+    name: false,
+    url: false,
+    category: false,
+    description: false
+  });
+
   const [formData, setFormData] = useState({
-    name: tileData?.name || "",
-    url: tileData?.url || "",
-    logo: tileData?.logo || "",
-    category: tileData?.category || { value: "", label: "", color: "" },
-    description: tileData?.description || "",
-    tags: tileData?.tags || []
+    name: "",
+    url: "",
+    logo: "",
+    category: { value: "", label: "", color: "" },
+    description: "",
+    tags: [] as string[]
   });
 
   const dispatch = useDispatch();
 
+  const validateForm = () => {
+    const errors = {
+      name: !formData.name.trim(),
+      url: !formData.url.trim(),
+      category: !formData.category.value,
+      description: !formData.description.trim()
+    };
+    
+    setFormErrors(errors);
+    return !Object.values(errors).some(error => error);
+  };
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -78,11 +103,6 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
       setIsLoading(false);
     }
   }, [mapId]);
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
@@ -108,6 +128,10 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     }
   };
 
+  useEffect(() => {
+    fetchCategories(); 
+  }, [fetchCategories]);
+
   const handleCreateNewCategory = async (categoryName: string) => {
     try {
       setIsLoading(true);
@@ -127,7 +151,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
         .from("cards")
         .insert({
           map_id: mapId,
-          category_id: newCategory.category_id,
+          category_id: newCategory.category_id, // Changed from tag_id
           name: categoryName,
         })
         .select("*, categories!inner(category_id, name, color)") 
@@ -157,71 +181,43 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   };
 
   const handleSave = async () => {
+    if (!validateForm()) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    const { data } = await supabase.from("tiles").select().eq("card_id", cardId.cardId);
+
     try {
+      setIsSaving(true);
       const { error: updateError } = await supabase
         .from("tiles")
-        .update({
+        .insert({
           name: formData.name,
           url: formData.url,
           logo: formData.logo,
           description_markdown: formData.description,
-          tags: formData.tags,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("tile_id", tileData.tile_id);
+          card_id: cardId.cardId,
+          order: data?.length || 0,
+          tags: formData.tags
+        });
 
       if (updateError) throw updateError;
-
-      if (
-        formData.category?.value &&
-        formData.category?.value !== tileData.category?.value
-      ) {
-        const { data: existingCard, error: cardError } = await supabase
-          .from("cards")
-          .select("card_id")
-          .eq("category_id", formData.category.value)
-          .eq("map_id", mapId)
-          .single();
-
-        let cardId;
-
-        if (cardError) {
-          const { data: newCard, error: createError } = await supabase
-            .from("cards")
-            .insert({
-              map_id: mapId,
-              category_id: formData.category.value,
-            })
-            .select("card_id")
-            .single();
-
-          if (createError) throw createError;
-          cardId = newCard.card_id;
-        } else {
-          cardId = existingCard.card_id;
-        }
-
-        const { error: tileUpdateError } = await supabase
-          .from("tiles")
-          .update({
-            category_id: formData.category.value,
-            card_id: cardId,
-          })
-          .eq("tile_id", tileData.tile_id);
-
-        if (tileUpdateError) throw tileUpdateError;
-      }
 
       const mapData = await getMapData(mapId);
       if (mapData) {
         dispatch(setCards(mapData.cards));
       }
-
+      toast.success("Tile Added");
       dispatch(setMapSettings("none"));
     } catch (error) {
       console.error("Error updating tile:", error);
+      toast.error("Failed to add tile");
+    } finally {
+      setIsSaving(false);
     }
   };
+
 
   const handleDescriptionSave = async (content: {
     html: string;
@@ -237,7 +233,6 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   const handleDiscard = () => {
     setShowDiscardDialog(true);
   };
-
 
   return (
     <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
@@ -378,8 +373,6 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           />
         </div>
         <Separator className="border-1" />
-
-        {/* New Tags Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-sm">Tags</h3>
@@ -423,9 +416,6 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           </div>
         </div>
 
-
-
-
         <Separator className="border-1" />
 
         {/* Description Section */}
@@ -447,17 +437,23 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
             className="w-full h-24 rounded-md border p-2 resize-none text-sm"
           />
 
-          <div className="text-sm text-muted-foreground">
-            Last Modified: {new Date(tileData?.last_updated).toLocaleString()}
-          </div>
+          
         </div>
       </CardContent>
 
-      <CardFooter className="flex  gap-2 mt-6">
-        <Button className="w-full" onClick={handleSave}>
-          Save Changes
+      <CardFooter className="flex gap-2 mt-6">
+        <Button 
+          disabled={isSaving} 
+          className="w-full" 
+          onClick={handleSave}
+        >
+          {isSaving ? "Adding tile..." : "Add tile"}
         </Button>
-        <Button variant="outline" className="w-full" onClick={handleDiscard}>
+        <Button 
+          variant="outline" 
+          className="w-full" 
+          onClick={handleDiscard}
+        >
           Discard
         </Button>
       </CardFooter>
@@ -490,7 +486,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
             <DialogTitle>Edit Description</DialogTitle>
           </DialogHeader>
           <TiptapEditor
-            initialContent={tileData?.descriptionHtml || ""}
+            initialContent={""}
             onSave={handleDescriptionSave}
             onCancel={() => setIsDescriptionDialogOpen(false)}
           />
@@ -530,4 +526,4 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   );
 };
 
-export default TileSettings;
+export default AddTile;

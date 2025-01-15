@@ -1,7 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
+html{
+  font-family:sans-serif
+}
 /* width */
 ::-webkit-scrollbar {
   width: 10px;
@@ -384,7 +386,7 @@
   background: #f3f4f6;
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
-  font-family: monospace;
+  font-family:  monospace;
 }
 .tile-description pre {
   background: #f3f4f6;

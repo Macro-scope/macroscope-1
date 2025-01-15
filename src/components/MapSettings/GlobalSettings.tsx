@@ -36,6 +36,7 @@ import {
   TbBorderCornerSquare,
 } from "react-icons/tb";
 
+
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
@@ -434,7 +435,7 @@ const GlobalSettings = () => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-2 mt-6">
+        <CardFooter className="flex  gap-2 mt-6">
           <Button className="w-full" onClick={saveSettings}>
             Save Changes
           </Button>

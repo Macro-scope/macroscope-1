@@ -1,12 +1,9 @@
 "use client"
-import Image from "next/image";
+
 import { useRouter } from "next/navigation";
-import { CiCreditCard1, CiGlobe, CiMail } from "react-icons/ci";
-import { IoIosHelpCircleOutline } from "react-icons/io";
-import { MdSubscriptions } from "react-icons/md";
-import { FaArrowCircleUp } from "react-icons/fa";
-import { FaRegCreditCard } from "react-icons/fa6";
-import { PiArrowCircleUpLight } from "react-icons/pi";
+
+
+import {ArrowUpCircle,HelpCircle,CreditCard,Globe,Globe2, Mail} from "lucide-react"
 
 const DashSidebar = () => {
   const router = useRouter()
@@ -18,22 +15,22 @@ const DashSidebar = () => {
       <div className="flex flex-col gap-2">
         
         <div onClick={() => router.push("/dashboard/subscriptions")} className="p-2 pl-5 hover:bg-[#121212] flex gap-3 items-center cursor-pointer">
-        <PiArrowCircleUpLight className="text-2xl" />
+        <ArrowUpCircle className="text-2xl" />
           Upgrade
         </div>
         <div className="p-2 pl-5 hover:bg-[#121212] flex gap-3 items-center cursor-pointer" onClick={() => router.push("/dashboard/portal")}>
-        <CiCreditCard1  className="text-2xl" />
+        <CreditCard  className="text-2xl" />
           Billing
         </div>
         <div className="p-2 pl-5 hover:bg-[#121212] flex gap-3 items-center">
-          <IoIosHelpCircleOutline className="text-2xl" />
+          <HelpCircle className="text-2xl" />
           Support
         </div>
         <div className="flex gap-3 justify-start p-2 pb-3 pl-5 items-center">
-          <CiGlobe className="text-[28px]" />
+          <Globe2 className="text-[28px]" />
           <img src="/twitter.svg" alt="" className="h-[26px] invert" />
           <img src="/linkedin.svg" alt="" className="h-[30px]" />
-          <CiMail className="text-[29px]" />
+          <Mail className="text-[29px]" />
         </div>
       </div>
     </div>

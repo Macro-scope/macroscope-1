@@ -1,27 +1,32 @@
-'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Drawer } from 'antd';
-import TileInfoDrawer from './TileInfoDrawer';
-import { useParams } from 'next/navigation';
-import { setHandTool, setMapSettings } from '@/redux/mapSettingsSlice';
-import { setLocalCard, setLocalSettings } from '@/redux/localSettingsSlice';
-import { setTileData } from '@/redux/tileSettingsSlice';
-import { populateCardLocalSettings } from '@/hooks/populateCardLocalSettings';
-import { supabase } from '@/lib/supabaseClient';
-import { getMapData } from '@/hooks/getMapData';
-import { setCards } from '@/redux/mapCardsSlice';
-import debounce from 'lodash/debounce';
-import TileImage from './TileImage';
-import { Settings2, Maximize2 } from 'lucide-react';
-import Image from 'next/image';
-import CategoryDescription from '@/components/ui/description';
+"use client";
+
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Drawer } from "antd";
+import TileInfoDrawer from "./TileInfoDrawer";
+import { useParams } from "next/navigation";
+import { setHandTool, setMapSettings } from "@/redux/mapSettingsSlice";
+import { setLocalCard, setLocalSettings } from "@/redux/localSettingsSlice";
+import { setTileData } from "@/redux/tileSettingsSlice";
+import { populateCardLocalSettings } from "@/hooks/populateCardLocalSettings";
+import { supabase } from "@/lib/supabaseClient";
+import { getMapData } from "@/hooks/getMapData";
+import { setCards } from "@/redux/mapCardsSlice";
+import debounce from "lodash/debounce";
+import TileImage from "./TileImage";
+import { Settings2, Maximize2, List, Book } from "lucide-react";
+import Image from "next/image";
+import CategoryDescription from "@/components/ui/description";
+
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from '@/components/ui/hover-card';
+
+} from "@/components/ui/hover-card";
+import { Tile } from "@/types/data";
+
 
 const ResizableNode = (props) => {
   const { title, group, tileStyle } = useSelector((state: any) => ({
@@ -38,16 +43,37 @@ const ResizableNode = (props) => {
   // Add state for preview mode drawer
   const [previewDrawerOpen, setPreviewDrawerOpen] = useState(false);
   const [selectedPreviewTileId, setSelectedPreviewTileId] = useState(null);
-  const [selectedTileName, setSelectedTileName] = useState('');
-  const [enrichedTiles, setEnrichedTiles] = useState([]);
+
+  const [selectedTileName, setSelectedTileName] = useState("");
+  const [enrichedTiles, setEnrichedTiles] = useState<Tile[]>([]);
+
 
   const openLocalSettings = async () => {
     dispatch(setMapSettings('local'));
     dispatch(setLocalCard(props.cardId));
     const cardSettings = await populateCardLocalSettings(props.cardId);
-    dispatch(setLocalSettings(cardSettings));
-  };
 
+    dispatch(
+      setLocalSettings({
+        group: {
+          name: cardSettings?.name,
+          description: cardSettings?.description,
+          borderColor: cardSettings?.settings?.group?.borderColor,
+          fillColor: cardSettings?.settings?.group?.fillColor,
+        },
+        tile: cardSettings?.settings?.tile,
+        cardId: props.cardId,
+      })
+    );
+  };
+  const openReorderSettings = () => {
+    dispatch(setMapSettings("reorder"));
+    dispatch(setLocalCard(props.cardId));
+  };
+  const openAddItemsForm = () => {
+    dispatch(setMapSettings("addTile"));
+    dispatch(setLocalCard(props.cardId));
+  };
   const showTileSettings = async (tileId: string, name: string) => {
     try {
       const signupButton = document.getElementById('signup-button');
@@ -57,7 +83,8 @@ const ResizableNode = (props) => {
       }
 
       const { data, error } = await supabase
-        .from('tiles')
+        .from("tiles")
+
         .select(
           `
           *,
@@ -68,7 +95,8 @@ const ResizableNode = (props) => {
           )
         `
         )
-        .eq('tile_id', tileId)
+        .eq("tile_id", tileId)
+
         .single();
 
       if (error) throw error;
@@ -122,46 +150,56 @@ const ResizableNode = (props) => {
     }
     dispatch(setHandTool(false));
   };
-
-  const updateCardSize = async (width: number, height: number) => {
-    await supabase
-      .from('cards')
-      .update({ dimension: [width, height] })
-      .eq('card_id', props.cardId)
-      .select();
-
-    if (mapId) {
-      try {
-        const data: any = await getMapData(mapId);
-        if (data) {
-          dispatch(setCards(data.cards));
-        }
-      } catch (error) {
-        console.error('Fetching error:', error);
+  const handleResize = useCallback(
+    (width: number, height: number) => {
+      if (props.handleDynamicSizeChange) {
+        props.handleDynamicSizeChange({ width, height }, props.cardId);
       }
-    }
-  };
+    },
+    [props.handleDynamicSizeChange, props.cardId]
+  );
 
+
+  const memoizedUpdateCardSize = useCallback(
+    async (width: number, height: number) => {
+      await supabase
+        .from("cards")
+        .update({ dimension: [width, height] })
+        .eq("card_id", props.cardId)
+        .select();
+
+
+      if (mapId) {
+        try {
+          const data: any = await getMapData(mapId);
+          if (data) {
+            dispatch(setCards(data.cards));
+          }
+        } catch (error) {
+          console.error("Fetching error:", error);
+        }
+      }
+    },
+    [props.cardId, mapId, dispatch]
+  );
+
+  // Memoize the debounced resize callback
   const debouncedResizeStop = useCallback(
     debounce((size: { width: number; height: number }) => {
       if (typeof size.width === 'number' && typeof size.height === 'number') {
         if (size.width !== 0 && size.height !== 0) {
-          updateCardSize(size.width, size.height);
+          memoizedUpdateCardSize(size.width, size.height);
         }
       }
     }, 2000),
-    []
+    [memoizedUpdateCardSize]
   );
-
   useEffect(() => {
     const resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect;
         debouncedResizeStop({ width, height });
-
-        if (props.handleDynamicSizeChange) {
-          props.handleDynamicSizeChange({ width, height }, props.cardId);
-        }
+        handleResize(width, height);
       }
     });
 
@@ -175,42 +213,45 @@ const ResizableNode = (props) => {
       }
       debouncedResizeStop.cancel();
     };
-  }, [debouncedResizeStop, props]);
+  }, [debouncedResizeStop, handleResize]);
 
-  useEffect(() => {
-    const fetchTilesData = async () => {
-      try {
-        const tilePromises = props.tiles.map(async (tile) => {
-          const { data, error } = await supabase
-            .from('tiles')
-            .select(
-              `
-              *,
-              categories:category_id (
-                name,
-                color
-              )
+  const fetchTilesData = useCallback(async () => {
+    try {
+      const tilePromises = props.tiles.map(async (tile) => {
+        const { data, error } = await supabase
+          .from("tiles")
+          .select(
             `
+            *,
+            categories:category_id (
+              name,
+              color
             )
-            .eq('tile_id', tile.tile_id)
-            .single();
+          `
+          )
+          .eq("tile_id", tile.tile_id)
+          .single();
 
-          if (error) throw error;
-          return { ...tile, ...data };
-        });
+        if (error) throw error;
+        return { ...tile, ...data };
+      });
 
-        const enrichedTilesData = await Promise.all(tilePromises);
-        setEnrichedTiles(enrichedTilesData);
-      } catch (error) {
-        console.error('Error fetching tiles data:', error);
-      }
-    };
-
+      const enrichedTilesData = await Promise.all(tilePromises);
+      setEnrichedTiles(enrichedTilesData);
+    } catch (error) {
+      console.error("Error fetching tiles data:", error);
+    }
+  }, []);
+  useEffect(() => {
     if (props.tiles?.length > 0) {
       fetchTilesData();
     }
   }, [props.tiles]);
 
+  const shouldHighlightTile = (tileTags: string[] | null) => {
+    if (!props.selectedTags?.length || !tileTags?.length) return false;
+    return tileTags.some((tag) => props.selectedTags.includes(tag));
+  };
   return (
     <>
       <Drawer
@@ -256,6 +297,18 @@ const ResizableNode = (props) => {
               className="absolute text-slate-500 z-50 right-0 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
             >
               <Settings2 className="text-xl" size={16} />
+            </button>
+            <button
+              onClick={openReorderSettings}
+              className="absolute text-slate-500 z-50 right-5 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <List className="text-xl" size={16} />
+            </button>
+            <button
+              onClick={openAddItemsForm}
+              className="absolute text-slate-500 z-50 right-10 -top-7 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            >
+              <Plus className="text-xl" size={16} />
             </button>
             <div className="absolute text-slate-500 z-50 right-0 bottom-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               <Image
@@ -322,7 +375,9 @@ const ResizableNode = (props) => {
             }}
           >
             <div className="w-full h-full flex justify-center items-center">
-              <p className="">{props.tagName || 'Default'}</p>
+
+              <p className="">{props.tagName || "Default"}</p>
+
             </div>
           </div>
 
@@ -332,10 +387,9 @@ const ResizableNode = (props) => {
           >
             {enrichedTiles
               .slice()
-              .sort((a: any, b: any) => a.position - b.position)
+              .sort((a: any, b: any) => a.order - b.order)
               .map((tile: any, index) =>
                 props.cardId == tile.card_id && !tile.hidden ? (
-                  // Only render HoverCard in preview mode
                   props.isViewer ? (
                     <HoverCard key={index} openDelay={0} closeDelay={200}>
                       <HoverCardTrigger>
@@ -343,7 +397,13 @@ const ResizableNode = (props) => {
                           onClick={(e) =>
                             handleTileClick(tile.tile_id, tile.name, e)
                           }
-                          className="bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer hover:bg-gray-50 transition-colors"
+                          className={`bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer hover:bg-gray-50 transition-all ${
+                            shouldHighlightTile(tile.tags)
+                              ? "ring-2 ring-green-500  ring-opacity-50 shadow-xl"
+                              : props.selectedTags?.length
+                              ? "opacity-70"
+                              : ""
+                          }`}
                           style={{
                             border: `${tileStyle.borderWeight} solid ${props.settings.tile.borderColor}`,
                             background: `${props.settings.tile.fillColor}`,
@@ -361,6 +421,9 @@ const ResizableNode = (props) => {
                           <p className="m-0 min-h-full">{tile.name}</p>
                         </div>
                       </HoverCardTrigger>
+
+                      {/* ... (keep HoverCardContent the same) */}
+
                       <HoverCardContent
                         align="start"
                         className="w-[300px] p-0 rounded-lg shadow-lg border border-gray-200"
@@ -438,13 +501,18 @@ const ResizableNode = (props) => {
                       </HoverCardContent>
                     </HoverCard>
                   ) : (
-                    // Simple tile without HoverCard for edit mode
                     <div
                       key={index}
                       onClick={(e) =>
                         handleTileClick(tile.tile_id, tile.name, e)
                       }
-                      className="bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer hover:bg-gray-50 transition-colors"
+                      className={`bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer hover:bg-gray-50 transition-all ${
+                        shouldHighlightTile(tile.tags)
+                          ? "ring-2 ring-blue-500 ring-opacity-50 shadow-xl"
+                          : props.selectedTags?.length
+                          ? "opacity-70"
+                          : ""
+                      }`}
                       style={{
                         border: `${tileStyle.borderWeight} solid ${props.settings.tile.borderColor}`,
                         background: `${props.settings.tile.fillColor}`,

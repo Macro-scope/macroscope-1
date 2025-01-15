@@ -1,20 +1,18 @@
-'use client';
-import React, { useRef, useState, useEffect } from 'react';
-import { Rnd } from 'react-rnd';
-import { useDispatch, useSelector } from 'react-redux';
-import { CiMaximize2 } from 'react-icons/ci';
-import { LuMinus, LuPlus } from 'react-icons/lu';
-import { useParams, useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabaseClient';
-import MapNavbar from '@/components/PublishedNavbar/MapNavbar';
-import ResizableNode from '@/MapCanvas/CategoryCard';
-import { getMapData } from '@/hooks/getMapData';
-import { setCards } from '@/redux/mapCardsSlice';
-import { getGlobalMapStyles } from '@/hooks/getGlobalMapStyles';
-import { setGlobalSettings } from '@/redux/globalSettingsSlice';
-import { Loader2 } from 'lucide-react';
+"use client";
+import React, { useRef, useState, useEffect, useCallback } from "react";
+import { Rnd } from "react-rnd";
+import { useDispatch, useSelector } from "react-redux";
+import { Maximize, Minus, Plus } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
+import MapNavbar from "@/components/PublishedNavbar/MapNavbar";
+import ResizableNode from "@/MapCanvas/CategoryCard";
+import { getMapData } from "@/hooks/getMapData";
+import { setCards } from "@/redux/mapCardsSlice";
+import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
+import { setGlobalSettings } from "@/redux/globalSettingsSlice";
+import { Card } from "@/types/data";
 
-const PADDING = 10; // Padding around the content
 const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
 const ZOOM_SPEED = 0.1;
@@ -50,119 +48,74 @@ export default function PublishedMap() {
   const [zoom, setZoom] = useState(1);
   const [canvasWidth, setCanvasWidth] = useState(3000);
   const [canvasHeight, setCanvasHeight] = useState(3000);
-  const [handtool, setHandtool] = useState(true);
-  const [isPublished, setIsPublished] = useState<boolean | null>(null);
+
   const [isOwner, setIsOwner] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
+  const [isDraggingVertical, setIsDraggingVertical] = useState(false);
+  const [images, setImages] = useState<
+    Array<{
+      id: string;
+      src: string;
+      position: [number, number];
+      dimension: [number, number];
+    }>
+  >([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [currCards, setCurrCards] = useState<Card[]>([]);
+  const { localSettings, localCardId, mapSettings, mapCards } = useSelector(
+    (state: any) => ({
+      mapCards: state.mapCards,
+      handTool: state.handTool.value,
+      images: state.images,
+      localSettings: state.localSettings,
+      localCardId: state.localCardId.cardId,
+      mapSettings: state.mapSettings,
+    })
+  );
+
   const params = useParams();
   const mapId = params.id as string;
   const dispatch = useDispatch();
   const router = useRouter();
 
-  useEffect(() => {
-    const checkOwnership = async () => {
-      try {
-        setLoading(true); // Start loading
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (!session) {
-          router.push('/login');
-          return;
-        }
+  const checkOwnership = useCallback(async () => {
+    try {
+      setLoading(true);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+        return;
+      }
 
-        const userId = session.user.id;
+      const userId = session.user.id;
 
-        const { data: mapData } = await supabase
-          .from('maps')
-          .select('user_id')
-          .eq('map_id', mapId)
-          .single();
+      const { data: mapData } = await supabase
+        .from("maps")
+        .select("user_id")
+        .eq("map_id", mapId)
+        .single();
 
-        if (mapData && mapData.user_id === userId) {
-          setIsOwner(true);
-        } else {
-          setIsOwner(false);
-        }
-      } catch (error) {
-        console.error('Error checking ownership:', error);
+      if (mapData && mapData.user_id === userId) {
+        setIsOwner(true);
+      } else {
         setIsOwner(false);
-      } finally {
-        setLoading(false); // End loading
       }
-    };
-
-    checkOwnership();
-  }, [mapId, router]);
-
-  useEffect(() => {
-    const getMapId = async () => {
-      try {
-        const { data } = await supabase
-          .from('maps')
-          .select('name')
-          .eq('map_id', mapId)
-          .single();
-
-        if (!data) {
-          setIsPublished(false);
-          return;
-        }
-
-        const { data: publishInfo } = await supabase
-          .from('maps')
-          .select('is_published')
-          .eq('map_id', mapId)
-          .single();
-
-        setIsPublished(publishInfo?.is_published ?? false);
-      } catch (error) {
-        console.error('Error fetching map data:', error);
-        setIsPublished(false);
-      }
-    };
-
-    getMapId();
-  }, [mapId]);
-
-  const { mapCards } = useSelector((state: any) => ({
-    mapCards: state.mapCards,
-  }));
-
-  useEffect(() => {
-    const getCards = async (mapId: string) => {
-      try {
-        const data: any = await getMapData(mapId);
-        if (data) {
-          dispatch(setCards(data.cards));
-          console.log(data);
-          updateCanvasSize(data.cards);
-        }
-      } catch (error) {
-        console.error('Fetching error:', error);
-      }
-    };
-
-    const setGlobalStyles = async (mapId: string) => {
-      const globalStyles: any = await getGlobalMapStyles(mapId);
-      dispatch(setGlobalSettings(globalStyles!.settings));
-    };
-
-    if (mapId) {
-      getCards(mapId);
-      setGlobalStyles(mapId);
+    } catch (error) {
+      console.error("Error checking ownership:", error);
+      setIsOwner(false);
+    } finally {
+      setLoading(false);
     }
-  }, [mapId, dispatch]);
+  }, []);
 
-  const updateCanvasSize = (cards: any[]) => {
-    console.log('Iam here');
+  const updateCanvasSize = useCallback((cards: any[]) => {
     if (cards.length === 0) return;
-    console.log('Iam here');
-
-    // Calculate the bounding box of all cards
     let maxX = 0;
     let maxY = 0;
-
     cards.forEach((card: any) => {
       maxX = Math.max(
         maxX,
@@ -173,66 +126,43 @@ export default function PublishedMap() {
         Number(card.position[1]) + Number(card.dimension[1])
       );
     });
-
-    // Add padding
     const padding = 50;
     maxX += padding;
     maxY += padding;
-
-    // Get the element to capture (with updated size)
-    const element = document.getElementById('viewMap'); // Select the div
+    const element = document.getElementById("viewMap");
     if (!element) return;
-
-    // Set the element's size to the calculated dimensions
     element.style.width = `${maxX}px`;
     element.style.height = `${maxY}px`;
-
     setCanvasHeight(maxY);
     setCanvasWidth(maxX);
-  };
-
-  const [images, setImages] = useState<
-    Array<{
-      id: string;
-      src: string;
-      position: [number, number];
-      dimension: [number, number];
-    }>
-  >([]);
-
-  const handleDeleteImage = (imageId: string) => {
-    setImages((prev) => prev.filter((img) => img.id !== imageId));
-  };
-
-  useEffect(() => {
-    const updateViewportSize = () => {
-      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-    updateViewportSize();
-    window.addEventListener('resize', updateViewportSize);
-    return () => window.removeEventListener('resize', updateViewportSize);
   }, []);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const getCards = useCallback(async (mapId: string) => {
+    try {
+      const data: any = await getMapData(mapId);
+      if (data) {
+        dispatch(setCards(data.cards));
+        setCurrCards(data.cards);
+        updateCanvasSize(data.cards);
+      }
+    } catch (error) {
+      console.error("Fetching error:", error);
+    }
+  }, []);
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+  const setGlobalStyles = useCallback(async (mapId: string) => {
+    const globalStyles: any = await getGlobalMapStyles(mapId);
+    dispatch(setGlobalSettings(globalStyles!.settings));
+  }, []);
 
-    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-    ctx.strokeStyle = '#e0e0e0';
-    ctx.lineWidth = 1;
-  }, [offset]);
-
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === containerRef.current || e.target === canvasRef.current) {
       setIsDragging(true);
       setStartPan({ x: e.clientX - offset.x, y: e.clientY - offset.y });
     }
-  };
+  }, []);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
 
     const newOffset = {
@@ -253,15 +183,13 @@ export default function PublishedMap() {
     };
 
     setOffset(newOffset);
-  };
+  }, []);
 
   const handleMouseUp = () => {
     setIsDragging(false);
   };
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    // e.preventDefault();
-
     const rect = containerRef.current?.getBoundingClientRect();
     if (!rect) return;
 
@@ -276,51 +204,51 @@ export default function PublishedMap() {
     updateZoom(newZoom, mouseX, mouseY);
   };
 
-  const updateZoom = (
-    newZoom: number,
-    pointX: number = viewportSize.width / 2,
-    pointY: number = viewportSize.height / 2
-  ) => {
-    const newOffset = {
-      x: Math.min(
-        0,
-        Math.max(
-          viewportSize.width - canvasWidth * newZoom,
-          offset.x + pointX * (zoom - newZoom)
-        )
-      ),
-      y: Math.min(
-        0,
-        Math.max(
-          viewportSize.height - canvasHeight * newZoom,
-          offset.y + pointY * (zoom - newZoom)
-        )
-      ),
-    };
+  const updateZoom = useCallback(
+    (
+      newZoom: number,
+      pointX: number = viewportSize.width / 2,
+      pointY: number = viewportSize.height / 2
+    ) => {
+      const newOffset = {
+        x: Math.min(
+          0,
+          Math.max(
+            viewportSize.width - canvasWidth * newZoom,
+            offset.x + pointX * (zoom - newZoom)
+          )
+        ),
+        y: Math.min(
+          0,
+          Math.max(
+            viewportSize.height - canvasHeight * newZoom,
+            offset.y + pointY * (zoom - newZoom)
+          )
+        ),
+      };
 
-    setZoom(newZoom);
-    setOffset(newOffset);
-  };
+      setZoom(newZoom);
+      setOffset(newOffset);
+    },
+    []
+  );
 
-  const handleZoomIn = () => {
+  const handleZoomIn = useCallback(() => {
     const newZoom = Math.min(MAX_ZOOM, zoom + ZOOM_BUTTON_STEP);
     updateZoom(newZoom);
-  };
+  }, []);
 
-  const handleZoomOut = () => {
+  const handleZoomOut = useCallback(() => {
     const newZoom = Math.max(MIN_ZOOM, zoom - ZOOM_BUTTON_STEP);
     updateZoom(newZoom);
-  };
+  }, []);
 
-  const handleFitContent = () => {
+  const handleFitContent = useCallback(() => {
     if (!mapCards?.data?.length) return;
-
-    // Calculate the bounding box of all cards
     let minX = 0;
     let minY = 0;
     let maxX = 0;
     let maxY = 0;
-
     mapCards.data.forEach((card: any) => {
       minX = Math.min(minX, Number(card.position[0]));
       minY = Math.min(minY, Number(card.position[1]));
@@ -333,15 +261,12 @@ export default function PublishedMap() {
         Number(card.position[1]) + Number(card.dimension[1])
       );
     });
-
-    // Add padding
     const padding = 50;
     minX -= padding;
     minY -= padding;
     maxX += padding;
     maxY += padding;
 
-    // Calculate required zoom
     const contentWidth = maxX - minX;
     const contentHeight = maxY - minY;
     const zoomX = viewportSize.width / contentWidth;
@@ -350,116 +275,19 @@ export default function PublishedMap() {
       MIN_ZOOM,
       Math.min(MAX_ZOOM, Math.min(zoomX, zoomY))
     );
-
-    // Calculate center position
-    // const centerX = (minX + maxX) / 2;
-    // const centerY = (minY + maxY) / 2;
-
-    // Update zoom and offset to center content
     updateZoom(newZoom, maxX, maxY);
-    // setOffset({
-    //   x: viewportSize.width / 2 - centerX * newZoom,
-    //   y: viewportSize.height / 2 - centerY * newZoom,
-    // });
-  };
-
-  const { handTool, localSettings, localCardId, mapSettings } = useSelector(
-    (state: any) => ({
-      mapCards: state.mapCards,
-      handTool: state.handTool.value,
-      images: state.images,
-      localSettings: state.localSettings,
-      localCardId: state.localCardId.cardId,
-      mapSettings: state.mapSettings,
-    })
-  );
-
-  const [currCards, setCurrCards] = useState([]);
-
-  useEffect(() => {
-    const getCards = async (mapId: string) => {
-      try {
-        const data: any = await getMapData(mapId);
-        if (data) {
-          dispatch(setCards(data.cards));
-          console.log(data);
-        }
-      } catch (error) {
-        console.error('Fetching error:', error);
-      }
-    };
-
-    const setGlobalStyles = async (mapId: string) => {
-      const globalStyles: any = await getGlobalMapStyles(mapId);
-      dispatch(setGlobalSettings(globalStyles!.settings));
-    };
-
-    if (mapId) {
-      getCards(mapId);
-      console.log('hi');
-      setGlobalStyles(mapId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    setCurrCards(mapCards.data);
-    console.log('Woahhh ===== ', currCards);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapCards]);
-
-  useEffect(() => {
-    setCurrCards(mapCards.data);
-    console.log(currCards);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mapSettings]);
-
-  useEffect(() => {
-    const updateCardSettings = (targetCardId: string) => {
-      setCurrCards((prevCards: any) => {
-        if (!Array.isArray(prevCards)) return prevCards;
-        // Ensure deep cloning
-        console.log('ok here');
-        const updatedCards = prevCards.map((card: any) => {
-          if (card.card_id === targetCardId) {
-            return {
-              ...card,
-              settings: {
-                group: localSettings.group,
-                tile: localSettings.tile,
-              },
-            };
-          }
-          return card;
-        });
-        return updatedCards;
-      });
-    };
-
-    updateCardSettings(localCardId);
-    console.log('Here ---- ', currCards);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [localSettings]);
-
-  // Add new state for scrollbar interaction
-  const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
-  const [isDraggingVertical, setIsDraggingVertical] = useState(false);
-
-  // Add these helper functions before the return statement
-  const getScrollbarDimensions = () => {
+  const getScrollbarDimensions = useCallback(() => {
     const contentWidth = canvasWidth * zoom;
     const contentHeight = canvasHeight * zoom;
-
-    // Only show scrollbars if content is larger than viewport
     const showHorizontal = contentWidth > viewportSize.width;
     const showVertical = contentHeight > viewportSize.height;
-
     const horizontalThumbSize = Math.max(
       (viewportSize.width / contentWidth) *
         (viewportSize.width - SCROLLBAR_SIZE),
       SCROLLBAR_THUMB_MIN_SIZE
     );
-
     const verticalThumbSize = Math.max(
       (viewportSize.height / contentHeight) *
         (viewportSize.height - SCROLLBAR_SIZE),
@@ -484,35 +312,91 @@ export default function PublishedMap() {
       showHorizontal,
       showVertical,
     };
-  };
+  }, []);
 
-  const handleScrollbarDrag = (e: React.MouseEvent, isHorizontal: boolean) => {
-    e.preventDefault(); // Prevent default behavior
+  const handleScrollbarDrag = useCallback(
+    (e: React.MouseEvent, isHorizontal: boolean) => {
+      e.preventDefault();
 
-    if (isHorizontal) {
-      const scrollTrackStart = SCROLLBAR_SIZE;
-      const scrollTrackLength = viewportSize.width - SCROLLBAR_SIZE * 2;
-      const clickPosition = e.clientX - scrollTrackStart;
-      const percentage = Math.max(
-        0,
-        Math.min(1, clickPosition / scrollTrackLength)
-      );
-      const newX = -(canvasWidth * zoom - viewportSize.width) * percentage;
-      setOffset((prev) => ({ ...prev, x: Math.min(0, newX) }));
-    } else {
-      const scrollTrackStart = SCROLLBAR_SIZE;
-      const scrollTrackLength = viewportSize.height - SCROLLBAR_SIZE * 2;
-      const clickPosition = e.clientY - scrollTrackStart;
-      const percentage = Math.max(
-        0,
-        Math.min(1, clickPosition / scrollTrackLength)
-      );
-      const newY = -(canvasHeight * zoom - viewportSize.height) * percentage;
-      setOffset((prev) => ({ ...prev, y: Math.min(0, newY) }));
+      if (isHorizontal) {
+        const scrollTrackStart = SCROLLBAR_SIZE;
+        const scrollTrackLength = viewportSize.width - SCROLLBAR_SIZE * 2;
+        const clickPosition = e.clientX - scrollTrackStart;
+        const percentage = Math.max(
+          0,
+          Math.min(1, clickPosition / scrollTrackLength)
+        );
+        const newX = -(canvasWidth * zoom - viewportSize.width) * percentage;
+        setOffset((prev) => ({ ...prev, x: Math.min(0, newX) }));
+      } else {
+        const scrollTrackStart = SCROLLBAR_SIZE;
+        const scrollTrackLength = viewportSize.height - SCROLLBAR_SIZE * 2;
+        const clickPosition = e.clientY - scrollTrackStart;
+        const percentage = Math.max(
+          0,
+          Math.min(1, clickPosition / scrollTrackLength)
+        );
+        const newY = -(canvasHeight * zoom - viewportSize.height) * percentage;
+        setOffset((prev) => ({ ...prev, y: Math.min(0, newY) }));
+      }
+    },
+    []
+  );
+  const updateCardSettings = useCallback((targetCardId: string) => {
+    setCurrCards((prevCards: any) => {
+      if (!Array.isArray(prevCards)) return prevCards;
+      const updatedCards = prevCards.map((card: Card) => {
+        if (card.card_id === targetCardId) {
+          return {
+            ...card,
+            settings: {
+              group: localSettings.group,
+              tile: localSettings.tile,
+            },
+          };
+        }
+        return card;
+      });
+      return updatedCards;
+    });
+  }, []);
+
+  useEffect(() => {
+    checkOwnership();
+  }, [mapId, router]);
+
+  useEffect(() => {
+    if (mapId) {
+      getCards(mapId);
+      setGlobalStyles(mapId);
     }
-  };
+  }, [mapId, dispatch]);
 
-  // Add to your existing useEffect that handles window events
+  useEffect(() => {
+    const updateViewportSize = () => {
+      setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+    updateViewportSize();
+    window.addEventListener("resize", updateViewportSize);
+    return () => window.removeEventListener("resize", updateViewportSize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+    ctx.strokeStyle = "#e0e0e0";
+    ctx.lineWidth = 1;
+  }, [offset]);
+
+  useEffect(() => {
+    updateCardSettings(localCardId);
+  }, [localSettings]);
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDraggingHorizontal) {
@@ -528,30 +412,35 @@ export default function PublishedMap() {
       setIsDraggingVertical(false);
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
     };
   }, [isDraggingHorizontal, isDraggingVertical]);
 
-  // Loader component
   const Loader = () => (
-    <div className="flex justify-center items-center h-screen">
-      <div className="h-4 w-4 animate-spin">
-        <Loader2 />
-      </div>{' '}
-      {/* You can style this loader as needed */}
+    <div className="grid grid-cols-5 gap-4 p-4">
+      {Array.from({ length: 15 }).map((_, index) => (
+        <div
+          key={index}
+          className="w-full h-32 bg-gray-200 animate-pulse rounded-md"
+        ></div>
+      ))}
     </div>
   );
 
   return (
     <div>
-      <MapNavbar />
-      {/* <Watermark /> */}
-      {loading ? ( // Show loader while checking ownership
+      {currCards && (
+        <MapNavbar
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+        />
+      )}
+      {loading ? (
         <Loader />
       ) : isOwner ? (
         <div>
@@ -571,7 +460,7 @@ export default function PublishedMap() {
                 transform: `translate(${offset.x}px, ${offset.y}px) scale(${zoom})`,
                 width: canvasWidth,
                 height: canvasHeight,
-                transformOrigin: '0 0',
+                transformOrigin: "0 0",
               }}
             >
               <canvas
@@ -609,6 +498,8 @@ export default function PublishedMap() {
                       cardId={card.card_id}
                       isViewer={true}
                       isDoubleClick={false}
+                      description={card.description}
+                      selectedTags={selectedTags}
                       // handleDynamicSizeChange={handleDynamicSizeChange}
                     />
                   </Rnd>
@@ -620,12 +511,6 @@ export default function PublishedMap() {
                 images?.map((image: any) => (
                   <Rnd
                     key={image.img_id}
-                    // default={{
-                    //   x: Number(image.position[0]),
-                    //   y: Number(image.position[1]),
-                    //   width: image.dimension[0],
-                    //   height: image.dimension[1],
-                    // }}
                     size={{
                       width: Number(image.dimension[0]),
                       height: Number(image.dimension[1]),
@@ -656,42 +541,37 @@ export default function PublishedMap() {
                 className="hover:bg-gray-200 p-2"
                 title="Fit to Content"
               >
-                <CiMaximize2 className="w-5 h-5" />
+                <Maximize className="w-5 h-5" />
               </button>
               <button
                 onClick={handleZoomOut}
                 className="p-2 hover:bg-gray-200"
                 title="Zoom Out"
               >
-                {/* <BsZoomOut className="w-5 h-5" /> */}
-                <LuMinus />
+                <Minus />
               </button>
               <button
                 onClick={handleZoomIn}
                 className="p-2 hover:bg-gray-200"
                 title="Zoom In"
               >
-                <LuPlus />
-                {/* <BsZoomIn className="w-5 h-5" /> */}
+                <Plus />
               </button>
             </div>
 
             <a
               className="flex justify-center items-center absolute bottom-3 right-3 h-8"
-              style={{ zIndex: '2000' }}
+              style={{ zIndex: "2000" }}
               href="https://macroscope.so"
               target="_blank"
             >
-              {/* Made with{" "} */}
               <img
                 src="/branding.svg"
                 alt="Macroscope"
                 className="ml-2 mr-1 h-7"
               />
-              {/* <span className="font-semibold">Macroscope</span> */}
             </a>
 
-            {/* Horizontal Scrollbar */}
             {getScrollbarDimensions().showHorizontal && (
               <div
                 className="absolute bottom-0 left-0 right-[8px] bg-gray-200"

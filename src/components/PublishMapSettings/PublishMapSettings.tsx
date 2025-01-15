@@ -7,13 +7,15 @@ import WebsiteSettings from "./WebsiteSettings";
 import EmbedSettings from "./EmbedSettings";
 import ExportImageSettings from "./ExportImageSettings";
 import SettingsTab from "./SettingsTab";
+import { RootState } from "@/redux/store";
 
 type Props = {
   isPrevopen: (value: boolean) => void;
+  mapId:string
 };
 
 const PublishMapSettings = (props: Props) => {
-  const { publishedMapNav } = useSelector((state: any) => ({
+  const { publishedMapNav } = useSelector((state: RootState) => ({
     publishedMapNav: state.publishedMapNav,
   }));
 
@@ -28,7 +30,7 @@ const PublishMapSettings = (props: Props) => {
     {
       key: "1",
       label: <span className="font-medium text-sm">Settings</span>,
-      children: <SettingsTab />,
+      children: <SettingsTab mapId={props.mapId} />,
     },
     {
       key: "2",

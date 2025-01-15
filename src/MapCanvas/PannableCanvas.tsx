@@ -3,9 +3,8 @@ import React, { useRef, useState, useEffect } from "react";
 import { Rnd } from "react-rnd";
 import ResizableNode from "./CategoryCard";
 import { useDispatch, useSelector } from "react-redux";
-import { CiMaximize2 } from "react-icons/ci";
-import { LuMinus, LuPlus } from "react-icons/lu";
-import { RiExportFill } from "react-icons/ri";
+
+import { Maximize,Minus,Plus,X} from "lucide-react"
 import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
@@ -15,7 +14,8 @@ import { getImages } from "@/hooks/getImages";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { deleteImage } from "@/hooks/deleteImage";
-import { IoClose } from "react-icons/io5";
+
+
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 import ParentCategory from "./ParentCategory";
 import ParentCategoryLocalSettings from "@/components/MapSettings/ParentLocalSettings";
@@ -56,7 +56,7 @@ const ImageCard = ({ src, onDelete }: any) => {
         onClick={onDelete}
         className="absolute text-slate-500 z-50 right-0 -top-5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
       >
-        <IoClose className="text-xl" />
+        <X className="text-xl" />
       </button>
 
       {/* Resize handles that show on hover */}
@@ -854,6 +854,7 @@ export default function PannableCanvas() {
                 tagName={card.name}
                 cardId={card.card_id}
                 isDoubleClick={false}
+                description={card.description}
               />
             </Rnd>
           ) : null
@@ -926,7 +927,7 @@ export default function PannableCanvas() {
           className="hover:bg-gray-100 p-2 transition-colors"
           title="Fit to Content"
         >
-          <CiMaximize2 className="w-5 h-5" />
+          <Maximize className="w-5 h-5" />
         </button>
         <div className="w-px bg-gray-200" />
         <button
@@ -934,14 +935,14 @@ export default function PannableCanvas() {
           className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom Out"
         >
-          <LuMinus />
+          <Minus />
         </button>
         <button
           onClick={handleZoomIn}
           className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom In"
         >
-          <LuPlus />
+          <Plus />
         </button>
       </div>
 
@@ -973,7 +974,7 @@ export default function PannableCanvas() {
 
       {getScrollbarDimensions().showVertical && (
         <div
-          className="absolute top-0 right-0 bottom-[8px] bg-secondary/10"
+          className="absolute top-0 right-0 bottom-[8px]"
           style={{
             width: SCROLLBAR_SIZE,
             zIndex: 1001,
