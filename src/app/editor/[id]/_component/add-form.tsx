@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Camera, Upload, Link2, Trash2 } from 'lucide-react';
+import { Camera, Upload, Link2, Trash2, X } from 'lucide-react';
 import Select from 'react-select/creatable';
 import { supabase } from '@/lib/supabaseClient';
 import { useDispatch } from 'react-redux';
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { TiptapEditor } from '@/components/editor/tiptap-editor';
 import { ImageUpload } from '@/components/database/image-upload';
+import RichTextEditor from '@/components/editor/text-editor';
 
 interface AddSheetProps {
   open: boolean;
@@ -40,6 +41,8 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
     logo: '',
     category: { value: '', label: '', color: '' },
     description: '',
+    short_description_markdown: '',
+    short_description_html: '',
   });
 
   const fetchCategories = useCallback(async () => {
@@ -207,6 +210,8 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
         logo: formData.logo,
         category_id: categoryId,
         description_markdown: formData.description,
+        short_description_markdown: formData.short_description_markdown,
+        short_description_html: formData.short_description_html,
       });
 
       if (tileError) throw tileError;
@@ -223,6 +228,8 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
         logo: '',
         category: { value: '', label: '', color: '' },
         description: '',
+        short_description_markdown: '',
+        short_description_html: '',
       });
     } catch (error) {
       console.error('Error creating tile:', error);
@@ -243,12 +250,19 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-[360px] border-none shadow-none h-[calc(100vh-64px)] mt-16 pt-0"
+        className="w-[360px]  shadow-none h-[calc(100vh-60px)] mt-12 pt-0"
         side="right"
       >
-        <SheetHeader className="p-4 pb-2">
-          <SheetTitle>Add New Item</SheetTitle>
-        </SheetHeader>
+        <div className="p-2  flex justify-between items-center pb-2">
+          <div className="text-lg font-medium">Add New Item</div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onOpenChange(false)}
+          >
+            <X className="w-4 h-4" />
+          </Button>
+        </div>
 
         <div className="p-4 space-y-6 overflow-y-auto h-[calc(100%-140px)]">
           {/* Image Section */}
@@ -392,6 +406,25 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               value={formData.description}
               readOnly
               className="w-full h-24 rounded-md border p-2 resize-none text-sm"
+            />
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Short Description Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Short Description</h3>
+            </div>
+            <RichTextEditor
+              onChange={(content: { html: string; markdown: string }) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  short_description_markdown: content.markdown,
+                  short_description_html: content.html,
+                }));
+              }}
+              value={formData.short_description_html}
             />
           </div>
         </div>
