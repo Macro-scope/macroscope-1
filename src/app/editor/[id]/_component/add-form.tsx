@@ -113,64 +113,99 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
   const handleCreate = async () => {
     try {
       let cardId: string;
+      let categoryId: string;
       const tileName = formData.name.trim() || 'New Tile';
 
-      if (formData.category?.value) {
+      if (!formData.category?.value) {
+        // Get or create "Other" category
+        const { data: existingCategory, error: categoryError } = await supabase
+          .from('categories')
+          .select('category_id')
+          .eq('name', 'Other')
+          .eq('map_id', mapId)
+          .single();
+
+        if (categoryError) {
+          // Create new "Other" category
+          const newCategoryId = crypto.randomUUID();
+          const { data: newCategory, error: createCategoryError } =
+            await supabase
+              .from('categories')
+              .insert({
+                category_id: newCategoryId,
+                map_id: mapId,
+                name: 'Other',
+                color: '#000000',
+              })
+              .select('category_id')
+              .single();
+
+          if (createCategoryError) throw createCategoryError;
+          categoryId = newCategoryId;
+        } else {
+          categoryId = existingCategory.category_id;
+        }
+
+        // Get or create "Other" card
         const { data: existingCard, error: cardError } = await supabase
           .from('cards')
           .select('card_id')
-          .eq('category_id', formData.category.value)
+          .eq('name', 'Other')
+          .eq('category_id', categoryId)
           .eq('map_id', mapId)
           .single();
 
         if (cardError) {
-          const { data: newCard, error: createError } = await supabase
+          const { data: newCard, error: createCardError } = await supabase
             .from('cards')
             .insert({
               map_id: mapId,
-              category_id: formData.category.value,
-              name: formData.category.label,
+              category_id: categoryId,
+              name: 'Other',
             })
             .select('card_id')
             .single();
 
-          if (createError) throw createError;
+          if (createCardError) throw createCardError;
           cardId = newCard.card_id;
         } else {
           cardId = existingCard.card_id;
         }
       } else {
-        // Get or create default card
+        categoryId = formData.category.value;
+        // Get or create card for selected category
         const { data: existingCard, error: cardError } = await supabase
           .from('cards')
           .select('card_id')
-          .eq('name', 'Default Card')
+          .eq('category_id', categoryId)
           .eq('map_id', mapId)
           .single();
 
         if (cardError) {
-          const { data: defaultCard, error: defaultCardError } = await supabase
+          const { data: newCard, error: createCardError } = await supabase
             .from('cards')
             .insert({
               map_id: mapId,
-              name: 'Default Card',
+              category_id: categoryId,
+              name: formData.category.label,
             })
             .select('card_id')
             .single();
 
-          if (defaultCardError) throw defaultCardError;
-          cardId = defaultCard.card_id;
+          if (createCardError) throw createCardError;
+          cardId = newCard.card_id;
         } else {
           cardId = existingCard.card_id;
         }
       }
 
+      // Create the tile with valid card_id and category_id
       const { error: tileError } = await supabase.from('tiles').insert({
         card_id: cardId,
         name: tileName,
         url: formData.url || '#',
         logo: formData.logo,
-        category_id: formData.category?.value,
+        category_id: categoryId,
         description_markdown: formData.description,
       });
 
