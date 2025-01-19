@@ -4,7 +4,7 @@ import { Rnd } from "react-rnd";
 import ResizableNode from "./CategoryCard";
 import { useDispatch, useSelector } from "react-redux";
 
-import { Maximize,Minus,Plus,X} from "lucide-react"
+import { Maximize, Minus, Plus, X } from "lucide-react";
 import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getGlobalMapStyles } from "@/hooks/getGlobalMapStyles";
@@ -14,7 +14,6 @@ import { getImages } from "@/hooks/getImages";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { deleteImage } from "@/hooks/deleteImage";
-
 
 import { useUpdateImagePosition } from "@/hooks/useUpdateImagePosition";
 import ParentCategory from "./ParentCategory";
@@ -204,38 +203,37 @@ export default function PannableCanvas() {
     updateZoom(newZoom);
   };
   const handleFitContent = () => {
-
     if (!mapCards?.data?.length && (!images || !images.length)) return;
 
     let bounds = {
-        minX: Infinity,
-        minY: Infinity,
-        maxX: -Infinity,
-        maxY: -Infinity
+      minX: Infinity,
+      minY: Infinity,
+      maxX: -Infinity,
+      maxY: -Infinity,
     };
 
     if (mapCards?.data?.length) {
-        mapCards.data.forEach((card: any) => {
-            const [x, y] = card.position.map(Number);
-            const [width, height] = card.dimension.map(Number);
-            
-            bounds.minX = Math.min(bounds.minX, x);
-            bounds.minY = Math.min(bounds.minY, y);
-            bounds.maxX = Math.max(bounds.maxX, x + width);
-            bounds.maxY = Math.max(bounds.maxY, y + height);
-        });
+      mapCards.data.forEach((card: any) => {
+        const [x, y] = card.position.map(Number);
+        const [width, height] = card.dimension.map(Number);
+
+        bounds.minX = Math.min(bounds.minX, x);
+        bounds.minY = Math.min(bounds.minY, y);
+        bounds.maxX = Math.max(bounds.maxX, x + width);
+        bounds.maxY = Math.max(bounds.maxY, y + height);
+      });
     }
 
     if (images?.length) {
-        images.forEach((image: any) => {
-            const [x, y] = image.position.map(Number);
-            const [width, height] = image.dimension.map(Number);
-            
-            bounds.minX = Math.min(bounds.minX, x);
-            bounds.minY = Math.min(bounds.minY, y);
-            bounds.maxX = Math.max(bounds.maxX, x + width);
-            bounds.maxY = Math.max(bounds.maxY, y + height);
-        });
+      images.forEach((image: any) => {
+        const [x, y] = image.position.map(Number);
+        const [width, height] = image.dimension.map(Number);
+
+        bounds.minX = Math.min(bounds.minX, x);
+        bounds.minY = Math.min(bounds.minY, y);
+        bounds.maxX = Math.max(bounds.maxX, x + width);
+        bounds.maxY = Math.max(bounds.maxY, y + height);
+      });
     }
 
     if (bounds.minX === Infinity || bounds.minY === Infinity) return;
@@ -251,22 +249,22 @@ export default function PannableCanvas() {
 
     const zoomX = viewportSize.width / contentWidth;
     const zoomY = viewportSize.height / contentHeight;
-    
+
     let newZoom = Math.min(zoomX, zoomY);
-    
+
     newZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, newZoom));
 
-    const contentCenterX = bounds.minX + (contentWidth / 2);
-    const contentCenterY = bounds.minY + (contentHeight / 2);
+    const contentCenterX = bounds.minX + contentWidth / 2;
+    const contentCenterY = bounds.minY + contentHeight / 2;
 
     const newOffset = {
-        x: (viewportSize.width / 2) - (contentCenterX * newZoom),
-        y: (viewportSize.height / 2) - (contentCenterY * newZoom)
+      x: viewportSize.width / 2 - contentCenterX * newZoom,
+      y: viewportSize.height / 2 - contentCenterY * newZoom,
     };
 
     setZoom(newZoom);
     setOffset(newOffset);
-};
+  };
   let { id: mapId } = useParams();
   mapId = String(mapId);
   const {
@@ -462,8 +460,6 @@ export default function PannableCanvas() {
 
   useEffect(() => {
     setCurrCards(mapCards.data);
-    console.log("Woahhh ===== ", currCards);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapCards]);
 
   useEffect(() => {
@@ -758,107 +754,102 @@ export default function PannableCanvas() {
           );
         })}
 
-        {currCards?.map((card: any) =>
-          card.tiles.length > 0 ? (
-            <Rnd
-              disableDragging={handTool}
-              key={card.card_id}
-              default={{
-                x: Number(card.position[0]),
-                y: Number(card.position[1]),
-                width: Number(card.dimension[0]),
-                height: Number(card.dimension[1]),
-              }}
-              size={{
-                width: Number(card.dimension[0]),
-                height: Number(card.dimension[1]),
-              }}
-              position={{
-                x: Number(card.position[0]),
-                y: Number(card.position[1]),
-              }}
-              enableResizing={{
-                bottom: true,
-                bottomLeft: true,
-                bottomRight: true,
-                left: true,
-                right: true,
-                top: true,
-                topLeft: true,
-                topRight: true,
-              }}
-              minHeight={card.tiles.length * 100}
-              style={
-                handTool
-                  ? { zIndex: 1, height: "auto", minHeight: "100%" }
-                  : { zIndex: 1000, height: "auto", minHeight: "100%" }
-              }
-              bounds="parent"
-              scale={zoom}
-              onDragStop={(_e, d) => {
-                const updatedCards = mapCards?.data?.map((c: any) =>
-                  c.card_id === card.card_id
-                    ? { ...c, position: [d.x, d.y] }
-                    : c
-                );
-                dispatch(setCards(updatedCards));
+        {currCards?.map((card: any) => (
+          <Rnd
+            disableDragging={handTool}
+            key={card.card_id}
+            default={{
+              x: Number(card.position[0]),
+              y: Number(card.position[1]),
+              width: Number(card.dimension[0]),
+              height: Number(card.dimension[1]),
+            }}
+            size={{
+              width: Number(card.dimension[0]),
+              height: Number(card.dimension[1]),
+            }}
+            position={{
+              x: Number(card.position[0]),
+              y: Number(card.position[1]),
+            }}
+            enableResizing={{
+              bottom: true,
+              bottomLeft: true,
+              bottomRight: true,
+              left: true,
+              right: true,
+              top: true,
+              topLeft: true,
+              topRight: true,
+            }}
+            minHeight={card.tiles.length * 100}
+            style={
+              handTool
+                ? { zIndex: 1, height: "auto", minHeight: "100%" }
+                : { zIndex: 1000, height: "auto", minHeight: "100%" }
+            }
+            bounds="parent"
+            scale={zoom}
+            onDragStop={(_e, d) => {
+              const updatedCards = mapCards?.data?.map((c: any) =>
+                c.card_id === card.card_id ? { ...c, position: [d.x, d.y] } : c
+              );
+              dispatch(setCards(updatedCards));
 
-                // Also update in Supabase to persist position
-                supabase
-                  .from("cards")
-                  .update({ position: [d.x, d.y] })
-                  .eq("card_id", card.card_id)
-                  .then(({ error }) => {
-                    if (error) console.error("Error updating position:", error);
-                  });
-              }}
-              onResizeStop={(_e, _direction, ref, _delta, position) => {
-                const updatedCards = mapCards?.data?.map((c: any) =>
-                  c.card_id === card.card_id
-                    ? {
-                        ...c,
-                        dimension: [
-                          parseInt(ref.style.width),
-                          parseInt(ref.style.height),
-                        ],
-                        position: [position.x, position.y],
-                      }
-                    : c
-                );
-                dispatch(setCards(updatedCards));
+              // Also update in Supabase to persist position
+              supabase
+                .from("cards")
+                .update({ position: [d.x, d.y] })
+                .eq("card_id", card.card_id)
+                .then(({ error }) => {
+                  if (error) console.error("Error updating position:", error);
+                });
+            }}
+            onResizeStop={(_e, _direction, ref, _delta, position) => {
+              const updatedCards = mapCards?.data?.map((c: any) =>
+                c.card_id === card.card_id
+                  ? {
+                      ...c,
+                      dimension: [
+                        parseInt(ref.style.width),
+                        parseInt(ref.style.height),
+                      ],
+                      position: [position.x, position.y],
+                    }
+                  : c
+              );
+              dispatch(setCards(updatedCards));
 
-                // Update dimensions in Supabase
-                supabase
-                  .from("cards")
-                  .update({
-                    dimension: [
-                      parseInt(ref.style.width),
-                      parseInt(ref.style.height),
-                    ],
-                    position: [position.x, position.y],
-                  })
-                  .eq("card_id", card.card_id)
-                  .then(({ error }) => {
-                    if (error)
-                      console.error("Error updating dimensions:", error);
-                  });
-              }}
-              resizeGrid={[10, 10]}
-              dragGrid={[2, 2]}
-              className="mappedCards z-50"
-            >
-              <ResizableNode
-                tagId={card.category_id}
-                settings={card.settings}
-                tiles={card.tiles}
-                tagName={card.name}
-                cardId={card.card_id}
-                isDoubleClick={false}
-                description={card.description}
-              />
-            </Rnd>
-          ) : null
-        )}
+              // Update dimensions in Supabase
+              supabase
+                .from("cards")
+                .update({
+                  dimension: [
+                    parseInt(ref.style.width),
+                    parseInt(ref.style.height),
+                  ],
+                  position: [position.x, position.y],
+                })
+                .eq("card_id", card.card_id)
+                .then(({ error }) => {
+                  if (error) console.error("Error updating dimensions:", error);
+                });
+            }}
+            resizeGrid={[10, 10]}
+            dragGrid={[2, 2]}
+            className="mappedCards z-50"
+          >
+            <ResizableNode
+              tagId={card.category_id}
+              settings={card.settings}
+              tiles={card.tiles}
+              tagName={card.name}
+              cardId={card.card_id}
+              isDoubleClick={false}
+              description={card.description}
+            />
+          </Rnd>
+        ))}
         {images &&
           images?.map((image: any) => (
             <Rnd
@@ -927,7 +918,7 @@ export default function PannableCanvas() {
           className="hover:bg-gray-100 p-2 transition-colors"
           title="Fit to Content"
         >
-          <Maximize className="w-5 h-5" />
+          <Maximize className="w-4 h-4" />
         </button>
         <div className="w-px bg-gray-200" />
         <button
@@ -935,14 +926,14 @@ export default function PannableCanvas() {
           className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom Out"
         >
-          <Minus />
+          <Minus className="w-4 h-4" />
         </button>
         <button
           onClick={handleZoomIn}
           className="p-2 hover:bg-gray-100 transition-colors"
           title="Zoom In"
         >
-          <Plus />
+          <Plus className="w-4 h-4" />
         </button>
       </div>
 
@@ -960,7 +951,7 @@ export default function PannableCanvas() {
           }}
         >
           <div
-            className="absolute cursor-pointer bg-secondary/50 hover:bg-secondary/70 transition-all duration-200"
+            className="absolute cursor-pointer hover:bg-secondary/70 transition-all duration-200"
             style={{
               width: getScrollbarDimensions().horizontalThumbSize,
               height: SCROLLBAR_SIZE - 4,
@@ -986,7 +977,7 @@ export default function PannableCanvas() {
           }}
         >
           <div
-            className="absolute cursor-pointer bg-secondary/50 hover:bg-secondary/70 transition-all duration-200"
+            className="absolute cursor-pointer  hover:bg-secondary/70 transition-all duration-200"
             style={{
               height: getScrollbarDimensions().verticalThumbSize,
               width: SCROLLBAR_SIZE - 4,

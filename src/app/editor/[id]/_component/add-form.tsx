@@ -1,31 +1,45 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-} from '@/components/ui/sheet';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Camera, Upload, Link2, Trash2, X } from 'lucide-react';
-import Select from 'react-select/creatable';
-import { supabase } from '@/lib/supabaseClient';
-import { useDispatch } from 'react-redux';
-import { setCards } from '@/redux/mapCardsSlice';
-import { getMapData } from '@/hooks/getMapData';
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Camera,
+  Upload,
+  Link2,
+  Trash2,
+  X,
+  Pencil,
+  Plus,
+  XCircle,
+} from "lucide-react";
+import Select from "react-select/creatable";
+import { supabase } from "@/lib/supabaseClient";
+import { useDispatch, useSelector } from "react-redux";
+import { setCards } from "@/redux/mapCardsSlice";
+import { getMapData } from "@/hooks/getMapData";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { TiptapEditor } from '@/components/editor/tiptap-editor';
-import { ImageUpload } from '@/components/database/image-upload';
-import RichTextEditor from '@/components/editor/text-editor';
+} from "@/components/ui/dialog";
+import { TiptapEditor } from "@/components/editor/tiptap-editor";
+import { ImageUpload } from "@/components/database/image-upload";
+import RichTextEditor from "@/components/editor/text-editor";
+import { Input } from "@/components/ui/input";
+import { setMapSettings } from "@/redux/mapSettingsSlice";
+import { toast } from "sonner";
+import { RootState } from "@/redux/store";
+import { setLocalCard, setLocalCardId } from "@/redux/localSettingsSlice";
 
 interface AddSheetProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   mapId: string;
 }
 
@@ -35,38 +49,40 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [tagInput, setTagInput] = useState("");
   const [formData, setFormData] = useState({
-    name: '',
-    url: '',
-    logo: '',
-    category: { value: '', label: '', color: '' },
-    description: '',
-    short_description_markdown: '',
-    short_description_html: '',
+    name: "",
+    url: "",
+    logo: "",
+    category: { value: "", label: "", color: "" },
+    description: "",
+    short_description_markdown: "",
+    short_description_html: "",
+    tags: [] as string[],
   });
-
+  const localCard = useSelector((state: RootState) => state.localCardId);
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data: categories, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('map_id', mapId);
+        .from("categories")
+        .select("*")
+        .eq("map_id", mapId);
 
       if (error) {
-        console.error('Error fetching categories:', error);
+        console.error("Error fetching categories:", error);
         return;
       }
 
       const formattedCategories = categories.map((category) => ({
         value: category.category_id,
         label: category.name,
-        color: category.color || '#000000',
+        color: category.color || "#000000",
       }));
 
       setCategoryOptions(formattedCategories);
     } catch (error) {
-      console.error('Error in fetchCategories:', error);
+      console.error("Error in fetchCategories:", error);
     } finally {
       setIsLoading(false);
     }
@@ -76,18 +92,31 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
     fetchCategories();
   }, [fetchCategories]);
 
+  useEffect(() => {
+    if (localCard && localCard.card && localCard.card.value !== "") {
+      setFormData((prev) => ({
+        ...prev,
+        category: {
+          value: localCard.card.value,
+          label: localCard.card.label,
+          color: "#000000",
+        },
+      }));
+    }
+  }, [localCard]);
+
   const handleCreateNewCategory = async (categoryName: string) => {
     try {
       setIsLoading(true);
       const newCategoryId = crypto.randomUUID();
 
       const { data: newCategory, error: categoryError } = await supabase
-        .from('categories')
+        .from("categories")
         .insert({
           category_id: newCategoryId,
           map_id: mapId,
           name: categoryName,
-          color: '#000000',
+          color: "#000000",
         })
         .select()
         .single();
@@ -97,7 +126,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
       const newCategoryOption = {
         value: newCategoryId,
         label: categoryName,
-        color: '#000000',
+        color: "#000000",
       };
 
       setFormData((prev) => ({
@@ -107,7 +136,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
 
       await fetchCategories();
     } catch (error) {
-      console.error('Error creating new category:', error);
+      console.error("Error creating new category:", error);
     } finally {
       setIsLoading(false);
     }
@@ -117,15 +146,15 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
     try {
       let cardId: string;
       let categoryId: string;
-      const tileName = formData.name.trim() || 'New Tile';
+      const tileName = formData.name.trim() || "New Tile";
 
       if (!formData.category?.value) {
         // Get or create "Other" category
         const { data: existingCategory, error: categoryError } = await supabase
-          .from('categories')
-          .select('category_id')
-          .eq('name', 'Other')
-          .eq('map_id', mapId)
+          .from("categories")
+          .select("category_id")
+          .eq("name", "Other")
+          .eq("map_id", mapId)
           .single();
 
         if (categoryError) {
@@ -133,14 +162,14 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           const newCategoryId = crypto.randomUUID();
           const { data: newCategory, error: createCategoryError } =
             await supabase
-              .from('categories')
+              .from("categories")
               .insert({
                 category_id: newCategoryId,
                 map_id: mapId,
-                name: 'Other',
-                color: '#000000',
+                name: "Other",
+                color: "#000000",
               })
-              .select('category_id')
+              .select("category_id")
               .single();
 
           if (createCategoryError) throw createCategoryError;
@@ -151,22 +180,22 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
 
         // Get or create "Other" card
         const { data: existingCard, error: cardError } = await supabase
-          .from('cards')
-          .select('card_id')
-          .eq('name', 'Other')
-          .eq('category_id', categoryId)
-          .eq('map_id', mapId)
+          .from("cards")
+          .select("card_id")
+          .eq("name", "Other")
+          .eq("category_id", categoryId)
+          .eq("map_id", mapId)
           .single();
 
         if (cardError) {
           const { data: newCard, error: createCardError } = await supabase
-            .from('cards')
+            .from("cards")
             .insert({
               map_id: mapId,
               category_id: categoryId,
-              name: 'Other',
+              name: "Other",
             })
-            .select('card_id')
+            .select("card_id")
             .single();
 
           if (createCardError) throw createCardError;
@@ -178,21 +207,21 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
         categoryId = formData.category.value;
         // Get or create card for selected category
         const { data: existingCard, error: cardError } = await supabase
-          .from('cards')
-          .select('card_id')
-          .eq('category_id', categoryId)
-          .eq('map_id', mapId)
+          .from("cards")
+          .select("card_id")
+          .eq("category_id", categoryId)
+          .eq("map_id", mapId)
           .single();
 
         if (cardError) {
           const { data: newCard, error: createCardError } = await supabase
-            .from('cards')
+            .from("cards")
             .insert({
               map_id: mapId,
               category_id: categoryId,
               name: formData.category.label,
             })
-            .select('card_id')
+            .select("card_id")
             .single();
 
           if (createCardError) throw createCardError;
@@ -203,10 +232,10 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
       }
 
       // Create the tile with valid card_id and category_id
-      const { error: tileError } = await supabase.from('tiles').insert({
+      const { error: tileError } = await supabase.from("tiles").insert({
         card_id: cardId,
         name: tileName,
-        url: formData.url || '#',
+        url: formData.url || "#",
         logo: formData.logo,
         category_id: categoryId,
         description_markdown: formData.description,
@@ -221,18 +250,24 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
         dispatch(setCards(mapData.cards));
       }
 
+      toast.success("Tile Added");
+
       onOpenChange(false);
+      dispatch(setMapSettings("none"));
+      dispatch(setLocalCardId(""));
+      dispatch(setLocalCard({ label: "", value: "" }));
       setFormData({
-        name: '',
-        url: '',
-        logo: '',
-        category: { value: '', label: '', color: '' },
-        description: '',
-        short_description_markdown: '',
-        short_description_html: '',
+        name: "",
+        url: "",
+        logo: "",
+        category: { value: "", label: "", color: "" },
+        description: "",
+        short_description_markdown: "",
+        short_description_html: "",
+        tags: [],
       });
     } catch (error) {
-      console.error('Error creating tile:', error);
+      console.error("Error creating tile:", error);
     }
   };
 
@@ -246,7 +281,29 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
     }));
     setIsDescriptionDialogOpen(false);
   };
+  const handleRemoveTag = (tagToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
+    }));
+  };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
+  };
+  const handleAddTag = () => {
+    const trimmedTag = tagInput.trim();
+    if (trimmedTag && !formData.tags.includes(trimmedTag)) {
+      setFormData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, trimmedTag],
+      }));
+      setTagInput("");
+    }
+  };
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
@@ -258,7 +315,14 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => onOpenChange(false)}
+            onClick={() => {
+              if (onOpenChange) {
+                onOpenChange(false);
+              }
+              dispatch(setLocalCardId(""));
+              dispatch(setLocalCard({ label: "", value: "" }));
+              dispatch(setMapSettings("none"));
+            }}
           >
             <X className="w-4 h-4" />
           </Button>
@@ -295,7 +359,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                     variant="destructive"
                     size="sm"
                     onClick={() =>
-                      setFormData((prev) => ({ ...prev, logo: '' }))
+                      setFormData((prev) => ({ ...prev, logo: "" }))
                     }
                   >
                     <Trash2 className="w-4 h-4" />
@@ -356,16 +420,16 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               isClearable
               placeholder={
                 isLoading
-                  ? 'Loading categories...'
-                  : 'Search or create category...'
+                  ? "Loading categories..."
+                  : "Search or create category..."
               }
-              value={formData.category}
+              value={formData.category.value === "" ? null : formData.category}
               options={categoryOptions}
               onChange={(newValue: any) => {
                 if (!newValue) {
                   setFormData((prev) => ({
                     ...prev,
-                    category: { value: '', label: '', color: '' },
+                    category: { value: "", label: "", color: "" },
                   }));
                   return;
                 }
@@ -380,11 +444,55 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                 }
               }}
               classNames={{
-                control: () => 'border rounded-md !min-h-[40px]',
-                menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
-                option: () => 'px-3 py-2 hover:bg-gray-50',
+                control: () => "border rounded-md !min-h-[40px]",
+                menu: () => "mt-1 bg-white border rounded-md shadow-lg",
+                option: () => "px-3 py-2 hover:bg-gray-50",
               }}
             />
+          </div>
+
+          <Separator className="border-1" />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Tags</h3>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Add a tag..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim()}
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1"
+                  >
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
           </div>
 
           <Separator className="border-1" />
@@ -392,21 +500,16 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           {/* Description Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Description</h3>
+              <h3 className="font-medium text-sm">Page Content</h3>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsDescriptionDialogOpen(true)}
               >
+                <Pencil className="w-4 h-4" />
                 Edit
               </Button>
             </div>
-
-            <textarea
-              value={formData.description}
-              readOnly
-              className="w-full h-24 rounded-md border p-2 resize-none text-sm"
-            />
           </div>
 
           <Separator className="border-1" />
@@ -417,6 +520,8 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               <h3 className="font-medium text-sm">Short Description</h3>
             </div>
             <RichTextEditor
+              placeholder="Add a short description..."
+              features={["bold", "italic", "link"]}
               onChange={(content: { html: string; markdown: string }) => {
                 setFormData((prev) => ({
                   ...prev,
@@ -429,9 +534,16 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           </div>
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">
           <Button className="w-full" onClick={handleCreate}>
             Create Tile
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => onOpenChange(false)}
+          >
+            Discard
           </Button>
         </div>
 

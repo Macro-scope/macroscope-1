@@ -52,7 +52,7 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
     name: false,
     url: false,
     category: false,
-    description: false
+    description: false,
   });
 
   const [formData, setFormData] = useState({
@@ -61,7 +61,7 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
     logo: "",
     category: { value: "", label: "", color: "" },
     description: "",
-    tags: [] as string[]
+    tags: [] as string[],
   });
 
   const dispatch = useDispatch();
@@ -71,17 +71,17 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
       name: !formData.name.trim(),
       url: !formData.url.trim(),
       category: !formData.category.value,
-      description: !formData.description.trim()
+      description: !formData.description.trim(),
     };
-    
+
     setFormErrors(errors);
-    return !Object.values(errors).some(error => error);
+    return !Object.values(errors).some((error) => error);
   };
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data: categories, error } = await supabase
-        .from("categories") 
+        .from("categories")
         .select("*")
         .eq("map_id", mapId);
 
@@ -103,40 +103,16 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
       setIsLoading(false);
     }
   }, [mapId]);
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !formData.tags.includes(trimmedTag)) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, trimmedTag]
-      }));
-      setTagInput("");
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddTag();
-    }
-  };
 
   useEffect(() => {
-    fetchCategories(); 
+    fetchCategories();
   }, [fetchCategories]);
 
   const handleCreateNewCategory = async (categoryName: string) => {
     try {
       setIsLoading(true);
       const { data: newCategory, error: categoryError } = await supabase
-        .from("categories") 
+        .from("categories")
         .insert({
           map_id: mapId,
           name: categoryName,
@@ -154,7 +130,7 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
           category_id: newCategory.category_id, // Changed from tag_id
           name: categoryName,
         })
-        .select("*, categories!inner(category_id, name, color)") 
+        .select("*, categories!inner(category_id, name, color)")
         .single();
 
       if (cardError) throw cardError;
@@ -186,21 +162,22 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
       return;
     }
 
-    const { data } = await supabase.from("tiles").select().eq("card_id", cardId.cardId);
+    const { data } = await supabase
+      .from("tiles")
+      .select()
+      .eq("card_id", cardId.cardId);
 
     try {
       setIsSaving(true);
-      const { error: updateError } = await supabase
-        .from("tiles")
-        .insert({
-          name: formData.name,
-          url: formData.url,
-          logo: formData.logo,
-          description_markdown: formData.description,
-          card_id: cardId.cardId,
-          order: data?.length || 0,
-          tags: formData.tags
-        });
+      const { error: updateError } = await supabase.from("tiles").insert({
+        name: formData.name,
+        url: formData.url,
+        logo: formData.logo,
+        description_markdown: formData.description,
+        card_id: cardId.cardId,
+        order: data?.length || 0,
+        tags: formData.tags,
+      });
 
       if (updateError) throw updateError;
 
@@ -218,7 +195,6 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
     }
   };
 
-
   const handleDescriptionSave = async (content: {
     html: string;
     markdown: string;
@@ -235,10 +211,10 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
   };
 
   return (
-    <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+    <Card className="w-[360px] border-none shadow-lg h-full overflow-y-auto border-l-2 border-gray-200">
       <div className="p-2">
         <div className="flex items-center justify-between">
-          <span className="text-base">Edit Tile</span>
+          <span className="text-base">Add Tile </span>
           <Button
             variant="ghost"
             size="icon"
@@ -372,49 +348,6 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
             }}
           />
         </div>
-        <Separator className="border-1" />
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">Tags</h3>
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Add a tag..."
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleAddTag}
-                disabled={!tagInput.trim()}
-                size="sm"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1"
-                >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    <XCircle className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
 
         <Separator className="border-1" />
 
@@ -436,24 +369,14 @@ const AddTile = ({ mapId, tileData }: TileSettingsProps) => {
             readOnly
             className="w-full h-24 rounded-md border p-2 resize-none text-sm"
           />
-
-          
         </div>
       </CardContent>
 
       <CardFooter className="flex gap-2 mt-6">
-        <Button 
-          disabled={isSaving} 
-          className="w-full" 
-          onClick={handleSave}
-        >
+        <Button disabled={isSaving} className="w-full" onClick={handleSave}>
           {isSaving ? "Adding tile..." : "Add tile"}
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full" 
-          onClick={handleDiscard}
-        >
+        <Button variant="outline" className="w-full" onClick={handleDiscard}>
           Discard
         </Button>
       </CardFooter>

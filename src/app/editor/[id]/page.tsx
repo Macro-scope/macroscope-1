@@ -14,6 +14,7 @@ import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import AddForm from "./_component/add-form";
 
 const EditorMain = () => {
   const { mapSettings, tileData } = useSelector((state: any) => ({
@@ -49,7 +50,7 @@ const EditorMain = () => {
       parentCategoryLocal: <ParentCategoryLocalSettings />,
       tile: <TileSettings mapId={mapId} tileData={tileData} />,
       reorder: <Reordering mapId={mapId} />,
-      addTile: <AddTile mapId={mapId} tileData={tileData} />,
+      addTile: <AddForm open={mapSettings === "addTile"} mapId={mapId} />,
     };
 
     const SettingComponent = settingComponents[mapSettings];

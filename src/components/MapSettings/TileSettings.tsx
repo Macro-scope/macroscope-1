@@ -16,8 +16,11 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import Select from "react-select/creatable";
 import { supabase } from "@/lib/supabaseClient";
@@ -28,6 +31,7 @@ import { getMapData } from "@/hooks/getMapData";
 import { TiptapEditor } from "../editor/tiptap-editor";
 import { ImageUpload } from "../database/image-upload";
 import { Input } from "../ui/input";
+import { toast } from "sonner";
 
 interface TileSettingsProps {
   mapId: string;
@@ -47,7 +51,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     logo: tileData?.logo || "",
     category: tileData?.category || { value: "", label: "", color: "" },
     description: tileData?.description || "",
-    tags: tileData?.tags || []
+    tags: tileData?.tags || [],
   });
 
   const dispatch = useDispatch();
@@ -56,7 +60,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     try {
       setIsLoading(true);
       const { data: categories, error } = await supabase
-        .from("categories") 
+        .from("categories")
         .select("*")
         .eq("map_id", mapId);
 
@@ -86,23 +90,23 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        tags: [...prev.tags, trimmedTag]
+        tags: [...prev.tags, trimmedTag],
       }));
       setTagInput("");
     }
   };
 
   const handleRemoveTag = (tagToRemove: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
+      tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       e.preventDefault();
       handleAddTag();
     }
@@ -112,7 +116,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     try {
       setIsLoading(true);
       const { data: newCategory, error: categoryError } = await supabase
-        .from("categories") 
+        .from("categories")
         .insert({
           map_id: mapId,
           name: categoryName,
@@ -130,7 +134,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           category_id: newCategory.category_id,
           name: categoryName,
         })
-        .select("*, categories!inner(category_id, name, color)") 
+        .select("*, categories!inner(category_id, name, color)")
         .single();
 
       if (cardError) throw cardError;
@@ -238,9 +242,31 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     setShowDiscardDialog(true);
   };
 
+  const handleDeleteTile = async () => {
+    try {
+      const { error } = await supabase
+        .from("tiles")
+        .delete()
+        .eq("tile_id", tileData.tile_id);
+
+      if (error) throw error;
+
+      const mapData = await getMapData(mapId);
+      if (mapData) {
+        console.log(mapData.cards);
+        dispatch(setCards(mapData.cards));
+      }
+
+      dispatch(setMapSettings("none"));
+      toast.success("Tile deleted successfully");
+    } catch (error) {
+      console.error("Error deleting tile:", error);
+      toast.error("Failed to delete tile");
+    }
+  };
 
   return (
-    <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+    <Card className="w-[360px] border-none shadow-lg  h-full overflow-y-auto">
       <div className="p-2">
         <div className="flex items-center justify-between">
           <span className="text-base">Edit Tile</span>
@@ -384,7 +410,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-sm">Tags</h3>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex gap-2">
               <Input
@@ -395,7 +421,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
                 placeholder="Add a tag..."
                 className="flex-1"
               />
-              <Button 
+              <Button
                 onClick={handleAddTag}
                 disabled={!tagInput.trim()}
                 size="sm"
@@ -403,7 +429,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {formData.tags.map((tag, index) => (
                 <span
@@ -422,9 +448,6 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
             </div>
           </div>
         </div>
-
-
-
 
         <Separator className="border-1" />
 
@@ -447,13 +470,36 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
             className="w-full h-24 rounded-md border p-2 resize-none text-sm"
           />
 
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground ">
             Last Modified: {new Date(tileData?.last_updated).toLocaleString()}
           </div>
         </div>
+
+        <Separator className="border-1" />
+        <div className="flex items-center justify-between pb-12">
+          <h3 className="font-medium text-sm">Danger</h3>
+          <Dialog>
+            <DialogTrigger>
+              <Button variant="destructive" size="sm">
+                Delete Tile
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Tile</DialogTitle>
+              </DialogHeader>
+              <DialogDescription>
+                Are you sure you want to delete this tile?
+              </DialogDescription>
+              <DialogFooter>
+                <Button onClick={handleDeleteTile}>Delete</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </CardContent>
 
-      <CardFooter className="flex  gap-2 mt-6">
+      <CardFooter className="flex absolute bottom-0 left-0 right-0 py-4 bg-background gap-2">
         <Button className="w-full" onClick={handleSave}>
           Save Changes
         </Button>

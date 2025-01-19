@@ -95,13 +95,23 @@ const LocalSettings = () => {
       setLoading(true);
 
       if (deleteItems) {
+        const { data: cardData } = await supabase
+          .from("cards")
+          .select("*")
+          .eq("card_id", cardId)
+          .single();
         // Delete the card
         const { error: cardError } = await supabase
           .from("cards")
           .delete()
           .eq("card_id", cardId);
+        const { error: categoryError } = await supabase
+          .from("categories")
+          .delete()
+          .eq("category_id", cardData?.category_id);
 
         if (cardError) throw cardError;
+        if (categoryError) throw categoryError;
       } else {
         // Find or create 'Other' category
         const { data: otherCategory, error: categoryError } = await supabase
@@ -233,7 +243,7 @@ const LocalSettings = () => {
   );
 
   return (
-    <Card className="w-[360px] border-none shadow-none h-full flex flex-col">
+    <Card className="w-[360px] border-none shadow-lg h-full flex flex-col">
       <div className="p-2 flex-shrink-0">
         <div className="flex items-center justify-between">
           <span className="font-medium text-md">Local Settings</span>
@@ -325,7 +335,8 @@ const LocalSettings = () => {
             />
           </div>
         </div>
-        <div className="flex justify-between p-4">
+        <Separator />
+        <div className="flex justify-between items-center p-4">
           <Label className="text-red-600">Danger zone</Label>
           <Button
             variant="destructive"
@@ -363,7 +374,7 @@ const LocalSettings = () => {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent className="bg-white p-6 max-w-[400px]">
           <div className="flex justify-between items-center">
-            <AlertDialogTitle className="text-xl font-semibold mb-4">
+            <AlertDialogTitle className="text-xl font-semibold">
               Delete Group
             </AlertDialogTitle>
             <Button
@@ -374,14 +385,14 @@ const LocalSettings = () => {
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <AlertDialogDescription className="mb-6">
+          <AlertDialogDescription className="">
             Choose how to handle this group
           </AlertDialogDescription>
           <div className="space-y-3">
             <button
               onClick={() => handleDeleteOption(false)}
               disabled={loading}
-              className="w-full bg-black text-white p-3 text-sm text-left rounded-md hover:bg-gray-800 disabled:opacity-50"
+              className="w-full bg-black text-white p-3 text-sm  rounded-md hover:bg-gray-800 disabled:opacity-50 text-center"
             >
               Move group to &apos;Other&apos; category
             </button>
