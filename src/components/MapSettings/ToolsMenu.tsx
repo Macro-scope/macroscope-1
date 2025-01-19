@@ -17,10 +17,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Card } from "@/components/ui/card";
-import { MousePointer, Image as ImageIcon, Settings, Plus } from "lucide-react";
+import {
+  MousePointer2,
+  Image as ImageIcon,
+  Settings,
+  Plus,
+} from "lucide-react";
 import AddForm from "@/app/editor/[id]/_component/add-form";
 
-const iconStyle = {
+export const iconStyle = {
   width: "20px",
   height: "20px",
   minWidth: "20px",
@@ -108,7 +113,7 @@ const ToolsMenu = () => {
                   onClick={() => dispatch(setHandTool(!handTool))}
                   className="h-10 w-10 transition-all hover:scale-105"
                 >
-                  <MousePointer
+                  <MousePointer2
                     style={iconStyle}
                     strokeWidth={!handTool ? 2 : 1.5}
                   />

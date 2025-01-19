@@ -86,23 +86,11 @@ export default function PublishedMap() {
 
     const getMapId = async () => {
       try {
-        // const { data } = await supabase
-        //   .from("maps")
-        //   .select("name")
-        //   .eq("map_id", mapId)
-        //   .single();
-
-        // if (!data) {
-        //   setIsPublished(false);
-        //   return;
-        // }
-
         const { data: map } = await supabase
           .from("maps")
           .select()
           .eq("map_id", mapId)
           .single();
-        console.log("Heloo ===>>>>>>", map);
 
         setIsPublished(map?.is_published);
         console.log(currUser);

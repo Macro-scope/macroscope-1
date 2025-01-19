@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabaseClient';
-import { useSelector } from 'react-redux';
-import { X } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabaseClient";
+import { useSelector } from "react-redux";
+import { X } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,16 +16,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   tileId: string;
@@ -37,10 +37,10 @@ const TileEditDrawer = (props: Props) => {
   const [categories, setCategories] = useState([]);
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
-    url: '',
-    category: '',
-    description: '',
+    name: "",
+    url: "",
+    category: "",
+    description: "",
   });
 
   const { mapCards } = useSelector((state: any) => ({
@@ -59,17 +59,17 @@ const TileEditDrawer = (props: Props) => {
   useEffect(() => {
     const getTileInfo = async (tileId: string) => {
       const { data } = await supabase
-        .from('tiles')
+        .from("tiles")
         .select()
-        .eq('tile_id', tileId)
+        .eq("tile_id", tileId)
         .single();
 
       setTile(data);
       setFormData({
-        name: data?.name || '',
-        url: data?.url || '',
-        category: data?.card_id || '',
-        description: data?.description || '',
+        name: data?.name || "",
+        url: data?.url || "",
+        category: data?.card_id || "",
+        description: data?.description || "",
       });
     };
 
@@ -85,21 +85,21 @@ const TileEditDrawer = (props: Props) => {
     const isToday = date.toDateString() === today.toDateString();
     const isYesterday = date.toDateString() === yesterday.toDateString();
 
-    if (isToday) return 'Today';
-    if (isYesterday) return 'Yesterday';
+    if (isToday) return "Today";
+    if (isYesterday) return "Yesterday";
     return new Date(timestamp).toLocaleString();
   };
 
   const saveTileSettings = async () => {
     const { error } = await supabase
-      .from('tiles')
+      .from("tiles")
       .update({
         name: formData.name,
         url: formData.url,
         card_id: formData.category,
         description: formData.description,
       })
-      .eq('tile_id', props.tileId);
+      .eq("tile_id", props.tileId);
 
     if (error) {
       console.error(error);
@@ -110,10 +110,10 @@ const TileEditDrawer = (props: Props) => {
 
   return (
     <>
-      <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+      <Card className="w-[360px] border-none shadow-lg h-full overflow-y-auto">
         <div className="p-2">
           <div className="flex items-center justify-between">
-            <span className="text-base">Edit Tile</span>
+            <span className="text-base">Edit Tiles</span>
             <Button
               variant="ghost"
               size="icon"
@@ -233,7 +233,7 @@ const TileEditDrawer = (props: Props) => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex flex-col gap-2 mt-6">
+        <CardFooter className="flex absolute bottom-0 left-0 right-0 py-4 bg-background gap-2">
           <Button className="w-full" onClick={saveTileSettings}>
             Save Changes
           </Button>

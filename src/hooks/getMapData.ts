@@ -5,22 +5,24 @@ export const getMapData = async (mapId: string) => {
     // First get the main map data with cards, categories and tiles
     const { data: mapData, error: mapError } = await supabase
       .from("maps")
-      .select(`
+      .select(
+        `
         *,
         cards!left(
           *,
-          tiles!left(*),
+          tiles(*),
           categories!left(*)
         )
-      `)
-      .eq('map_id', mapId)
+      `
+      )
+      .eq("map_id", mapId)
       .single();
 
     // Then get parent categories data
     const { data: parentCategories, error: parentError } = await supabase
       .from("parent_categories")
-      .select('*')
-      .eq('map_id', mapId);
+      .select("*")
+      .eq("map_id", mapId);
 
     if (mapError) {
       console.error("Map error:", mapError);
@@ -35,11 +37,10 @@ export const getMapData = async (mapId: string) => {
     // Combine the data
     return {
       ...mapData,
-      parent_categories: parentCategories
+      parent_categories: parentCategories,
     };
-
   } catch (error) {
-    console.error('Fetching map data error:', error);
+    console.error("Fetching map data error:", error);
     return null;
   }
 };

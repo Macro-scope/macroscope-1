@@ -11,7 +11,7 @@ import { RootState } from "@/redux/store";
 
 type Props = {
   isPrevopen: (value: boolean) => void;
-  mapId:string
+  mapId: string;
 };
 
 const PublishMapSettings = (props: Props) => {
@@ -32,15 +32,27 @@ const PublishMapSettings = (props: Props) => {
       label: <span className="font-medium text-sm">Settings</span>,
       children: <SettingsTab mapId={props.mapId} />,
     },
-    {
-      key: "2",
-      label: <span className="font-medium text-sm">Website</span>,
-      children: <WebsiteSettings isPrevOpen={props.isPrevopen} />,
-    },
+    // {
+    //   key: "2",
+    //   label: <span className="font-medium text-sm">Website</span>,
+    //   children: <WebsiteSettings isPrevOpen={props.isPrevopen} />,
+    // },
     {
       key: "3",
       label: <span className="font-medium text-sm">Embed</span>,
-      children: <EmbedSettings />,
+      children: (
+        <div className="flex flex-col items-center  justify-center h-full py-20">
+          <h2 className="text-xl text-gray-600 font-medium mb-2">
+            Coming soon
+          </h2>
+          <p className="text-xs text-gray-400">
+            We are working on this feature.
+          </p>
+          <p className="text-xs text-gray-400">
+            You can expect the feature to be available in 1-2 weeks
+          </p>
+        </div>
+      ),
     },
     {
       key: "4",
@@ -74,16 +86,20 @@ const PublishMapSettings = (props: Props) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm">Macroscope branding</span>
-            <span className="bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded">Pro</span>
+            <span className="bg-green-100 text-green-800 text-xs px-1.5 py-0.5 rounded">
+              Pro
+            </span>
           </div>
-          <div 
-            className={`w-11 h-6 ${isBrandingEnabled ? 'bg-black' : 'bg-gray-300'} rounded-full relative transition-colors duration-300 cursor-pointer`}
+          <div
+            className={`w-11 h-6 ${
+              isBrandingEnabled ? "bg-black" : "bg-gray-300"
+            } rounded-full relative transition-colors duration-300 cursor-pointer`}
             onClick={() => setIsBrandingEnabled(!isBrandingEnabled)}
           >
-            <div 
+            <div
               className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-300 ${
-                isBrandingEnabled ? 'translate-x-5' : 'translate-x-0'
-              }`} 
+                isBrandingEnabled ? "translate-x-5" : "translate-x-0"
+              }`}
             />
           </div>
         </div>

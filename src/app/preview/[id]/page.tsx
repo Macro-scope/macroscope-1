@@ -141,6 +141,7 @@ export default function PublishedMap() {
     try {
       const data: any = await getMapData(mapId);
       if (data) {
+        console.log(data);
         dispatch(setCards(data.cards));
         setCurrCards(data.cards);
         updateCanvasSize(data.cards);
@@ -471,42 +472,38 @@ export default function PublishedMap() {
                 style={{ zIndex: 1 }}
                 id="canvasID"
               />
-              {currCards?.map((card: any) =>
-                card.tiles.length > 0 ? (
-                  <Rnd
-                    disableDragging={true}
-                    enableResizing={false}
-                    key={card.card_id}
-                    size={{
-                      width: card.dimension[0] as number,
-                      height: card.dimension[1] as number,
-                    }}
-                    position={{
-                      x: card.position[0],
-                      y: card.position[1],
-                    }}
-                    style={{ zIndex: 1000 }}
-                    bounds="parent"
-                    scale={zoom}
-                    className="mappedCards z-50"
-                  >
-                    <ResizableNode
-                      tagId={card.category_id}
-                      settings={card.settings}
-                      tiles={card.tiles}
-                      tagName={card.name}
-                      cardId={card.card_id}
-                      isViewer={true}
-                      isDoubleClick={false}
-                      description={card.description}
-                      selectedTags={selectedTags}
-                      // handleDynamicSizeChange={handleDynamicSizeChange}
-                    />
-                  </Rnd>
-                ) : (
-                  <></>
-                )
-              )}
+              {currCards?.map((card: any) => (
+                <Rnd
+                  disableDragging={true}
+                  enableResizing={false}
+                  key={card.card_id}
+                  size={{
+                    width: card.dimension[0] as number,
+                    height: card.dimension[1] as number,
+                  }}
+                  position={{
+                    x: card.position[0],
+                    y: card.position[1],
+                  }}
+                  style={{ zIndex: 1000 }}
+                  bounds="parent"
+                  scale={zoom}
+                  className="mappedCards z-50"
+                >
+                  <ResizableNode
+                    tagId={card.category_id}
+                    settings={card.settings}
+                    tiles={card.tiles}
+                    tagName={card.name}
+                    cardId={card.card_id}
+                    isViewer={true}
+                    isDoubleClick={false}
+                    description={card.description}
+                    selectedTags={selectedTags}
+                    // handleDynamicSizeChange={handleDynamicSizeChange}
+                  />
+                </Rnd>
+              ))}
               {images &&
                 images?.map((image: any) => (
                   <Rnd

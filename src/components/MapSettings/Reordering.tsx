@@ -200,7 +200,7 @@ const Reordering = ({ mapId }: { mapId: string }) => {
   }
 
   return (
-    <Card className="w-[360px] border-none shadow-none h-full flex flex-col">
+    <Card className="w-[360px] border-none shadow-lg h-full flex flex-col">
       <div className="flex-grow p-4 min-h-[200px]">
         <div className="flex items-center justify-between mb-4">
           <Label className="text-lg font-semibold">Reorder Tiles</Label>

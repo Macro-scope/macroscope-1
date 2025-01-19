@@ -36,7 +36,6 @@ import {
   TbBorderCornerSquare,
 } from "react-icons/tb";
 
-
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
@@ -171,7 +170,7 @@ const GlobalSettings = () => {
 
   return (
     <>
-      <Card className="w-[360px] border-none shadow-none h-full overflow-y-auto">
+      <Card className="w-[360px] border-none shadow-lg h-full overflow-y-auto">
         <div className="p-2">
           <div className="flex items-center justify-between">
             <span className="font-medium text-md">Global Settings</span>
@@ -435,7 +434,7 @@ const GlobalSettings = () => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex  gap-2 mt-6">
+        <CardFooter className="flex absolute bottom-0 left-0 right-0 py-4 bg-background gap-2">
           <Button className="w-full" onClick={saveSettings}>
             Save Changes
           </Button>
@@ -448,9 +447,7 @@ const GlobalSettings = () => {
       <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
         <AlertDialogContent className="w-96">
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Save Changes
-            </AlertDialogTitle>
+            <AlertDialogTitle>Save Changes</AlertDialogTitle>
             <AlertDialogDescription>
               Do you want to save these changes?
             </AlertDialogDescription>
