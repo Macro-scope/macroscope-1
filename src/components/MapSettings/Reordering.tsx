@@ -4,13 +4,14 @@ import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import { supabase } from "@/lib/supabaseClient";
 import { Rnd } from "react-rnd";
-import { GripVertical, Loader } from "lucide-react";
+import { GripVertical, Loader, X } from "lucide-react";
 import { RootState } from "@/redux/store";
 import { setMapSettings } from "@/redux/mapSettingsSlice";
 import { Label } from "../ui/label";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getMapData } from "@/hooks/getMapData";
 import { toast } from "sonner";
+import { Sheet, SheetContent } from "../ui/sheet";
 
 interface Tile {
   tile_id: string;
@@ -199,107 +200,122 @@ const Reordering = ({ mapId }: { mapId: string }) => {
     );
   }
 
+  const mapSettings = useSelector(
+    (state: RootState) => state.mapSettings.value
+  );
+
   return (
-    <Card className="w-[360px] border-none shadow-lg h-full flex flex-col">
-      <div className="flex-grow p-4 min-h-[200px]">
-        <div className="flex items-center justify-between mb-4">
-          <Label className="text-lg font-semibold">Reorder Tiles</Label>
+    <Sheet
+      open={mapSettings === "reorder"}
+      onOpenChange={() => dispatch(setMapSettings("none"))}
+    >
+      <SheetContent
+        className="w-[360px] shadow-none h-[calc(100vh-60px)] mt-12 pt-0 p-0"
+        side="right"
+      >
+        <div className="px-4 py-2 flex justify-between items-center pb-2 border-b-[1.2px] border-gray-200">
+          <div className="text-lg font-medium">Reorder Tiles</div>
+          <Button variant="ghost" size="icon" onClick={handleDiscard}>
+            <X className="w-4 h-4" />
+          </Button>
         </div>
 
-        {loading && (
-          <div className="flex flex-col items-center justify-center h-40 gap-2">
-            <Loader className="animate-spin h-6 w-6 text-gray-400" />
-            {saveProgress > 0 && (
-              <div className="text-sm text-gray-500">
-                Saving... {saveProgress}%
-              </div>
-            )}
-          </div>
-        )}
-
-        {error && (
-          <div className="p-4 text-red-500 text-center rounded bg-red-50">
-            Error: {error}
-          </div>
-        )}
-
-        {!loading && !error && tiles.length === 0 && (
-          <div className="p-4 text-gray-500 text-center">No tiles found</div>
-        )}
-
-        {!loading && !error && tiles.length > 0 && (
-          <div
-            className="relative w-full transition-all duration-200"
-            style={{ height: `${tiles.length * TILE_HEIGHT}px` }}
-          >
-            {tiles.map((tile: Tile) => (
-              <Rnd
-                key={tile.tile_id}
-                position={{
-                  x: 0,
-                  y: tile.order * TILE_HEIGHT,
-                }}
-                bounds="parent"
-                enableResizing={false}
-                onDragStart={handleDragStart}
-                onDragStop={(e, d) => handleDragStop(tile.tile_id, d)}
-                dragAxis="y"
-                className={`w-full transition-shadow ${
-                  isDragging ? "z-50" : "z-0"
-                }`}
-              >
-                <div className="flex items-center w-full gap-3 p-3 rounded-lg border bg-card hover:bg-accent/5 cursor-move transition-colors">
-                  <GripVertical className="h-4 w-4 text-gray-400" />
-                  {tile.logo || tile.url ? (
-                    <img
-                      className="h-8 w-8 rounded-md object-contain"
-                      src={
-                        tile.logo ||
-                        `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
-                      }
-                      alt={tile.name}
-                      onError={(e) => {
-                        e.currentTarget.src = `https://ui-avatars.com/api/?name=${tile.name}&background=random`;
-                      }}
-                    />
-                  ) : (
-                    <div className="h-8 w-8 rounded-md bg-gray-100 flex items-center justify-center">
-                      {tile.name.charAt(0)}
-                    </div>
-                  )}
-                  <span className="font-medium">{tile.name}</span>
+        <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-140px)]">
+          {loading && (
+            <div className="flex flex-col items-center justify-center h-40 gap-2">
+              <Loader className="animate-spin h-6 w-6 text-gray-400" />
+              {saveProgress > 0 && (
+                <div className="text-sm text-gray-500">
+                  Saving... {saveProgress}%
                 </div>
-              </Rnd>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="p-4 flex gap-2 bg-gray-50 border-t mt-auto">
-        <Button
-          className="w-full"
-          onClick={handleSave}
-          disabled={!hasUnsavedChanges || loading}
-        >
-          {loading ? (
-            <span className="flex items-center gap-2">
-              <Loader className="animate-spin h-4 w-4" />
-              {saveProgress > 0 ? `Saving ${saveProgress}%` : "Saving..."}
-            </span>
-          ) : (
-            "Save Changes"
+              )}
+            </div>
           )}
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={handleDiscard}
-          disabled={loading}
-        >
-          Discard Changes
-        </Button>
-      </div>
-    </Card>
+
+          {error && (
+            <div className="p-4 text-red-500 text-center rounded bg-red-50">
+              Error: {error}
+            </div>
+          )}
+
+          {!loading && !error && tiles.length === 0 && (
+            <div className="p-4 text-gray-500 text-center">No tiles found</div>
+          )}
+
+          {!loading && !error && tiles.length > 0 && (
+            <div
+              className="relative w-full transition-all duration-200"
+              style={{ height: `${tiles.length * TILE_HEIGHT}px` }}
+            >
+              {tiles.map((tile: Tile) => (
+                <Rnd
+                  key={tile.tile_id}
+                  position={{
+                    x: 0,
+                    y: tile.order * TILE_HEIGHT,
+                  }}
+                  bounds="parent"
+                  enableResizing={false}
+                  onDragStart={handleDragStart}
+                  onDragStop={(e, d) => handleDragStop(tile.tile_id, d)}
+                  dragAxis="y"
+                  className={`w-full transition-shadow ${
+                    isDragging ? "z-50" : "z-0"
+                  }`}
+                >
+                  <div className="flex items-center w-full gap-3 p-3 rounded-lg border bg-card hover:bg-accent/5 cursor-move transition-colors">
+                    <GripVertical className="h-4 w-4 text-gray-400" />
+                    {tile.logo || tile.url ? (
+                      <img
+                        className="h-8 w-8 rounded-md object-contain"
+                        src={
+                          tile.logo ||
+                          `https://icons.duckduckgo.com/ip3/www.${tile.url}.ico`
+                        }
+                        alt={tile.name}
+                        onError={(e) => {
+                          e.currentTarget.src = `https://ui-avatars.com/api/?name=${tile.name}&background=random`;
+                        }}
+                      />
+                    ) : (
+                      <div className="h-8 w-8 rounded-md bg-gray-100 flex items-center justify-center">
+                        {tile.name.charAt(0)}
+                      </div>
+                    )}
+                    <span className="font-medium">{tile.name}</span>
+                  </div>
+                </Rnd>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">
+          <Button
+            className="w-full"
+            onClick={handleSave}
+            disabled={!hasUnsavedChanges || loading}
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader className="animate-spin h-4 w-4" />
+                {saveProgress > 0 ? `Saving ${saveProgress}%` : "Saving..."}
+              </span>
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleDiscard}
+            disabled={loading}
+          >
+            Discard Changes
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 

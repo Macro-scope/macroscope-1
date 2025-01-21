@@ -36,6 +36,7 @@ import Skeleton from "@/components/ui/skeleton";
 import { toast } from "react-toastify";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
+import { Sheet, SheetContent } from "../ui/sheet";
 
 const LocalSettings = () => {
   const [showDiscardDialog, setShowDiscardDialog] = useState(false);
@@ -64,13 +65,14 @@ const LocalSettings = () => {
   }));
 
   const dispatch = useDispatch();
+  const mapSettings = useSelector(
+    (state: RootState) => state.mapSettings.value
+  );
   let { id: mapId } = useParams();
   mapId = String(mapId);
 
-  // Initialize local state with Redux state
   useEffect(() => {
     setLocalSettingsState({ ...reduxSettings, cardId });
-    // Add a small delay to simulate data loading and prevent flash
     setTimeout(() => setIsInitialLoading(false), 500);
   }, [reduxSettings]);
 
@@ -243,25 +245,22 @@ const LocalSettings = () => {
   );
 
   return (
-    <Card className="w-[360px] border-none shadow-lg h-full flex flex-col">
-      <div className="p-2 flex-shrink-0">
-        <div className="flex items-center justify-between">
-          <span className="font-medium text-md">Local Settings</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDiscard}
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
+    <Sheet
+      open={mapSettings === "local"}
+      onOpenChange={() => dispatch(setMapSettings("none"))}
+    >
+      <SheetContent
+        className="w-[360px] shadow-none h-[calc(100vh-60px)] mt-12 pt-0 p-0"
+        side="right"
+      >
+        <div className="px-4 py-2 flex justify-between items-center pb-2 border-b-[1.2px] border-gray-200">
+          <div className="text-lg font-medium">Local Settings</div>
+          <Button variant="ghost" size="icon" onClick={handleDiscard}>
+            <X className="w-4 h-4" />
           </Button>
         </div>
-      </div>
 
-      <Separator className="flex-shrink-0" />
-
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 space-y-6">
+        <div className="p-4 space-y-6 overflow-y-auto h-[calc(100%-140px)]">
           {/* Group Styles */}
           <div className="space-y-4">
             {isInitialLoading ? (
@@ -314,7 +313,7 @@ const LocalSettings = () => {
             </div>
           </div>
 
-          <Separator />
+          <Separator className="border-1" />
 
           {/* Tile Styles */}
           <div className="space-y-4">
@@ -334,106 +333,115 @@ const LocalSettings = () => {
               }
             />
           </div>
-        </div>
-        <Separator />
-        <div className="flex justify-between items-center p-4">
-          <Label className="text-red-600">Danger zone</Label>
-          <Button
-            variant="destructive"
-            onClick={() => {
-              setShowDeleteDialog(true);
-            }}
-          >
-            <Trash /> Delete Group
-          </Button>
-        </div>
-      </div>
 
-      <div className="p-4 flex  gap-2 bg-white border-t">
-        <Button
-          className="w-full"
-          onClick={saveSettings}
-          disabled={!hasUnsavedChanges || loading}
-        >
-          {loading ? (
-            <Loader className="animate-spin h-4 w-4" />
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
-        <Button
-          variant="outline"
-          className="w-full"
-          onClick={handleDiscard}
-          disabled={loading}
-        >
-          Discard
-        </Button>
-      </div>
+          <Separator className="border-1" />
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent className="bg-white p-6 max-w-[400px]">
+          {/* Danger Zone */}
           <div className="flex justify-between items-center">
-            <AlertDialogTitle className="text-xl font-semibold">
-              Delete Group
-            </AlertDialogTitle>
+            <Label className="text-red-600">Danger zone</Label>
             <Button
-              variant="ghost"
-              className="h-8 w-8 p-0"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <AlertDialogDescription className="">
-            Choose how to handle this group
-          </AlertDialogDescription>
-          <div className="space-y-3">
-            <button
-              onClick={() => handleDeleteOption(false)}
-              disabled={loading}
-              className="w-full bg-black text-white p-3 text-sm  rounded-md hover:bg-gray-800 disabled:opacity-50 text-center"
-            >
-              Move group to &apos;Other&apos; category
-            </button>
-            <button
-              onClick={() => handleDeleteOption(true)}
-              disabled={loading}
-              className="w-full p-3 text-center text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50"
-            >
-              Delete group permanently
-            </button>
-          </div>
-        </AlertDialogContent>
-      </AlertDialog>
-      {/* Discard Dialog */}
-      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent className="w-96">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Unsaved Changes
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You have unsaved changes. Do you want to save them before closing?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={discardChanges}>
-              Discard
-            </AlertDialogCancel>
-            <AlertDialogAction
+              variant="destructive"
               onClick={() => {
-                saveSettings();
-                setShowDiscardDialog(false);
+                setShowDeleteDialog(true);
               }}
             >
-              Save Changes
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Card>
+              <Trash className="w-4 h-4 mr-2" /> Delete Group
+            </Button>
+          </div>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">
+          <Button
+            className="w-full"
+            onClick={saveSettings}
+            disabled={!hasUnsavedChanges || loading}
+          >
+            {loading ? (
+              <Loader className="animate-spin h-4 w-4" />
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={handleDiscard}
+            disabled={loading}
+          >
+            Discard
+          </Button>
+        </div>
+
+        {/* Delete Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent className="bg-white p-6 max-w-[400px]">
+            <div className="flex justify-between items-center">
+              <AlertDialogTitle className="text-xl font-semibold">
+                Delete Group
+              </AlertDialogTitle>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={() => setShowDeleteDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <AlertDialogDescription>
+              Choose how to handle this group
+            </AlertDialogDescription>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleDeleteOption(false)}
+                disabled={loading}
+                className="w-full bg-black text-white p-3 text-sm rounded-md hover:bg-gray-800 disabled:opacity-50 text-center"
+              >
+                Move group to &apos;Other&apos; category
+              </button>
+              <button
+                onClick={() => handleDeleteOption(true)}
+                disabled={loading}
+                className="w-full p-3 text-center text-sm border rounded-md hover:bg-gray-50 disabled:opacity-50"
+              >
+                Delete group permanently
+              </button>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Discard Dialog */}
+        <AlertDialog
+          open={showDiscardDialog}
+          onOpenChange={setShowDiscardDialog}
+        >
+          <AlertDialogContent className="w-96">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                Unsaved Changes
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You have unsaved changes. Do you want to save them before
+                closing?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={discardChanges}>
+                Discard
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  saveSettings();
+                  setShowDiscardDialog(false);
+                }}
+              >
+                Save Changes
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

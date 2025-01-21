@@ -2,7 +2,16 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { X, Upload, Link2, Camera, Trash2, Plus, XCircle } from "lucide-react";
+import {
+  X,
+  Upload,
+  Link2,
+  Camera,
+  Trash2,
+  Plus,
+  XCircle,
+  Pencil,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,7 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import Select from "react-select/creatable";
 import { supabase } from "@/lib/supabaseClient";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setMapSettings } from "@/redux/mapSettingsSlice";
 import { setCards } from "@/redux/mapCardsSlice";
 import { getMapData } from "@/hooks/getMapData";
@@ -32,6 +41,8 @@ import { TiptapEditor } from "../editor/tiptap-editor";
 import { ImageUpload } from "../database/image-upload";
 import { Input } from "../ui/input";
 import { toast } from "sonner";
+import { Sheet, SheetContent } from "../ui/sheet";
+import { RootState } from "@/redux/store";
 
 interface TileSettingsProps {
   mapId: string;
@@ -54,6 +65,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     tags: tileData?.tags || [],
   });
 
+  const mapSettings = useSelector((state: RootState) => state.mapSettings);
   const dispatch = useDispatch();
 
   const fetchCategories = useCallback(async () => {
@@ -266,313 +278,320 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   };
 
   return (
-    <Card className="w-[360px] border-none shadow-lg  h-full overflow-y-auto">
-      <div className="p-2">
-        <div className="flex items-center justify-between">
-          <span className="text-base">Edit Tile</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDiscard}
-            className="h-8 w-8 p-0"
-          >
-            <X className="h-4 w-4" />
+    <Sheet
+      open={mapSettings.value === "tile"}
+      onOpenChange={() => dispatch(setMapSettings("none"))}
+    >
+      <SheetContent
+        className="w-[360px] shadow-none h-[calc(100vh-60px)] mt-12 pt-0 p-0"
+        side="right"
+      >
+        <div className="px-4 py-2 flex justify-between items-center pb-2 border-b-[1.2px] border-gray-200">
+          <div className="text-lg font-medium">Edit Tile</div>
+          <Button variant="ghost" size="icon" onClick={handleDiscard}>
+            <X className="w-4 h-4" />
           </Button>
         </div>
-      </div>
 
-      <div className="h-[1px] w-full bg-border" />
-      <div className="p-4 space-y-6"></div>
-
-      <CardContent className="space-y-6">
-        {/* Image Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-sm">Image</h3>
-          </div>
-          <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group">
-            {formData.logo ? (
-              <img
-                src={formData.logo}
-                alt="Logo"
-                className="w-full h-full object-contain rounded-lg"
-              />
-            ) : (
-              <Camera className="w-12 h-12 text-gray-300" />
-            )}
-            <div className="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsImageDialogOpen(true)}
-              >
-                <Upload className="w-4 h-4 mr-2" />
-                Upload Image
-              </Button>
-              {formData.logo && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setFormData((prev) => ({ ...prev, logo: "" }))}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <Separator className="border-1" />
-
-        {/* Basic Info Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-sm">Basic Info</h3>
-          </div>
-
+        <div className="p-4 space-y-6 overflow-y-auto h-[calc(100%-140px)]">
+          {/* Image Section */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Name</span>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-48 h-8 rounded-md border px-2"
-              />
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Image</h3>
             </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">URL</span>
-              <div className="relative w-48">
-                <input
-                  type="text"
-                  value={formData.url}
-                  onChange={(e) =>
-                    setFormData({ ...formData, url: e.target.value })
-                  }
-                  className="w-full h-8 rounded-md border px-2 pr-8"
+            <div className="relative w-full h-40 bg-gray-50 rounded-lg flex items-center justify-center group">
+              {formData.logo ? (
+                <img
+                  src={formData.logo}
+                  alt="Logo"
+                  className="w-full h-full object-contain rounded-lg"
                 />
-                <Link2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              ) : (
+                <Camera className="w-12 h-12 text-gray-300" />
+              )}
+              <div className="absolute right-2 bottom-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setIsImageDialogOpen(true)}
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload Image
+                </Button>
+                {formData.logo && (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() =>
+                      setFormData((prev) => ({ ...prev, logo: "" }))
+                    }
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
-        </div>
 
-        <Separator className="border-1" />
+          <Separator className="border-1" />
 
-        {/* Category Section */}
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h3 className="font-medium text-sm">Category</h3>
-          </div>
-
-          <Select
-            isDisabled={isLoading}
-            isClearable
-            placeholder={
-              isLoading
-                ? "Loading categories..."
-                : "Search or create category..."
-            }
-            value={formData.category}
-            options={categoryOptions} // Changed from tagOptions
-            onChange={(newValue: any) => {
-              if (!newValue) {
-                setFormData((prev) => ({
-                  ...prev,
-                  category: { value: "", label: "", color: "" },
-                }));
-                return;
-              }
-
-              if (newValue.__isNew__) {
-                handleCreateNewCategory(newValue.label); // Changed from handleCreateNewTag
-              } else {
-                setFormData((prev) => ({
-                  ...prev,
-                  category: newValue,
-                }));
-              }
-            }}
-            classNames={{
-              control: () => "border rounded-md !min-h-[40px]",
-              menu: () => "mt-1 bg-white border rounded-md shadow-lg",
-              option: () => "px-3 py-2 hover:bg-gray-50",
-            }}
-          />
-        </div>
-        <Separator className="border-1" />
-
-        {/* New Tags Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">Tags</h3>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <Input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Add a tag..."
-                className="flex-1"
-              />
-              <Button
-                onClick={handleAddTag}
-                disabled={!tagInput.trim()}
-                size="sm"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
+          {/* Basic Info Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Basic Info</h3>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {formData.tags.map((tag, index) => (
-                <span
-                  key={index}
-                  className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1"
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Name</span>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-48 h-8 rounded-md border px-2"
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">URL</span>
+                <div className="relative w-48">
+                  <input
+                    type="text"
+                    value={formData.url}
+                    onChange={(e) =>
+                      setFormData({ ...formData, url: e.target.value })
+                    }
+                    className="w-full h-8 rounded-md border px-2 pr-8"
+                  />
+                  <Link2 className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Category Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-sm">Category</h3>
+            </div>
+
+            <Select
+              isDisabled={isLoading}
+              isClearable
+              placeholder={
+                isLoading
+                  ? "Loading categories..."
+                  : "Search or create category..."
+              }
+              value={formData.category}
+              options={categoryOptions}
+              onChange={(newValue: any) => {
+                if (!newValue) {
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: { value: "", label: "", color: "" },
+                  }));
+                  return;
+                }
+
+                if (newValue.__isNew__) {
+                  handleCreateNewCategory(newValue.label);
+                } else {
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: newValue,
+                  }));
+                }
+              }}
+              classNames={{
+                control: () => "border rounded-md !min-h-[40px]",
+                menu: () => "mt-1 bg-white border rounded-md shadow-lg",
+                option: () => "px-3 py-2 hover:bg-gray-50",
+              }}
+            />
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Tags Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Tags</h3>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Add a tag..."
+                  className="flex-1"
+                />
+                <Button
+                  onClick={handleAddTag}
+                  disabled={!tagInput.trim()}
+                  size="sm"
                 >
-                  {tag}
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="text-gray-500 hover:text-gray-700"
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {formData.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1"
                   >
-                    <XCircle className="w-4 h-4" />
-                  </button>
-                </span>
-              ))}
+                    {tag}
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      <XCircle className="w-4 h-4" />
+                    </button>
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
 
-        <Separator className="border-1" />
+          <Separator className="border-1" />
 
-        {/* Description Section */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">Description</h3>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsDescriptionDialogOpen(true)}
-            >
-              Edit
-            </Button>
-          </div>
-
-          <textarea
-            value={formData.description}
-            readOnly
-            className="w-full h-24 rounded-md border p-2 resize-none text-sm"
-          />
-
-          <div className="text-sm text-muted-foreground ">
-            Last Modified: {new Date(tileData?.last_updated).toLocaleString()}
-          </div>
-        </div>
-
-        <Separator className="border-1" />
-        <div className="flex items-center justify-between pb-12">
-          <h3 className="font-medium text-sm">Danger</h3>
-          <Dialog>
-            <DialogTrigger>
-              <Button variant="destructive" size="sm">
-                Delete Tile
+          {/* Description Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Description</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDescriptionDialogOpen(true)}
+              >
+                <Pencil className="w-4 h-4 mr-2" />
+                Edit
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Delete Tile</DialogTitle>
-              </DialogHeader>
-              <DialogDescription>
-                Are you sure you want to delete this tile?
-              </DialogDescription>
-              <DialogFooter>
-                <Button onClick={handleDeleteTile}>Delete</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+            </div>
+
+            <textarea
+              value={formData.description}
+              readOnly
+              className="w-full h-24 rounded-md border p-2 resize-none text-sm"
+            />
+
+            <div className="text-sm text-muted-foreground">
+              Last Modified: {new Date(tileData?.last_updated).toLocaleString()}
+            </div>
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Danger Zone */}
+          <div className="flex items-center justify-between">
+            <h3 className="font-medium text-sm">Danger</h3>
+            <Dialog>
+              <DialogTrigger>
+                <Button variant="destructive" size="sm">
+                  Delete Tile
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Tile</DialogTitle>
+                </DialogHeader>
+                <DialogDescription>
+                  Are you sure you want to delete this tile?
+                </DialogDescription>
+                <DialogFooter>
+                  <Button onClick={handleDeleteTile}>Delete</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
-      </CardContent>
 
-      <CardFooter className="flex absolute bottom-0 left-0 right-0 py-4 bg-background gap-2">
-        <Button className="w-full" onClick={handleSave}>
-          Save Changes
-        </Button>
-        <Button variant="outline" className="w-full" onClick={handleDiscard}>
-          Discard
-        </Button>
-      </CardFooter>
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">
+          <Button className="w-full" onClick={handleSave}>
+            Save Changes
+          </Button>
+          <Button variant="outline" className="w-full" onClick={handleDiscard}>
+            Discard
+          </Button>
+        </div>
 
-      {/* Image Upload Dialog */}
-      <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
-        <DialogContent className="sm:max-w-[680px] max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>Upload Image</DialogTitle>
-          </DialogHeader>
-          <ImageUpload
-            initialImage={formData.logo}
-            initialUrl={formData.url}
-            onImageSelect={(imageUrl) => {
-              setFormData((prev) => ({ ...prev, logo: imageUrl }));
-              setIsImageDialogOpen(false);
-            }}
-            onClose={() => setIsImageDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Description Editor Dialog */}
-      <Dialog
-        open={isDescriptionDialogOpen}
-        onOpenChange={setIsDescriptionDialogOpen}
-      >
-        <DialogContent className="sm:max-w-[900px] h-[90vh]">
-          <DialogHeader>
-            <DialogTitle>Edit Description</DialogTitle>
-          </DialogHeader>
-          <TiptapEditor
-            initialContent={tileData?.descriptionHtml || ""}
-            onSave={handleDescriptionSave}
-            onCancel={() => setIsDescriptionDialogOpen(false)}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Discard Dialog */}
-      <AlertDialog open={showDiscardDialog} onOpenChange={setShowDiscardDialog}>
-        <AlertDialogContent className="w-96">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Save Changes</AlertDialogTitle>
-            <AlertDialogDescription>
-              Do you want to save these changes?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => {
-                dispatch(setMapSettings("none"));
-                setShowDiscardDialog(false);
+        {/* Image Upload Dialog */}
+        <Dialog open={isImageDialogOpen} onOpenChange={setIsImageDialogOpen}>
+          <DialogContent className="sm:max-w-[680px] max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>Upload Image</DialogTitle>
+            </DialogHeader>
+            <ImageUpload
+              initialImage={formData.logo}
+              initialUrl={formData.url}
+              onImageSelect={(imageUrl) => {
+                setFormData((prev) => ({ ...prev, logo: imageUrl }));
+                setIsImageDialogOpen(false);
               }}
-            >
-              Discard
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                handleSave();
-                setShowDiscardDialog(false);
-              }}
-            >
-              Save changes
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Card>
+              onClose={() => setIsImageDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Description Editor Dialog */}
+        <Dialog
+          open={isDescriptionDialogOpen}
+          onOpenChange={setIsDescriptionDialogOpen}
+        >
+          <DialogContent className="sm:max-w-[900px] h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Edit Description</DialogTitle>
+            </DialogHeader>
+            <TiptapEditor
+              initialContent={tileData?.descriptionHtml || ""}
+              onSave={handleDescriptionSave}
+              onCancel={() => setIsDescriptionDialogOpen(false)}
+            />
+          </DialogContent>
+        </Dialog>
+
+        {/* Discard Dialog */}
+        <AlertDialog
+          open={showDiscardDialog}
+          onOpenChange={setShowDiscardDialog}
+        >
+          <AlertDialogContent className="w-96">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Save Changes</AlertDialogTitle>
+              <AlertDialogDescription>
+                Do you want to save these changes?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => {
+                  dispatch(setMapSettings("none"));
+                  setShowDiscardDialog(false);
+                }}
+              >
+                Discard
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  handleSave();
+                  setShowDiscardDialog(false);
+                }}
+              >
+                Save changes
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

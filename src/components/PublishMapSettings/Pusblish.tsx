@@ -49,9 +49,9 @@ const Pusblish = (props: Props) => {
           placeholder="Map Name"
           className="w-full rounded-xl border-2 p-2 my-2"
           value={publishedMapNav.title}
-        onChange={(e) => {
-          dispatch(setTitle(e.target.value));
-        }}
+          onChange={(e) => {
+            dispatch(setTitle(e.target.value));
+          }}
         />
       </div>
       <div className="flex flex-col mt-4">
@@ -61,9 +61,9 @@ const Pusblish = (props: Props) => {
           placeholder="Name | Email | Website"
           className="w-full rounded-xl border-2 p-2 my-2"
           value={publishedMapNav.subtext}
-        onChange={(e) => {
-          dispatch(setSubtext(e.target.value));
-        }}
+          onChange={(e) => {
+            dispatch(setSubtext(e.target.value));
+          }}
         />
       </div>
 
@@ -72,7 +72,7 @@ const Pusblish = (props: Props) => {
           <h1>NavBarLogo</h1>
           <h2>80 X 250 px</h2>
 
-          <input type="file" placeholder="Sub-text" className="mb-3"/>
+          <input type="file" placeholder="Sub-text" className="mb-3" />
         </div>
         {/* <div>
           <img src="" alt="img" className="h-28" />
@@ -82,16 +82,17 @@ const Pusblish = (props: Props) => {
       </div>
       <div>
         <h1 className="font-medium">Suggestion form link</h1>
-        <input type="text" className="w-full rounded-xl border-2 p-2 my-2"
-        value={publishedMapNav.suggest}
-        onChange={(e) => {
-          dispatch(setSuggest(e.target.value));
-        }}
+        <input
+          type="text"
+          className="w-full rounded-xl border-2 p-2 my-2"
+          value={publishedMapNav.suggest}
+          onChange={(e) => {
+            dispatch(setSuggest(e.target.value));
+          }}
         />
       </div>
-            <hr className="border-2"/>
-      <div>
-      </div>
+      <hr className="border-2" />
+      <div></div>
     </div>
   );
 };

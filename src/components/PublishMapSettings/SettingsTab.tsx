@@ -1,123 +1,125 @@
-"use client"
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
-import { Trash2, Upload } from 'lucide-react'
-import Image from 'next/image'
-import { supabase } from '@/lib/supabaseClient'
-import { useToast } from "@/hooks/use-toast"
-import { addLogo } from '@/hooks/addLogo'
+import React, { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Trash2, Upload } from "lucide-react";
+import Image from "next/image";
+import { supabase } from "@/lib/supabaseClient";
+import { useToast } from "@/hooks/use-toast";
+import { addLogo } from "@/hooks/addLogo";
 
 const SettingsTab = ({ mapId }: { mapId: string }) => {
-  const { toast } = useToast()
+  const { toast } = useToast();
 
   const [settings, setSettings] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     navbar_logo: null as string | null,
-    suggestion_form_link: ''
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isInitialLoading, setIsInitialLoading] = useState(true)
+    suggestion_form_link: "",
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Fetch initial settings
   useEffect(() => {
     const fetchSettings = async () => {
       try {
         const { data, error } = await supabase
-          .from('publish_settings')
-          .select('*')
-          .eq('map_id', mapId)
-          .single()
+          .from("publish_settings")
+          .select("*")
+          .eq("map_id", mapId)
+          .single();
 
-        if (error) throw error
+        if (error) throw error;
 
         if (data) {
           setSettings({
-            title: data.title || '',
-            description: data.description || '',
+            title: data.title || "",
+            description: data.description || "",
             navbar_logo: data.navbar_logo || null,
-            suggestion_form_link: data.suggestion_form_link || ''
-          })
+            suggestion_form_link: data.suggestion_form_link || "",
+          });
         }
       } catch (error) {
-        console.error('Error fetching settings:', error)
+        console.error("Error fetching settings:", error);
         toast({
           title: "Error",
           description: "Failed to load settings",
-          variant: "destructive"
-        })
+          variant: "destructive",
+        });
       } finally {
-        setIsInitialLoading(false)
+        setIsInitialLoading(false);
       }
-    }
+    };
 
     if (mapId) {
-      fetchSettings()
+      fetchSettings();
     }
-  }, [mapId, toast])
+  }, [mapId, toast]);
 
-  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
+  const handleLogoUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-    setIsUploading(true)
+    setIsUploading(true);
     try {
-      const reader = new FileReader()
+      const reader = new FileReader();
       reader.onloadend = async () => {
-        const imageUrl = reader.result as string
-        const publicUrl = await addLogo(imageUrl)
+        const imageUrl = reader.result as string;
+        const publicUrl = await addLogo(imageUrl);
         if (publicUrl) {
-          setSettings(prev => ({ ...prev, navbar_logo: publicUrl }))
+          setSettings((prev) => ({ ...prev, navbar_logo: publicUrl }));
         }
-      }
-      reader.readAsDataURL(file)
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading logo:', error)
+      console.error("Error uploading logo:", error);
       toast({
         title: "Error",
         description: "Failed to upload logo",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsUploading(false)
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleSaveChanges = async () => {
-    setIsSaving(true)
+    setIsSaving(true);
     try {
       const { error } = await supabase
-        .from('publish_settings')
+        .from("publish_settings")
         .update({
           title: settings.title,
           description: settings.description,
           navbar_logo: settings.navbar_logo,
-          suggestion_form_link: settings.suggestion_form_link
+          suggestion_form_link: settings.suggestion_form_link,
         })
-        .eq('map_id', mapId)
+        .eq("map_id", mapId);
 
-      if (error) throw error
+      if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Settings saved successfully"
-      })
+        description: "Settings saved successfully",
+      });
     } catch (error) {
-      console.error('Error saving settings:', error)
+      console.error("Error saving settings:", error);
       toast({
         title: "Error",
         description: "Failed to save settings",
-        variant: "destructive"
-      })
+        variant: "destructive",
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   if (isInitialLoading) {
     return (
@@ -133,12 +135,11 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
           <div className="h-10 bg-gray-200 rounded w-full"></div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="flex flex-col space-y-6 p-4">
-      {/* Title Section */}
       <div className="space-y-2">
         <Label htmlFor="title" className="block font-medium text-sm">
           Title
@@ -146,13 +147,13 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
         <Input
           id="title"
           value={settings.title}
-          onChange={(e) => setSettings(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) =>
+            setSettings((prev) => ({ ...prev, title: e.target.value }))
+          }
           placeholder="Map Name"
           className="w-full"
         />
       </div>
-
-      {/* Description Section */}
       <div className="space-y-2">
         <Label htmlFor="description" className="block font-medium text-sm">
           Description
@@ -160,7 +161,9 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
         <textarea
           id="description"
           value={settings.description}
-          onChange={(e) => setSettings(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) =>
+            setSettings((prev) => ({ ...prev, description: e.target.value }))
+          }
           placeholder="Enter description"
           className="w-full h-24 rounded-md border p-2 resize-none text-sm"
         />
@@ -168,13 +171,9 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
 
       {/* NavBar Logo Section */}
       <div className="space-y-2">
-        <Label className="block font-medium text-sm">
-          NavBar Logo
-        </Label>
-        <p className="text-xs text-gray-500">
-          Recommended size: 80 × 250 px
-        </p>
-        
+        <Label className="block font-medium text-sm">NavBar Logo</Label>
+        <p className="text-xs text-gray-500">Recommended size: 80 × 250 px</p>
+
         <div className="flex flex-col gap-2">
           <div className="w-full overflow-hidden bg-gray-50 h-20 rounded border border-gray-200 flex items-center justify-center">
             {settings.navbar_logo ? (
@@ -195,7 +194,7 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
               />
             )}
           </div>
-          
+
           <div className="flex gap-2">
             <div className="relative">
               <input
@@ -205,21 +204,23 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 disabled={isUploading}
               />
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="flex items-center gap-2 border-gray-200"
                 disabled={isUploading}
               >
                 <Upload className="h-4 w-4" />
-                {isUploading ? 'Uploading...' : 'Upload'}
+                {isUploading ? "Uploading..." : "Upload"}
               </Button>
             </div>
             {settings.navbar_logo && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSettings(prev => ({ ...prev, navbar_logo: null }))}
+                onClick={() =>
+                  setSettings((prev) => ({ ...prev, navbar_logo: null }))
+                }
                 className="text-gray-500 hover:text-gray-600"
                 disabled={isUploading}
               >
@@ -238,22 +239,24 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
         <Input
           id="suggestion-link"
           value={settings.suggestion_form_link}
-          onChange={(e) => setSettings(prev => ({ ...prev, suggestion_form_link: e.target.value }))}
+          onChange={(e) =>
+            setSettings((prev) => ({
+              ...prev,
+              suggestion_form_link: e.target.value,
+            }))
+          }
           placeholder="Enter suggestion form link"
           className="w-full"
         />
       </div>
 
-      <div className="bg-white w-full py-2">
-        <Button 
-          onClick={handleSaveChanges}
-          disabled={isSaving}
-        >
-          {isSaving ? 'Saving...' : 'Save Changes'}
+      <div className="bg-white w-full py-2  ">
+        <Button onClick={handleSaveChanges} disabled={isSaving}>
+          {isSaving ? "Saving..." : "Save Changes"}
         </Button>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default SettingsTab
+export default SettingsTab;

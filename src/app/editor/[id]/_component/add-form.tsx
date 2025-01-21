@@ -1,10 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -60,7 +55,9 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
     short_description_html: "",
     tags: [] as string[],
   });
+  const [allTags, setAllTags] = useState([]);
   const localCard = useSelector((state: RootState) => state.localCardId);
+  const mapCards = useSelector((state: RootState) => state.mapCards);
   const fetchCategories = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -91,6 +88,14 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
+  useEffect(() => {
+    const allTags = mapCards.data
+      .flatMap((card) => card.tiles)
+      .flatMap((tile) => tile.tags || [])
+      .filter((tag): tag is string => tag !== undefined);
+
+    setAllTags(allTags);
+  }, [mapCards]);
 
   useEffect(() => {
     if (localCard && localCard.card && localCard.card.value !== "") {
@@ -294,7 +299,14 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
       handleAddTag();
     }
   };
-  const handleAddTag = () => {
+  const handleAddTag = (tag?: string) => {
+    if (tag) {
+      setFormData((prev) => ({
+        ...prev,
+        tags: [...prev.tags, tag],
+      }));
+      return;
+    }
     const trimmedTag = tagInput.trim();
     if (trimmedTag && !formData.tags.includes(trimmedTag)) {
       setFormData((prev) => ({
@@ -307,10 +319,10 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
-        className="w-[360px]  shadow-none h-[calc(100vh-60px)] mt-12 pt-0"
+        className="w-[360px]  shadow-none h-[calc(100vh-60px)] mt-12 pt-0 p-0"
         side="right"
       >
-        <div className="p-2  flex justify-between items-center pb-2">
+        <div className="px-4 py-2  flex justify-between items-center pb-2 border-b-[1.2px] border-gray-200">
           <div className="text-lg font-medium">Add New Item</div>
           <Button
             variant="ghost"
@@ -468,7 +480,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                   className="flex-1"
                 />
                 <Button
-                  onClick={handleAddTag}
+                  onClick={() => handleAddTag()}
                   disabled={!tagInput.trim()}
                   size="sm"
                 >
@@ -477,15 +489,30 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {allTags.map((tag, index) => (
+                  <span
+                    onClick={() => {
+                      handleAddTag(tag);
+                      setAllTags(allTags.filter((t) => t !== tag));
+                    }}
+                    key={index}
+                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1 cursor-pointer"
+                  >
+                    {tag}
+                  </span>
+                ))}
                 {formData.tags.map((tag, index) => (
                   <span
                     key={index}
-                    className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm flex items-center gap-1"
+                    className="bg-gray-700 text-gray-100 px-2 py-1 rounded-md text-sm flex items-center gap-1"
                   >
                     {tag}
                     <button
-                      onClick={() => handleRemoveTag(tag)}
-                      className="text-gray-500 hover:text-gray-700"
+                      onClick={() => {
+                        handleRemoveTag(tag);
+                        setAllTags([...allTags, tag]);
+                      }}
+                      className="text-gray-200 hover:text-gray-200"
                     >
                       <XCircle className="w-4 h-4" />
                     </button>
@@ -494,24 +521,6 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               </div>
             </div>
           </div>
-
-          <Separator className="border-1" />
-
-          {/* Description Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Page Content</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setIsDescriptionDialogOpen(true)}
-              >
-                <Pencil className="w-4 h-4" />
-                Edit
-              </Button>
-            </div>
-          </div>
-
           <Separator className="border-1" />
 
           {/* Short Description Section */}
@@ -531,6 +540,23 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
               }}
               value={formData.short_description_html}
             />
+          </div>
+
+          <Separator className="border-1" />
+
+          {/* Description Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Page Content</h3>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDescriptionDialogOpen(true)}
+              >
+                <Pencil className="w-4 h-4" />
+                Edit
+              </Button>
+            </div>
           </div>
         </div>
 
