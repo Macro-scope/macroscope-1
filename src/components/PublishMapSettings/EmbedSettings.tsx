@@ -2,10 +2,7 @@
 
 import React, { useState } from "react";
 
-
-
-
-import { Copy,Check, WifiOff,Send  } from "lucide-react";
+import { Copy, Check, WifiOff, Send } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -85,21 +82,23 @@ const EmbedSettings = () => {
   return (
     <div className="w-full max-w-3xl mx-auto space-y-6">
       {/* Status Row */}
-       {/* Status Row */}
+      {/* Status Row */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <h3 className="text-base font-semibold text-gray-900">Status</h3>
             <div className="flex items-center gap-2">
               <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-              <span className="text-sm font-medium text-gray-900">Published</span>
+              <span className="text-sm font-medium text-gray-900">
+                Published
+              </span>
               <span className="text-sm text-gray-500">4min ago</span>
             </div>
           </div>
           <Button
             variant="default"
             onClick={handlePublish}
-            disabled={isLoading || publishStatus === 'published'}
+            disabled={isLoading || publishStatus === "published"}
             className="bg-black hover:bg-gray-800 text-white gap-2"
           >
             <Send className="h-4 w-4" />
@@ -108,7 +107,6 @@ const EmbedSettings = () => {
         </div>
         <div className="h-px bg-gray-200" />
       </div>
-
 
       {/* Embed Code */}
       <div>

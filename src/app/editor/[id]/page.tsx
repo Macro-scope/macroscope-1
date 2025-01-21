@@ -57,11 +57,7 @@ const EditorMain = () => {
 
     if (!SettingComponent) return null;
 
-    return (
-      <div className="flex flex-col bg-white p-2 relative">
-        {SettingComponent}
-      </div>
-    );
+    return SettingComponent;
   };
 
   return (

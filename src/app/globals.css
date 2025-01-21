@@ -1,8 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-html{
-  font-family:sans-serif
+html {
+  font-family: sans-serif;
 }
 /* width */
 ::-webkit-scrollbar {
@@ -386,7 +386,7 @@ html{
   background: #f3f4f6;
   padding: 0.2rem 0.4rem;
   border-radius: 0.25rem;
-  font-family:  monospace;
+  font-family: monospace;
 }
 .tile-description pre {
   background: #f3f4f6;
@@ -463,7 +463,7 @@ html{
   margin-bottom: 1.1428571em;
 }
 
-.prose-sm [class~='lead'] {
+.prose-sm [class~="lead"] {
   font-size: 1.2857143em;
   line-height: 1.5555556;
   margin-top: 0.8888889em;
@@ -557,3 +557,6 @@ html{
   padding: 0.2em;
   border-radius: 3px;
 }
+/* radix-:r2: {
+  padding-right: 0px;
+} */

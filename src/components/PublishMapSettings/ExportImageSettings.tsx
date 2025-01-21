@@ -127,12 +127,12 @@ const ExportImageSettings = () => {
   };
 
   return (
-    <Card className="w-full shadow-lg">
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
           <Image className="w-5 h-5" />
           Export Settings
-        </CardTitle>
+        </div>
         <CardDescription>
           Configure and download your mind map as an image
         </CardDescription>
