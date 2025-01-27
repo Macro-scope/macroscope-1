@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { X, Upload, Link2, Camera, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import React, { useState, useCallback, useEffect } from "react";
+import { X, Upload, Link2, Camera, Trash2 } from "lucide-react";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,25 +10,25 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import Select from 'react-select/creatable';
-import { supabase } from '@/lib/supabaseClient';
-import { TiptapEditor } from '../editor/tiptap-editor';
-import { ImageUpload } from '../database/image-upload';
-import { useTableData } from '@/hooks/use-table-data';
-import { useTableColumns } from '@/hooks/use-table-columns';
-import RichTextEditor from '../editor/text-editor';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import Select from "react-select/creatable";
+import { supabase } from "@/lib/supabaseClient";
+import { TiptapEditor } from "../editor/tiptap-editor";
+import { ImageUpload } from "../database/image-upload";
+import { useTableData } from "@/hooks/use-table-data";
+import { useTableColumns } from "@/hooks/use-table-columns";
+import RichTextEditor from "../editor/text-editor";
 
 interface FormData {
   name: string;
@@ -81,24 +81,24 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
-    name: data.name || '',
-    url: data.url || '',
-    logo: data.logo || '',
-    category: data.category || { value: '', label: '', color: '' },
-    description: data.description || '',
+    name: data.name || "",
+    url: data.url || "",
+    logo: data.logo || "",
+    category: data.category || { value: "", label: "", color: "" },
+    description: data.description || "",
     last_updated: data.last_updated || new Date().toISOString(),
     parentCategory: data.parentCategory || null,
-    shortDescription: data.shortDescription || '',
-    shortDescriptionHtml: data.shortDescriptionHtml || '',
+    shortDescription: data.shortDescription || "",
+    shortDescriptionHtml: data.shortDescriptionHtml || "",
   });
-  console.log('formData', formData);
+  console.log("formData", formData);
   const { updateRow } = useTableData({ mapId });
 
   const fetchCards = useCallback(async () => {
     try {
       setIsLoading(true);
       const { data: cards, error } = await supabase
-        .from('cards')
+        .from("cards")
         .select(
           `
           card_id,
@@ -106,22 +106,22 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
           settings
         `
         )
-        .eq('map_id', mapId);
+        .eq("map_id", mapId);
 
       if (error) {
-        console.error('Error fetching cards:', error);
+        console.error("Error fetching cards:", error);
         return;
       }
 
       const formattedCards = cards.map((card) => ({
         value: card.card_id,
         label: card.name,
-        color: card.settings?.tile?.fillColor || '#ffffff',
+        color: card.settings?.tile?.fillColor || "#ffffff",
       }));
 
       setCategoryOptions(formattedCards);
     } catch (error) {
-      console.error('Error in fetchCards:', error);
+      console.error("Error in fetchCards:", error);
     } finally {
       setIsLoading(false);
     }
@@ -135,13 +135,13 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
     try {
       setIsLoading(true);
       const { data: newCard, error: cardError } = await supabase
-        .from('cards')
+        .from("cards")
         .insert({
           map_id: mapId,
           name: cardName,
           settings: {
-            tile: { fillColor: '#ffffff', borderColor: '#000000' },
-            group: { fillColor: '#ffffff', borderColor: '#000000' },
+            tile: { fillColor: "#ffffff", borderColor: "#000000" },
+            group: { fillColor: "#ffffff", borderColor: "#000000" },
           },
         })
         .select()
@@ -152,7 +152,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
       const newCardOption = {
         value: newCard.card_id,
         label: cardName,
-        color: newCard.settings?.tile?.fillColor || '#ffffff',
+        color: newCard.settings?.tile?.fillColor || "#ffffff",
       };
 
       setFormData((prev) => ({
@@ -163,7 +163,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
       await fetchCards();
       return newCard;
     } catch (error) {
-      console.error('Error creating new card:', error);
+      console.error("Error creating new card:", error);
       throw error;
     } finally {
       setIsLoading(false);
@@ -194,7 +194,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
       updates.shortDescriptionHtml = formData.shortDescriptionHtml;
     }
 
-    console.log('updates', updates);
+    console.log("updates", updates);
     await onSave(updates);
   };
 
@@ -215,7 +215,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
       }));
       setIsDescriptionDialogOpen(false);
     } catch (error) {
-      console.error('Error saving description:', error);
+      console.error("Error saving description:", error);
     }
   };
 
@@ -268,8 +268,8 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                     variant="destructive"
                     size="sm"
                     onClick={() => {
-                      setFormData((prev) => ({ ...prev, logo: '' }));
-                      onSave({ logo: '' });
+                      setFormData((prev) => ({ ...prev, logo: "" }));
+                      onSave({ logo: "" });
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -328,8 +328,8 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
               isClearable
               placeholder={
                 isLoading
-                  ? 'Loading categories...'
-                  : 'Search or create category...'
+                  ? "Loading categories..."
+                  : "Search or create category..."
               }
               value={formData.category.value ? formData.category : null}
               options={categoryOptions} // Changed from tagOptions
@@ -337,7 +337,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                 if (!newValue) {
                   setFormData((prev) => ({
                     ...prev,
-                    category: { value: '', label: '', color: '' },
+                    category: { value: "", label: "", color: "" },
                   }));
                   return;
                 }
@@ -351,9 +351,9 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                 }
               }}
               classNames={{
-                control: () => 'border rounded-md !min-h-[40px]',
-                menu: () => 'mt-1 bg-white border rounded-md shadow-lg',
-                option: () => 'px-3 py-2 hover:bg-gray-50',
+                control: () => "border rounded-md !min-h-[40px]",
+                menu: () => "mt-1 bg-white border rounded-md shadow-lg",
+                option: () => "px-3 py-2 hover:bg-gray-50",
               }}
             />
           </div>
@@ -397,10 +397,11 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
                 }));
               }}
               value={formData.shortDescriptionHtml}
+              valueMarkdown={formData.shortDescription}
             />
           </div>
           <div className="text-sm text-gray-500">
-            Last Modified:{' '}
+            Last Modified:{" "}
             <span className="font-medium">
               {new Date(data.last_updated).toLocaleString()}
             </span>
@@ -448,7 +449,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
             <DialogTitle>Edit Description</DialogTitle>
           </DialogHeader>
           <TiptapEditor
-            initialContent={data.descriptionHtml || ''}
+            initialContent={data.descriptionHtml || ""}
             onSave={handleDescriptionSave}
             onCancel={() => setIsDescriptionDialogOpen(false)}
           />
@@ -474,7 +475,7 @@ const DatabaseForm = ({ mapId, data, onSave, onCancel }: DatabaseFormProps) => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                handleSubmit(new Event('submit') as any);
+                handleSubmit(new Event("submit") as any);
                 setShowDiscardDialog(false);
               }}
             >
