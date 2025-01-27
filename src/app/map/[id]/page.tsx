@@ -524,7 +524,7 @@ export default function PublishedMap() {
   if (isOwner || isPublished)
     return (
       <div>
-        <MapNavbar selectedTags={[]} />
+        <MapNavbar />
         {/* <Watermark /> */}
         <div
           className="w-full h-[calc(100vh-65px)] overflow-hidden bg-gray-100 relative cursor-grab"
