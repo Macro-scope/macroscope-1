@@ -18,7 +18,14 @@ import { getMapData } from "@/hooks/getMapData";
 import { setCards } from "@/redux/mapCardsSlice";
 import debounce from "lodash/debounce";
 import TileImage from "./TileImage";
-import { Settings2, Maximize2, List, Book, Plus } from "lucide-react";
+import {
+  Settings2,
+  Maximize2,
+  List,
+  Book,
+  Plus,
+  ExternalLink,
+} from "lucide-react";
 import Image from "next/image";
 import CategoryDescription from "@/components/ui/description";
 
@@ -205,7 +212,6 @@ const ResizableNode = (props) => {
     if (resizableRef.current) {
       resizeObserver.observe(resizableRef.current);
     }
-
     return () => {
       if (resizableRef.current) {
         resizeObserver.unobserve(resizableRef.current);
@@ -236,13 +242,15 @@ const ResizableNode = (props) => {
       });
 
       const enrichedTilesData = await Promise.all(tilePromises);
+      console.log("enrichedTilesData", enrichedTilesData);
       setEnrichedTiles(enrichedTilesData);
     } catch (error) {
       console.error("Error fetching tiles data:", error);
     }
   }, [props.tiles]);
   useEffect(() => {
-    if (props.tiles?.length > 0) {
+    console.log("props.tiles", props.tiles);
+    if (props.tiles?.length >= 0) {
       fetchTilesData();
     }
   }, [props.tiles]);
@@ -391,9 +399,9 @@ const ResizableNode = (props) => {
                     <HoverCard key={index} openDelay={0} closeDelay={200}>
                       <HoverCardTrigger>
                         <div
-                          onClick={(e) =>
-                            handleTileClick(tile.tile_id, tile.name, e)
-                          }
+                          // onClick={(e) =>
+                          //   handleTileClick(tile.tile_id, tile.name, e)
+                          // }
                           className={`bg-white shadow-lg p-2 gap-2 flex items-center justify-center z-50 w-fit cursor-pointer hover:bg-gray-50 transition-all ${
                             shouldHighlightTile(tile.tags)
                               ? "ring-2 ring-green-500  ring-opacity-50 shadow-xl"
@@ -443,15 +451,15 @@ const ResizableNode = (props) => {
                             <div className=" mb-2">
                               <div className="flex">
                                 <h3 className="text-lg font-semibold w-full pr-8">
-                                  {tile.name}
+                                  {tile.name + "..."}
                                 </h3>
                                 <button
                                   onClick={(e) =>
-                                    handleTileClick(tile.tile_id, tile.name, e)
+                                    window.open(tile.url, "_blank")
                                   }
                                   className="absolute top-4 right-4 p-1 hover:bg-gray-100 rounded-md transition-colors"
                                 >
-                                  <Maximize2 className="w-5 h-5 text-gray-500" />
+                                  <ExternalLink className="w-5 h-5 text-gray-500" />
                                 </button>
                               </div>
                             </div>

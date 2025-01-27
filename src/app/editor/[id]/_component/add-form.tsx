@@ -526,7 +526,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           {/* Short Description Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Short Description</h3>
+              <h3 className="font-medium text-sm">Short Descriptions</h3>
             </div>
             <RichTextEditor
               placeholder="Add a short description..."
@@ -538,6 +538,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                   short_description_html: content.html,
                 }));
               }}
+              valueMarkdown={formData.short_description_markdown}
               value={formData.short_description_html}
             />
           </div>

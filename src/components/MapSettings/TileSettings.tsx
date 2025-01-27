@@ -43,6 +43,7 @@ import { Input } from "../ui/input";
 import { toast } from "sonner";
 import { Sheet, SheetContent } from "../ui/sheet";
 import { RootState } from "@/redux/store";
+import RichTextEditor from "../editor/text-editor";
 
 interface TileSettingsProps {
   mapId: string;
@@ -63,6 +64,9 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     category: tileData?.category || { value: "", label: "", color: "" },
     description: tileData?.description || "",
     tags: tileData?.tags || [],
+    short_description_markdown: tileData?.short_description_markdown || "",
+    short_description_html: tileData?.short_description_html || "",
+    description_markdown: tileData?.description_markdown || "",
   });
 
   const mapSettings = useSelector((state: RootState) => state.mapSettings);
@@ -180,9 +184,12 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           name: formData.name,
           url: formData.url,
           logo: formData.logo,
-          description_markdown: formData.description,
           tags: formData.tags,
           updated_at: new Date().toISOString(),
+          short_description_markdown: formData.short_description_markdown,
+          short_description_html: formData.short_description_html,
+          description_markdown: formData.description_markdown,
+          description: formData.description,
         })
         .eq("tile_id", tileData.tile_id);
 
@@ -251,7 +258,11 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   };
 
   const handleDiscard = () => {
-    setShowDiscardDialog(true);
+    if (isFormModified()) {
+      setShowDiscardDialog(true);
+    } else {
+      dispatch(setMapSettings("none"));
+    }
   };
 
   const handleDeleteTile = async () => {
@@ -275,6 +286,20 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
       console.error("Error deleting tile:", error);
       toast.error("Failed to delete tile");
     }
+  };
+  const isFormModified = () => {
+    return (
+      formData.name !== tileData?.name ||
+      formData.url !== tileData?.url ||
+      formData.logo !== tileData?.logo ||
+      formData.category?.value !== tileData?.category?.value ||
+      formData.description_markdown !== tileData?.description_markdown ||
+      formData.description !== tileData?.description ||
+      formData.short_description_markdown !==
+        tileData?.short_description_markdown ||
+      formData.short_description_html !== tileData?.short_description_html ||
+      JSON.stringify(formData.tags) !== JSON.stringify(tileData?.tags)
+    );
   };
 
   return (
@@ -463,28 +488,40 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
 
           <Separator className="border-1" />
 
+          {/* Short Description Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-medium text-sm">Short Description</h3>
+            </div>
+            <RichTextEditor
+              valueMarkdown={formData.short_description_markdown}
+              placeholder="Add a short description..."
+              features={["bold", "italic", "link"]}
+              onChange={(content: { html: string; markdown: string }) => {
+                setFormData((prev) => ({
+                  ...prev,
+                  short_description_markdown: content.markdown,
+                  short_description_html: content.html,
+                }));
+              }}
+              value={formData.short_description_html}
+            />
+          </div>
+
+          <Separator className="border-1" />
+
           {/* Description Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Description</h3>
+              <h3 className="font-medium text-sm">Page Content</h3>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setIsDescriptionDialogOpen(true)}
               >
-                <Pencil className="w-4 h-4 mr-2" />
+                <Pencil className="w-4 h-4" />
                 Edit
               </Button>
-            </div>
-
-            <textarea
-              value={formData.description}
-              readOnly
-              className="w-full h-24 rounded-md border p-2 resize-none text-sm"
-            />
-
-            <div className="text-sm text-muted-foreground">
-              Last Modified: {new Date(tileData?.last_updated).toLocaleString()}
             </div>
           </div>
 
@@ -492,7 +529,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
 
           {/* Danger Zone */}
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-sm">Danger</h3>
+            <h3 className="font-medium text-sm">Danger zone</h3>
             <Dialog>
               <DialogTrigger>
                 <Button variant="destructive" size="sm">
