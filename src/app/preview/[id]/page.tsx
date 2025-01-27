@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import { Rnd } from "react-rnd";
 import { useDispatch, useSelector } from "react-redux";
-import { Maximize, Minus, Plus } from "lucide-react";
+import { ChevronDown, Maximize, Minus, Plus, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import MapNavbar from "@/components/PublishedNavbar/MapNavbar";
@@ -54,6 +54,9 @@ export default function PublishedMap() {
 
   const [isDraggingHorizontal, setIsDraggingHorizontal] = useState(false);
   const [isDraggingVertical, setIsDraggingVertical] = useState(false);
+  const [tags, setTags] = useState<string[]>([]);
+
+  const [searchQuery, setSearchQuery] = useState("");
   const [images, setImages] = useState<
     Array<{
       id: string;
@@ -74,6 +77,9 @@ export default function PublishedMap() {
       mapSettings: state.mapSettings,
     })
   );
+  const [isOpen, setIsOpen] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const params = useParams();
   const mapId = params.id as string;
@@ -156,14 +162,23 @@ export default function PublishedMap() {
     dispatch(setGlobalSettings(globalStyles!.settings));
   }, []);
 
-  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === containerRef.current || e.target === canvasRef.current) {
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button === 0) {
       setIsDragging(true);
       setStartPan({ x: e.clientX - offset.x, y: e.clientY - offset.y });
     }
-  }, []);
+  };
 
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+  const isClickOnInteractiveElement = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    return (
+      target.closest("button") !== null ||
+      target.closest(".mappedCards") !== null ||
+      target.closest("input") !== null
+    );
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging) return;
 
     const newOffset = {
@@ -184,7 +199,7 @@ export default function PublishedMap() {
     };
 
     setOffset(newOffset);
-  }, []);
+  };
 
   const handleMouseUp = () => {
     setIsDragging(false);
@@ -278,6 +293,19 @@ export default function PublishedMap() {
     );
     updateZoom(newZoom, maxX, maxY);
   }, []);
+  const filteredTags = tags.filter((tag) =>
+    tag.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+  };
 
   const getScrollbarDimensions = useCallback(() => {
     const contentWidth = canvasWidth * zoom;
@@ -371,6 +399,26 @@ export default function PublishedMap() {
       getCards(mapId);
       setGlobalStyles(mapId);
     }
+    const fetchMap = async () => {
+      const data = await getMapData(Array.isArray(mapId) ? mapId[0] : mapId);
+      const set = new Set<string>();
+      if (data.cards && Array.isArray(data.cards)) {
+        data.cards.forEach((card: any) => {
+          if (card.tiles && Array.isArray(card.tiles)) {
+            card.tiles.forEach((tile: any) => {
+              if (tile.tags && Array.isArray(tile.tags)) {
+                tile.tags.forEach((tag: any) => {
+                  set.add(tag);
+                });
+              }
+            });
+          }
+        });
+        setTags(Array.from(set));
+      }
+    };
+
+    fetchMap();
   }, [mapId, dispatch]);
 
   useEffect(() => {
@@ -422,6 +470,20 @@ export default function PublishedMap() {
     };
   }, [isDraggingHorizontal, isDraggingVertical]);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const Loader = () => (
     <div className="grid grid-cols-5 gap-4 p-4">
       {Array.from({ length: 15 }).map((_, index) => (
@@ -435,12 +497,7 @@ export default function PublishedMap() {
 
   return (
     <div>
-      {currCards && (
-        <MapNavbar
-          selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
-        />
-      )}
+      {currCards && <MapNavbar />}
       {loading ? (
         <Loader />
       ) : isOwner ? (
@@ -529,6 +586,82 @@ export default function PublishedMap() {
             </div>
 
             {/* Zoom Controls */}
+            {/* <div className="absolute top-5 right-5" ref={dropdownRef}>
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="flex items-center justify-between min-w-[200px] px-4 py-2 text-sm bg-white border rounded-lg hover:bg-gray-50 focus:outline-none"
+              >
+                <div className="flex items-center gap-2 overflow-x-hidden">
+                  <span className="whitespace-nowrap">
+                    {selectedTags.length > 0
+                      ? `${selectedTags.length} selected`
+                      : "Filter by tags"}
+                  </span>
+                  {selectedTags.length > 0 && (
+                    <div className="flex gap-1">
+                      {selectedTags.map((tag) => (
+                        <div
+                          key={tag}
+                          className="flex items-center px-2 py-0.5 bg-gray-100 rounded-md text-xs"
+                        >
+                          {tag}
+                          <X
+                            className="w-3 h-3 ml-1 cursor-pointer hover:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeTag(tag);
+                            }}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <ChevronDown
+                  className={`w-4 h-4 ml-2 transition-transform flex-shrink-0 ${
+                    isOpen ? "transform rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {isOpen && (
+                <div className="absolute right-0 z-10 w-[250px] mt-1 bg-white border rounded-lg shadow-lg">
+                  <div className="p-2">
+                    <input
+                      type="text"
+                      placeholder="Search tags..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="max-h-[200px] overflow-y-auto">
+                    {filteredTags.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        No tags found
+                      </div>
+                    ) : (
+                      filteredTags.map((tag) => (
+                        <div
+                          key={tag}
+                          className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => toggleTag(tag)}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedTags.includes(tag)}
+                            onChange={() => {}}
+                            className="mr-2"
+                          />
+                          <span className="text-sm">{tag}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div> */}
             <div
               className="absolute bottom-6 left-5 flex gap-2 bg-white rounded-md shadow-lg zoom-controls h-[40px]"
               style={{ zIndex: 2000 }}

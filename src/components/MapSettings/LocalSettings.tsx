@@ -231,15 +231,29 @@ const LocalSettings = () => {
 
   const ColorPickerField = ({ label, value, onChange }) => (
     <div className="flex items-center justify-between">
-      <span>{label}</span>
+      <span className="text-sm">{label}</span>
       {isInitialLoading ? (
         <Skeleton className="h-8 w-24" />
       ) : (
-        <ColorPicker
-          showText
-          value={value}
-          onChange={(color) => onChange(color.toHexString())}
-        />
+        <div className="relative">
+          <div className="flex items-center gap-2 bg-white rounded-md border border-gray-200 px-2 py-1 cursor-pointer">
+            <div
+              className="w-5 h-5 rounded border border-gray-200"
+              style={{ backgroundColor: value || "#000000" }}
+            />
+            <span className="text-sm text-gray-600 font-mono">
+              {value?.toUpperCase() || "#000000"}
+            </span>
+          </div>
+          <input
+            type="color"
+            className="absolute inset-0 w-full h-full cursor-pointer opacity-0"
+            value={value || "#000000"}
+            onChange={(e) => {
+              onChange(e.target.value);
+            }}
+          />
+        </div>
       )}
     </div>
   );
@@ -291,6 +305,7 @@ const LocalSettings = () => {
                     }
                   />
                 </div>
+                <Separator className="border-1" />
               </>
             )}
 
@@ -299,9 +314,9 @@ const LocalSettings = () => {
               <ColorPickerField
                 label="Border Color"
                 value={localSettingsState.group.borderColor}
-                onChange={(color) =>
-                  handleInputChange("group", "borderColor", color)
-                }
+                onChange={(color) => {
+                  handleInputChange("group", "borderColor", color);
+                }}
               />
               <ColorPickerField
                 label="Fill Color"

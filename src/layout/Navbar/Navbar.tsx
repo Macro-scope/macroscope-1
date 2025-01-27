@@ -1,31 +1,23 @@
-'use client';
-import {
-  Button,
-  Dropdown,
-  Input,
-  MenuProps,
-  Modal,
-} from 'antd';
+"use client";
+import { Button, Dropdown, Input, MenuProps, Modal } from "antd";
 
-import { supabase } from '../../lib/supabaseClient';
-import { useState, useEffect } from 'react';
-import { User } from '@supabase/supabase-js';
-import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'next/navigation';
-import { updateMapCards } from '../../hooks/updateMapCards';
+import { supabase } from "../../lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { User } from "@supabase/supabase-js";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "next/navigation";
+import { updateMapCards } from "../../hooks/updateMapCards";
 
-import {Copy,RefreshCcw,Check,Plus,Cloud,X} from "lucide-react"
-import {
-  setPublishMapSettings,
-} from '../../redux/publishedMapSlice';
-import { setPublishedNav } from '../../hooks/updatePublishNav';
+import { Copy, RefreshCcw, Check, Plus, Cloud, X } from "lucide-react";
+import { setPublishMapSettings } from "../../redux/publishedMapSlice";
+import { setPublishedNav } from "../../hooks/updatePublishNav";
 
-import { renameMap } from '../../hooks/renameMap';
+import { renameMap } from "../../hooks/renameMap";
 
-import { updateImages } from '../../hooks/updateImages';
-import { usePathname, useRouter } from 'next/navigation';
-import PublishMapSettings from '@/components/PublishMapSettings/PublishMapSettings';
-import { Link } from 'react-router-dom';
+import { updateImages } from "../../hooks/updateImages";
+import { usePathname, useRouter } from "next/navigation";
+import PublishMapSettings from "@/components/PublishMapSettings/PublishMapSettings";
+import { Link } from "react-router-dom";
 
 const Navbar = () => {
   // Get the current location object
@@ -35,13 +27,13 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/');
+    router.push("/login");
     // setUser(null)
   };
 
-  const items: MenuProps['items'] = [
+  const items: MenuProps["items"] = [
     {
-      key: '1',
+      key: "1",
       label: (
         <a className="w-[400px]" href="/dashboard">
           Dashboard
@@ -49,7 +41,7 @@ const Navbar = () => {
       ),
     },
     {
-      key: '2',
+      key: "2",
       label: (
         <div className="w-full text-red-500" onClick={handleLogout}>
           Logout
@@ -70,9 +62,9 @@ const Navbar = () => {
 
     const setPublishSettings = async () => {
       const { data } = await supabase
-        .from('maps')
-        .select('navbar')
-        .eq('map_id', mapId)
+        .from("maps")
+        .select("navbar")
+        .eq("map_id", mapId)
         .single();
       dispatch(setPublishMapSettings(data?.navbar));
     };
@@ -89,9 +81,9 @@ const Navbar = () => {
   useEffect(() => {
     const getMapName = async () => {
       const { data } = await supabase
-        .from('maps')
-        .select('name')
-        .eq('map_id', mapId)
+        .from("maps")
+        .select("name")
+        .eq("map_id", mapId)
         .single();
 
       console.log(data?.name);
@@ -119,9 +111,9 @@ const Navbar = () => {
       setisSaving(false);
     }, 3000);
     await supabase
-      .from('maps')
+      .from("maps")
       .update({ last_updated: new Date() }) // Correctly pass the update as an object
-      .eq('map_id', mapId);
+      .eq("map_id", mapId);
     // toast.success("Map Saved");
   };
 
@@ -149,7 +141,7 @@ const Navbar = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
-  const [_websiteUrl, _setWebsiteUrl] = useState('');
+  const [_websiteUrl, _setWebsiteUrl] = useState("");
 
   const dispatch = useDispatch();
 
@@ -167,18 +159,18 @@ const Navbar = () => {
 
   const handleUnpublish = async () => {
     await supabase
-      .from('maps')
+      .from("maps")
       .update({ is_published: false })
-      .eq('map_id', mapId);
+      .eq("map_id", mapId);
 
     setIsModalOpen(false);
   };
 
   const handlePublish = async () => {
     await supabase
-      .from('maps')
+      .from("maps")
       .update({ is_published: true })
-      .eq('map_id', mapId);
+      .eq("map_id", mapId);
 
     setIsModalOpen(false);
     setPublishedNav(mapId!, publishedMapNav);
@@ -202,7 +194,7 @@ const Navbar = () => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
-    console.log('Here ------ ', session);
+    console.log("Here ------ ", session);
     return session?.user?.id || null;
   };
 
@@ -211,52 +203,52 @@ const Navbar = () => {
 
     if (userId) {
       const { data, error } = await supabase
-        .from('maps')
+        .from("maps")
         .insert([
           {
             user_id: userId,
             name: newProjectName,
           },
         ])
-        .select('map_id')
+        .select("map_id")
         .single();
 
       if (error) {
-        console.error('Error inserting data:', error);
+        console.error("Error inserting data:", error);
         return;
       }
 
       await supabase.from("publish_settings").insert({
-        map_id:data.map_id,
-        title:newProjectName,
-        description:newProjectName
-      })
+        map_id: data.map_id,
+        title: newProjectName,
+        description: newProjectName,
+      });
 
       // Generate a UUID for the category
       const categoryId = crypto.randomUUID();
 
       // Create a category with the generated UUID
       const { data: categoryData, error: categoryError } = await supabase
-        .from('categories')
+        .from("categories")
         .insert([
           {
             category_id: categoryId,
-            name: 'Other',
+            name: "Other",
             map_id: data.map_id,
             created_at: new Date().toISOString(),
           },
         ])
-        .select('category_id, name')
+        .select("category_id, name")
         .single();
 
       if (categoryError) {
-        console.error('Error inserting category:', categoryError);
+        console.error("Error inserting category:", categoryError);
         return;
       }
 
       // Insert a new card with category_id
       const { data: cardData, error: cardError } = await supabase
-        .from('cards')
+        .from("cards")
         .insert([
           {
             category_id: categoryData.category_id,
@@ -264,45 +256,45 @@ const Navbar = () => {
             name: categoryData.name,
           },
         ])
-        .select('card_id')
+        .select("card_id")
         .single();
 
       if (cardError) {
-        console.error('Error inserting card:', cardError);
+        console.error("Error inserting card:", cardError);
         return;
       }
 
       const { data: tileData, error: tileError } = await supabase
-        .from('tiles')
+        .from("tiles")
         .insert([
           {
             category_id: categoryData.category_id,
             card_id: cardData.card_id,
-            name: 'Macroscope',
-            url: 'macroscope.so',
+            name: "Macroscope",
+            url: "macroscope.so",
           },
         ])
         .single();
 
       if (tileError) {
-        console.error('Error inserting tile:', tileError);
+        console.error("Error inserting tile:", tileError);
         return;
       }
 
       setIsModalOpen(false);
       router.push(`/editor/${data?.map_id}`);
     } else {
-      console.error('No user is currently logged in');
+      console.error("No user is currently logged in");
     }
   };
 
-  const [newProjectName, setNewProjectName] = useState('Untitled');
+  const [newProjectName, setNewProjectName] = useState("Untitled");
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const showMapModal = () => {
     setIsMapModalOpen(true);
   };
   const handleCancelMap = () => {
-    setNewProjectName('untitled');
+    setNewProjectName("untitled");
     setIsMapModalOpen(false);
   };
   // const openProject = async (wid: string) => {
@@ -326,18 +318,18 @@ const Navbar = () => {
 
   const [isCopied, setIsCopied] = useState(false);
 
-  const [customDomain, setCustomDomain] = useState('');
+  const [customDomain, setCustomDomain] = useState("");
 
   async function addDomain(domain: string, projectId: string) {
-    const response = await fetch('/api/add-domain', {
-      method: 'POST',
+    const response = await fetch("/api/add-domain", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ domain, projectId }),
     });
     if (!response.ok) {
-      throw new Error('Failed to add domain');
+      throw new Error("Failed to add domain");
     }
     return response.json();
   }
@@ -348,7 +340,7 @@ const Navbar = () => {
     try {
       const user = await supabase.auth.getUser();
       if (!user.data.user) {
-        throw new Error('User not authenticated');
+        throw new Error("User not authenticated");
       }
 
       // Add domain to Vercel project
@@ -356,9 +348,9 @@ const Navbar = () => {
 
       // Save domain and route mapping to your database
       const { error } = await supabase
-        .from('maps')
+        .from("maps")
         .update({ domain: customDomain })
-        .eq('map_id', mapId);
+        .eq("map_id", mapId);
 
       if (error) throw error;
 
@@ -366,7 +358,7 @@ const Navbar = () => {
     } catch (error) {
       console.error(error);
     } finally {
-      console.log('finally');
+      console.log("finally");
     }
   };
 
@@ -427,13 +419,13 @@ const Navbar = () => {
         >
           <div className="flex gap-2">
             <Input
-              value={`app.macroscope.so/map/${mapName?.replace(/\s+/g, '-')}`}
+              value={`app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`}
               readOnly
             />
             <button
               onClick={() => {
                 navigator.clipboard.writeText(
-                  `app.macroscope.so/map/${mapName?.replace(/\s+/g, '-')}`
+                  `app.macroscope.so/map/${mapName?.replace(/\s+/g, "-")}`
                 );
                 setIsCopied(true);
               }}
@@ -443,31 +435,40 @@ const Navbar = () => {
           </div>
         </Modal>
         <div className="bg-white p-2 flex justify-between items-center border-b py-2 pl-5">
-          {currentPath === '/dashboard' ? (
+          {currentPath === "/dashboard" ? (
             <div></div>
           ) : (
             <div>
-               
-                
-
               {isEditing ? (
                 <div className="flex items-center gap-2">
-                  
+                  <img
+                    onClick={() => {
+                      router.push("/dashboard");
+                    }}
+                    src="/logosmallblack.svg"
+                    alt="logo"
+                    className="h-7 cursor-pointer"
+                  />
 
-                  <img onClick={()=>{router.push("/dashboard")}} src="/logosmallblack.svg" alt="logo" className="h-7 cursor-pointer" />
-
-                <input
-                  type="text"
-                  value={mapName}
-                  onChange={handleInputChange}
-                  onBlur={handleBlur}
-                  autoFocus
-                  className="font-medium text-xl border-b-2 border-gray-300 focus:outline-none"
-                />
+                  <input
+                    type="text"
+                    value={mapName}
+                    onChange={handleInputChange}
+                    onBlur={handleBlur}
+                    autoFocus
+                    className="font-medium text-xl border-b-2 border-gray-300 focus:outline-none"
+                  />
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <img  onClick={()=>{  router.push("/dashboard")}} src="/logosmallblack.svg" alt="logo" className="h-7 cursor-pointer" />
+                  <img
+                    onClick={() => {
+                      router.push("/dashboard");
+                    }}
+                    src="/logosmallblack.svg"
+                    alt="logo"
+                    className="h-7 cursor-pointer"
+                  />
                   <div
                     className="text-lg font-semibold cursor-pointer "
                     onClick={handleTextClick}
@@ -482,8 +483,8 @@ const Navbar = () => {
             </div>
           )}
           <div className="flex justify-center items-center gap-2">
-            {currentPath === '/dashboard' ||
-            currentPath === '/dashboard/subscriptions' ? (
+            {currentPath === "/dashboard" ||
+            currentPath === "/dashboard/subscriptions" ? (
               <>
                 <button
                   onClick={showMapModal}
@@ -499,7 +500,7 @@ const Navbar = () => {
                   onClick={updateCards}
                   className="mx-2 font-semibold text-gray-400 hover:underline"
                 >
-                  {isSaving || saveStatus === 'saving' ? (
+                  {isSaving || saveStatus === "saving" ? (
                     <div className="flex items-center gap-1">
                       <RefreshCcw className="text-[20px] animate-spin" />
                     </div>
@@ -514,7 +515,7 @@ const Navbar = () => {
                     onClick={() => {
                       window.open(
                         `https://app.macroscope.so/preview/${mapId}`,
-                        '_blank'
+                        "_blank"
                       );
                     }}
                     title="Preview Map"
@@ -551,7 +552,7 @@ const Navbar = () => {
                   <div className="rounded-full h-[30px] w-[30px] bg-black text-white flex items-center justify-center text-lg uppercase">
                     {currUser?.user_metadata.full_name?.[0] ||
                       currUser?.email?.[0] ||
-                      '?'}
+                      "?"}
                   </div>
                 )}
               </Dropdown>

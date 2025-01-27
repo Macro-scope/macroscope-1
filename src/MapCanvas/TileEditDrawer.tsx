@@ -113,7 +113,7 @@ const TileEditDrawer = (props: Props) => {
       <Card className="w-[360px] border-none shadow-lg h-full overflow-y-auto">
         <div className="p-2">
           <div className="flex items-center justify-between">
-            <span className="text-base">Edit Tiles</span>
+            <span className="text-base">Edit Tile</span>
             <Button
               variant="ghost"
               size="icon"

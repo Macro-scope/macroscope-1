@@ -1,6 +1,7 @@
 "use client";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
 import {
   Bold,
   Strikethrough,
@@ -25,20 +26,24 @@ import { useState } from "react";
 
 const RichTextEditor = ({
   value,
+  valueMarkdown,
   onChange,
   features = ["bold", "italic", "strike", "bulletList", "orderedList", "link"],
   placeholder = "",
 }: {
   value: string;
+  valueMarkdown: string;
   onChange: (content: { html: string; markdown: string }) => void;
   features?: string[];
   placeholder?: string;
 }) => {
+  console.log("value");
+  console.log(typeof valueMarkdown);
   const editor = useEditor({
     editorProps: {
       attributes: {
         class:
-          "min-h-[80px]  w-full  rounded-t-0 border border-input bg-transparent px-3 py-2 border-t-0 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 overflow-auto rounded-bl-md rounded-br-md",
+          "min-h-[80px]  w-full  rounded-t-0 border border-input bg-transparent px-3 py-2 border-t-0 text-sm ring-offset-background  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 overflow-auto rounded-bl-md rounded-br-md",
       },
       handleClick: (view, pos, event) => {
         const { state } = view;
@@ -52,6 +57,9 @@ const RichTextEditor = ({
       },
     },
     extensions: [
+      Placeholder.configure({
+        placeholder: placeholder,
+      }),
       StarterKit.configure({
         orderedList: {
           HTMLAttributes: {
