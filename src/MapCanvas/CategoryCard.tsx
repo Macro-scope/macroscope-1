@@ -343,10 +343,7 @@ const ResizableNode = (props) => {
         >
           <div className="w-full min-h-[40px] px-5 mt-4 mb-2">
             <CategoryDescription
-              description={
-                props.description ||
-                "This category contains resources related to AI platforms and tools."
-              }
+              description={props.description || ""}
               maxLines={2}
               className="text-sm text-gray-600"
             />

@@ -2,16 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  X,
-  Upload,
-  Link2,
-  Camera,
-  Trash2,
-  Plus,
-  XCircle,
-  Pencil,
-} from "lucide-react";
+import { X, Upload, Link2, Camera, Trash2, Plus, XCircle } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -69,7 +60,12 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
     description_markdown: tileData?.description_markdown || "",
   });
 
-  const mapSettings = useSelector((state: RootState) => state.mapSettings);
+  const { mapSettings, cards } = useSelector((state: RootState) => {
+    return {
+      mapSettings: state.mapSettings,
+      cards: state.mapCards,
+    };
+  });
   const dispatch = useDispatch();
 
   const fetchCategories = useCallback(async () => {
@@ -79,6 +75,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
         .from("categories")
         .select("*")
         .eq("map_id", mapId);
+      console.log("categories", categories);
 
       if (error) {
         console.error("Error fetching categories:", error);
@@ -100,8 +97,9 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   }, [mapId]);
 
   useEffect(() => {
+    console.log("cards", cards);
     fetchCategories();
-  }, [fetchCategories]);
+  }, [fetchCategories, cards]);
 
   const handleAddTag = () => {
     const trimmedTag = tagInput.trim();
@@ -305,7 +303,13 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   return (
     <Sheet
       open={mapSettings.value === "tile"}
-      onOpenChange={() => dispatch(setMapSettings("none"))}
+      onOpenChange={() => {
+        if (isFormModified()) {
+          setShowDiscardDialog(true);
+        } else {
+          dispatch(setMapSettings("none"));
+        }
+      }}
     >
       <SheetContent
         className="w-[360px] shadow-none h-[calc(100vh-60px)] mt-12 pt-0 p-0"
@@ -401,16 +405,14 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
           {/* Category Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm">Category</h3>
+              <h3 className="font-medium text-sm">Group</h3>
             </div>
 
             <Select
               isDisabled={isLoading}
               isClearable
               placeholder={
-                isLoading
-                  ? "Loading categories..."
-                  : "Search or create category..."
+                isLoading ? "Loading Groups..." : "Search or create group..."
               }
               value={formData.category}
               options={categoryOptions}
@@ -455,7 +457,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Add a tag..."
+                  placeholder="Select tags or create new..."
                   className="flex-1"
                 />
                 <Button
@@ -508,10 +510,10 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
             />
           </div>
 
-          <Separator className="border-1" />
+          {/* <Separator className="border-1" /> */}
 
           {/* Description Section */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-sm">Page Content</h3>
               <Button
@@ -523,7 +525,7 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
                 Edit
               </Button>
             </div>
-          </div>
+          </div> */}
 
           <Separator className="border-1" />
 
@@ -552,11 +554,15 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">
-          <Button className="w-full" onClick={handleSave}>
+          <Button
+            className="w-full"
+            onClick={handleSave}
+            disabled={!isFormModified()}
+          >
             Save Changes
           </Button>
           <Button variant="outline" className="w-full" onClick={handleDiscard}>
-            Discard
+            {isFormModified() ? "Discard" : "Close"}
           </Button>
         </div>
 
@@ -596,9 +602,15 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
         </Dialog>
 
         {/* Discard Dialog */}
+
         <AlertDialog
-          open={showDiscardDialog}
-          onOpenChange={setShowDiscardDialog}
+          open={showDiscardDialog && isFormModified()}
+          onOpenChange={(open) => {
+            if (!open && !isFormModified()) {
+              dispatch(setMapSettings("none"));
+            }
+            setShowDiscardDialog(open);
+          }}
         >
           <AlertDialogContent className="w-96">
             <AlertDialogHeader>
