@@ -1,14 +1,14 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const initialState = { data: [] }
+const initialState = { data: [] };
 export const mapCardsSlice = createSlice({
-    name: 'map-cards',
-    initialState: initialState,
-    reducers: {
-        setCards: (state, action: PayloadAction<any>) => {
-            state.data = action.payload;
-        }
+  name: "map-cards",
+  initialState: initialState,
+  reducers: {
+    setCards: (state, action: PayloadAction<any>) => {
+      state.data = action.payload;
     },
+  },
 });
 
-export const { setCards } = mapCardsSlice.actions
+export const { setCards } = mapCardsSlice.actions;

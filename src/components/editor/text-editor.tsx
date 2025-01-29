@@ -58,7 +58,12 @@ const RichTextEditor = ({
     },
     extensions: [
       Placeholder.configure({
-        placeholder: placeholder,
+        placeholder: ({ node }) => {
+          if (node.type.name === "heading") {
+            return "Heading placeholder";
+          }
+          return placeholder;
+        },
       }),
       StarterKit.configure({
         orderedList: {

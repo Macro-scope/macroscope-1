@@ -421,19 +421,17 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
 
           <Separator className="border-1" />
 
-          {/* Category Section */}
+          {/* Group Section */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <h3 className="font-medium text-sm">Category</h3>
+              <h3 className="font-medium text-sm">Group</h3>
             </div>
 
             <Select
               isDisabled={isLoading}
               isClearable
               placeholder={
-                isLoading
-                  ? "Loading categories..."
-                  : "Search or create category..."
+                isLoading ? "Loading groups..." : "Search or create group..."
               }
               value={formData.category.value === "" ? null : formData.category}
               options={categoryOptions}
@@ -476,7 +474,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Add a tag..."
+                  placeholder="Select tags or create new..."
                   className="flex-1"
                 />
                 <Button
@@ -526,7 +524,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
           {/* Short Description Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-medium text-sm">Short Descriptions</h3>
+              <h3 className="font-medium text-sm">Short Description</h3>
             </div>
             <RichTextEditor
               placeholder="Add a short description..."
@@ -543,10 +541,10 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
             />
           </div>
 
-          <Separator className="border-1" />
+          {/* <Separator className="border-1" /> */}
 
           {/* Description Section */}
-          <div className="space-y-4">
+          {/* <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-medium text-sm">Page Content</h3>
               <Button
@@ -558,7 +556,7 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
                 Edit
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex gap-2">

@@ -188,7 +188,15 @@ const LocalSettings = () => {
         localSettingsState.group.name,
         localSettingsState.group.description
       );
-
+      console.log("cardId", cardId);
+      const { data: categories, error } = await supabase
+        .from("categories")
+        .update({
+          name: localSettingsState.group.name,
+        })
+        .eq("category_id", cardId);
+      console.log("categories", categories);
+      console.log("error", error);
       const data = await getMapData(mapId);
       if (data) dispatch(setCards(data.cards));
 
@@ -268,7 +276,7 @@ const LocalSettings = () => {
         side="right"
       >
         <div className="px-4 py-2 flex justify-between items-center pb-2 border-b-[1.2px] border-gray-200">
-          <div className="text-lg font-medium">Local Settings</div>
+          <div className="text-lg font-medium">Group Settings</div>
           <Button variant="ghost" size="icon" onClick={handleDiscard}>
             <X className="w-4 h-4" />
           </Button>
@@ -403,16 +411,16 @@ const LocalSettings = () => {
               </Button>
             </div>
             <AlertDialogDescription>
-              Choose how to handle this group
+              Deleting this group will remove it from the map and all items
             </AlertDialogDescription>
             <div className="space-y-3">
-              <button
+              {/* <button
                 onClick={() => handleDeleteOption(false)}
                 disabled={loading}
                 className="w-full bg-black text-white p-3 text-sm rounded-md hover:bg-gray-800 disabled:opacity-50 text-center"
               >
                 Move group to &apos;Other&apos; category
-              </button>
+              </button> */}
               <button
                 onClick={() => handleDeleteOption(true)}
                 disabled={loading}

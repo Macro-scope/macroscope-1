@@ -194,9 +194,7 @@ const ParentCategory: React.FC<ParentCategoryProps> = (props) => {
     props.settings,
   ]);
 
-  const description =
-    props.description ||
-    "This category contains resources related to AI platforms and tools.";
+  const description = props.description || "";
 
   return (
     <Rnd
