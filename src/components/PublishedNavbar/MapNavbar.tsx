@@ -46,7 +46,10 @@ const MapNavbar = () => {
 
       <div className="flex flex-col justify-center items-center">
         <h1 className="text-xl font-semibold">{nav?.title}</h1>
-        <p className="text-sm">{nav?.description}</p>
+        <p
+          className="text-sm"
+          dangerouslySetInnerHTML={{ __html: nav?.description ?? "" }}
+        />
       </div>
 
       <div className="flex items-center gap-2">

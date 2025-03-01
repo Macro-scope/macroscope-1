@@ -80,19 +80,85 @@ const ExportImageSettings = () => {
       element.style.width = `${maxX}px`;
       element.style.height = `${maxY}px`;
 
-      await new Promise((resolve) => setTimeout(resolve, 100));
+      // Pre-load all images before capturing
+      const preloadImages = async () => {
+        const imgElements = element.querySelectorAll("img");
+        const loadPromises = Array.from(imgElements).map((img) => {
+          return new Promise((resolve) => {
+            const imgEl = img as HTMLImageElement;
+
+            // If image is already loaded or has no src, resolve immediately
+            if (imgEl.complete || !imgEl.src) {
+              resolve(null);
+              return;
+            }
+            // Create a new image to preload
+            const newImg = document.createElement("img");
+            newImg.crossOrigin = "anonymous"; // Try with CORS
+
+            // Set up event handlers
+            newImg.onload = () => resolve(null);
+            newImg.onerror = () => {
+              console.warn(`Failed to load image: ${imgEl.src}`);
+              resolve(null);
+            };
+
+            // Start loading
+            newImg.src = imgEl.src;
+
+            // Set a timeout to avoid hanging
+            setTimeout(resolve, 3000);
+          });
+        });
+
+        return Promise.all(loadPromises);
+      };
+
+      // Wait for images to preload
+      await preloadImages();
+
+      // Additional delay to ensure rendering
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const canvas = await html2canvas(element, {
         useCORS: true,
         allowTaint: true,
         logging: true,
         scale: Number(quality),
-        backgroundColor: "#ffffff", // Set white background
+        backgroundColor: "#ffffff",
+        imageTimeout: 15000,
         onclone: (clonedDoc) => {
           const clonedElement = clonedDoc.getElementById("capture");
           if (clonedElement) {
             clonedElement.style.overflow = "visible";
-            clonedElement.style.backgroundColor = "#ffffff"; // Ensure white background in cloned element
+            clonedElement.style.backgroundColor = "#ffffff";
+
+            // Hide UI elements that shouldn't be in the export
+            const uiElements = clonedElement.querySelectorAll(
+              ".card-actions, .card-toolbar"
+            );
+            uiElements.forEach((el) => {
+              (el as HTMLElement).style.display = "none";
+            });
+
+            // Fix broken images by replacing them with a colored div if needed
+            const imgElements = clonedElement.querySelectorAll("img");
+            imgElements.forEach((img) => {
+              const imgEl = img as HTMLImageElement;
+              if (!imgEl.complete || imgEl.naturalWidth === 0) {
+                // Create a replacement colored div for the broken image
+                const replacementDiv = document.createElement("div");
+                replacementDiv.style.width = "24px";
+                replacementDiv.style.height = "24px";
+                replacementDiv.style.backgroundColor = "#888";
+                replacementDiv.style.display = "inline-block";
+                replacementDiv.style.borderRadius = "4px";
+
+                // Replace the broken image with our div
+                imgEl.parentNode?.replaceChild(replacementDiv, imgEl);
+              }
+            });
+
             Array.from(clonedElement.getElementsByTagName("*")).forEach(
               (el) => {
                 const element = el as HTMLElement;

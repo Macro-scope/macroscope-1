@@ -242,7 +242,6 @@ const ResizableNode = (props) => {
       });
 
       const enrichedTilesData = await Promise.all(tilePromises);
-      console.log("enrichedTilesData", enrichedTilesData);
       setEnrichedTiles(enrichedTilesData);
     } catch (error) {
       console.error("Error fetching tiles data:", error);
