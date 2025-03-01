@@ -2,7 +2,18 @@ import React, { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { X, Upload, Link2, Camera, Trash2, Plus, XCircle } from "lucide-react";
+import {
+  X,
+  Upload,
+  Link2,
+  Camera,
+  Trash2,
+  Plus,
+  XCircle,
+  PenLineIcon,
+  PenIcon,
+  MoreVerticalIcon,
+} from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,7 +58,9 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
   const [categoryOptions, setCategoryOptions] = useState([]);
   const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
+  const [isTagDialogOpen, setIsTagDialogOpen] = useState(false);
   const [tagInput, setTagInput] = useState("");
+  const [editTagInput, setEditTagInput] = useState("");
   const [formData, setFormData] = useState({
     name: tileData?.name || "",
     url: tileData?.url || "",
@@ -285,6 +298,16 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
       toast.error("Failed to delete tile");
     }
   };
+  const handleSaveEditTag = async () => {
+    try {
+      if (editTagInput.length == 0) {
+        return;
+      }
+    } catch (error) {
+    } finally {
+      setIsTagDialogOpen(false);
+    }
+  };
   const isFormModified = () => {
     return (
       formData.name !== tileData?.name ||
@@ -482,6 +505,67 @@ const TileSettings = ({ mapId, tileData }: TileSettingsProps) => {
                     >
                       <XCircle className="w-4 h-4" />
                     </button>
+                    <div className="relative flex items-center">
+                      <button
+                        className=""
+                        onClick={() =>
+                          isTagDialogOpen
+                            ? setIsTagDialogOpen(false)
+                            : setIsTagDialogOpen(true)
+                        }
+                      >
+                        <MoreVerticalIcon className="w-4 h-4" />
+                      </button>
+                      {isTagDialogOpen && (
+                        <div className="absolute top-0  -right-28 bg-white border rounded-md shadow-lg px-4 py-2">
+                          <ul>
+                            <li>
+                              <Dialog onOpenChange={setIsTagDialogOpen}>
+                                <DialogTrigger>
+                                  <button
+                                    onClick={() => {
+                                      setEditTagInput(tag);
+                                    }}
+                                    className="text-gray-500 hover:text-gray-700 flex items-center gap-2"
+                                  >
+                                    Edit <PenIcon className="w-4 h-4" />
+                                  </button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                  <DialogTitle>Edit Tag</DialogTitle>
+                                  <DialogDescription>
+                                    <h1 className="text-sm mb-2">
+                                      Edit the tag name
+                                    </h1>
+                                    <Input
+                                      type="text"
+                                      value={editTagInput}
+                                      onChange={(e) => {
+                                        setEditTagInput(e.target.value);
+                                      }}
+                                    />
+                                  </DialogDescription>
+                                  <DialogFooter>
+                                    <Button onClick={handleSaveEditTag}>
+                                      Save
+                                    </Button>
+                                  </DialogFooter>
+                                </DialogContent>
+                              </Dialog>
+                            </li>
+                            <li>
+                              <Dialog>
+                                <DialogTrigger>
+                                  <button className="text-gray-500 hover:text-gray-700 flex items-center gap-2">
+                                    Delete <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </DialogTrigger>
+                              </Dialog>
+                            </li>
+                          </ul>
+                        </div>
+                      )}
+                    </div>
                   </span>
                 ))}
               </div>

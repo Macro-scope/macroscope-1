@@ -257,10 +257,10 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
 
       toast.success("Tile Added");
 
-      onOpenChange(false);
       dispatch(setMapSettings("none"));
       dispatch(setLocalCardId(""));
       dispatch(setLocalCard({ label: "", value: "" }));
+      console.log("resetting form data");
       setFormData({
         name: "",
         url: "",
@@ -271,6 +271,10 @@ const AddForm = ({ open, onOpenChange, mapId }: AddSheetProps) => {
         short_description_html: "",
         tags: [],
       });
+      setTagInput("");
+      setIsImageDialogOpen(false);
+      setIsDescriptionDialogOpen(false);
+      onOpenChange(false);
     } catch (error) {
       console.error("Error creating tile:", error);
     }

@@ -37,8 +37,6 @@ const RichTextEditor = ({
   features?: string[];
   placeholder?: string;
 }) => {
-  console.log("value");
-  console.log(typeof valueMarkdown);
   const editor = useEditor({
     editorProps: {
       attributes: {

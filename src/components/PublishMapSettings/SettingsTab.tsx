@@ -9,6 +9,7 @@ import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient";
 import { useToast } from "@/hooks/use-toast";
 import { addLogo } from "@/hooks/addLogo";
+import RichTextEditor from "../editor/text-editor";
 
 const SettingsTab = ({ mapId }: { mapId: string }) => {
   const { toast } = useToast();
@@ -158,14 +159,15 @@ const SettingsTab = ({ mapId }: { mapId: string }) => {
         <Label htmlFor="description" className="block font-medium text-sm">
           Description
         </Label>
-        <textarea
-          id="description"
+        <RichTextEditor
           value={settings.description}
-          onChange={(e) =>
-            setSettings((prev) => ({ ...prev, description: e.target.value }))
-          }
-          placeholder="Enter description"
-          className="w-full h-24 rounded-md border p-2 resize-none text-sm"
+          valueMarkdown={settings.description}
+          onChange={(content: { html: string; markdown: string }) => {
+            setSettings((prev) => ({
+              ...prev,
+              description: content.html,
+            }));
+          }}
         />
       </div>
 

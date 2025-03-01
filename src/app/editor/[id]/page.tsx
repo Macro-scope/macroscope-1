@@ -13,15 +13,18 @@ import PannableCanvas from "@/MapCanvas/PannableCanvas";
 import { useParams } from "next/navigation";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import AddForm from "./_component/add-form";
+import { setLocalCard } from "@/redux/localSettingsSlice";
+import { setLocalCardId } from "@/redux/localSettingsSlice";
+import { setMapSettings } from "@/redux/mapSettingsSlice";
 
 const EditorMain = () => {
   const { mapSettings, tileData } = useSelector((state: any) => ({
     mapSettings: state.mapSettings.value,
     tileData: state.tileSettings?.data, // Add this to your Redux state
   }));
-
+  const dispatch = useDispatch();
   const { id } = useParams();
   const mapId = Array.isArray(id) ? id[0] : id;
   const [mapOwner, setMapOwner] = useState();
@@ -50,7 +53,20 @@ const EditorMain = () => {
       parentCategoryLocal: <ParentCategoryLocalSettings />,
       tile: <TileSettings mapId={mapId} tileData={tileData} />,
       reorder: <Reordering mapId={mapId} />,
-      addTile: <AddForm open={mapSettings === "addTile"} mapId={mapId} />,
+      addTile: (
+        <AddForm
+          open={mapSettings === "addTile"}
+          onOpenChange={(open) => {
+            if (!open) {
+              dispatch(setMapSettings("none"));
+              dispatch(setLocalCardId(""));
+              dispatch(setLocalCard({ label: "", value: "" }));
+              console.log("resetting form data");
+            }
+          }}
+          mapId={mapId}
+        />
+      ),
     };
 
     const SettingComponent = settingComponents[mapSettings];
